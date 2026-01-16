@@ -48,6 +48,18 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
+  /* Primary Color - Xanh lá (Green) */
+  --color-primary-50: #f0fdf4;
+  --color-primary-100: #dcfce7;
+  --color-primary-200: #bbf7d0;
+  --color-primary-300: #86efac;
+  --color-primary-400: #4ade80;
+  --color-primary-500: #10b981;
+  --color-primary-600: #059669;
+  --color-primary-700: #047857;
+  --color-primary-800: #065f46;
+  --color-primary-900: #064e3b;
+
   /* Room Management Custom Colors */
   --color-room-empty: #10b981;
   --color-room-debt: #ef4444;
@@ -63,47 +75,49 @@
    VARIABLE DEFINITIONS (HSL/HEX)
    ============================================ */
 :root {
+  /* Light Mode - Màu chủ đạo xanh lá */
   --background: #ffffff;
-  --foreground: #0a0a0a;
+  --foreground: #111827;
   --card: #ffffff;
-  --card-foreground: #0a0a0a;
+  --card-foreground: #111827;
   --popover: #ffffff;
-  --popover-foreground: #0a0a0a;
-  --primary: #0a0a0a;
-  --primary-foreground: #fafafa;
-  --secondary: #f5f5f5;
-  --secondary-foreground: #0a0a0a;
-  --muted: #f5f5f5;
-  --muted-foreground: #737373;
-  --accent: #f5f5f5;
-  --accent-foreground: #0a0a0a;
+  --popover-foreground: #111827;
+  --primary: #10b981;
+  --primary-foreground: #ffffff;
+  --secondary: #f3f4f6;
+  --secondary-foreground: #111827;
+  --muted: #f9fafb;
+  --muted-foreground: #6b7280;
+  --accent: #d1fae5;
+  --accent-foreground: #047857;
   --destructive: #ef4444;
-  --destructive-foreground: #fafafa;
-  --border: #e5e5e5;
-  --input: #e5e5e5;
-  --ring: #0a0a0a;
+  --destructive-foreground: #ffffff;
+  --border: #e5e7eb;
+  --input: #e5e7eb;
+  --ring: #10b981;
 }
 
 .dark {
-  --background: #0a0a0a;
-  --foreground: #fafafa;
+  /* Dark Mode - Màu chủ đạo xanh lá */
+  --background: #000000;
+  --foreground: #f9fafb;
   --card: #0a0a0a;
-  --card-foreground: #fafafa;
+  --card-foreground: #f9fafb;
   --popover: #0a0a0a;
-  --popover-foreground: #fafafa;
-  --primary: #fafafa;
-  --primary-foreground: #0a0a0a;
-  --secondary: #262626;
-  --secondary-foreground: #fafafa;
-  --muted: #262626;
-  --muted-foreground: #a3a3a3;
-  --accent: #262626;
-  --accent-foreground: #fafafa;
-  --destructive: #7f1d1d;
-  --destructive-foreground: #fafafa;
+  --popover-foreground: #f9fafb;
+  --primary: #10b981;
+  --primary-foreground: #000000;
+  --secondary: #171717;
+  --secondary-foreground: #f9fafb;
+  --muted: #171717;
+  --muted-foreground: #9ca3af;
+  --accent: #065f46;
+  --accent-foreground: #d1fae5;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
   --border: #262626;
   --input: #262626;
-  --ring: #d4d4d4;
+  --ring: #34d399;
 }
 
 @layer base {
