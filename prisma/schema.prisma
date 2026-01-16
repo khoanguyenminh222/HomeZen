@@ -1,0 +1,52 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Model User cho xác thực
+model User {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  password  String   // bcrypt hashed
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Thông tin nhà trọ
+model PropertyInfo {
+  id          String   @id @default(cuid())
+  name        String
+  address     String
+  phone       String
+  ownerName   String
+  email       String?
+  logoUrl     String?  // Cloudinary URL
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Model Phòng
+model Room {
+  id                String    @id @default(cuid())
+  code              String    @unique  // Mã phòng (A101, A102, etc.)
+  name              String
+  price             Decimal   @db.Decimal(10, 0)
+  status            RoomStatus @default(EMPTY)
+  meterReadingDay   Int?      // Ngày chốt số hàng tháng (1-31)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  @@index([status])
+  @@index([code])
+}
+
+enum RoomStatus {
+  EMPTY     // Phòng trống
+  OCCUPIED  // Đã thuê
+}

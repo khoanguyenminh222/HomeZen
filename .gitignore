@@ -39,3 +39,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# AI
+.agent
+.kiro
+
+# Prisma
+/prisma/migrations
+/prisma/README.md

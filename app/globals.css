@@ -1,26 +1,183 @@
 @import "tailwindcss";
+@plugin "tailwindcss-animate";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@theme {
+  /* ============================================
+     TAILWIND V4 THEME SYSTEM
+     ============================================ */
 
-@theme inline {
+  /* Custom Breakpoints */
+  --breakpoint-xs: 375px;
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
+
+  /* Custom Font Sizes */
+  --font-size-base: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+  --font-size-3xl: 30px;
+  --font-size-4xl: 36px;
+
+  /* Touch Target & Spacing (Custom Utilities) */
+  --spacing-touch: 44px;
+  --min-height-touch: 44px;
+  --min-width-touch: 44px;
+
+  /* shadcn/ui System Colors - Mapping to v4 theme names */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Room Management Custom Colors */
+  --color-room-empty: #10b981;
+  --color-room-debt: #ef4444;
+  --color-meter-rollover: #f59e0b;
+  --color-bill-paid: #3b82f6;
+  --color-bill-unpaid: #f97316;
+
+  /* Keyframes for shadcn/ui */
+  --radius: 0.5rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* ============================================
+   VARIABLE DEFINITIONS (HSL/HEX)
+   ============================================ */
+:root {
+  --background: #ffffff;
+  --foreground: #0a0a0a;
+  --card: #ffffff;
+  --card-foreground: #0a0a0a;
+  --popover: #ffffff;
+  --popover-foreground: #0a0a0a;
+  --primary: #0a0a0a;
+  --primary-foreground: #fafafa;
+  --secondary: #f5f5f5;
+  --secondary-foreground: #0a0a0a;
+  --muted: #f5f5f5;
+  --muted-foreground: #737373;
+  --accent: #f5f5f5;
+  --accent-foreground: #0a0a0a;
+  --destructive: #ef4444;
+  --destructive-foreground: #fafafa;
+  --border: #e5e5e5;
+  --input: #e5e5e5;
+  --ring: #0a0a0a;
+}
+
+.dark {
+  --background: #0a0a0a;
+  --foreground: #fafafa;
+  --card: #0a0a0a;
+  --card-foreground: #fafafa;
+  --popover: #0a0a0a;
+  --popover-foreground: #fafafa;
+  --primary: #fafafa;
+  --primary-foreground: #0a0a0a;
+  --secondary: #262626;
+  --secondary-foreground: #fafafa;
+  --muted: #262626;
+  --muted-foreground: #a3a3a3;
+  --accent: #262626;
+  --accent-foreground: #fafafa;
+  --destructive: #7f1d1d;
+  --destructive-foreground: #fafafa;
+  --border: #262626;
+  --input: #262626;
+  --ring: #d4d4d4;
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  button,
+  [role="button"] {
+    cursor: pointer;
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 16px;
+  }
+
+  h1 {
+    font-size: 36px;
+    font-weight: bold;
+  }
+
+  h2 {
+    font-size: 30px;
+    font-weight: bold;
+  }
+
+  h3 {
+    font-size: 24px;
+    font-weight: 600;
+  }
+
+  h4 {
+    font-size: 20px;
+    font-weight: 600;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ============================================
+   COMPONENT CLASSES (Legacy/Custom)
+   ============================================ */
+@layer components {
+
+  /* Status Badges */
+  .status-badge-empty {
+    @apply inline-flex items-center justify-center px-3 py-1 rounded-full text-sm font-medium bg-room-empty text-white;
+  }
+
+  .status-badge-debt {
+    @apply inline-flex items-center justify-center px-3 py-1 rounded-full text-sm font-medium bg-room-debt text-white;
+  }
+
+  .status-badge-rollover {
+    @apply inline-flex items-center justify-center px-3 py-1 rounded-full text-sm font-medium bg-meter-rollover text-white;
+  }
+
+  .status-badge-paid {
+    @apply inline-flex items-center justify-center px-3 py-1 rounded-full text-sm font-medium bg-bill-paid text-white;
+  }
+
+  .status-badge-unpaid {
+    @apply inline-flex items-center justify-center px-3 py-1 rounded-full text-sm font-medium bg-bill-unpaid text-white;
+  }
+
+  /* Room Cards with modern color-mix */
+  .room-card-empty {
+    @apply rounded-lg border border-room-empty p-4 transition-all duration-200 min-h-[120px] hover:shadow-md;
+    background-color: color-mix(in srgb, var(--color-room-empty) 5%, transparent);
+  }
+
+  .room-card-debt {
+    @apply rounded-lg border border-room-debt p-4 transition-all duration-200 min-h-[120px] hover:shadow-md;
+    background-color: color-mix(in srgb, var(--color-room-debt) 5%, transparent);
+  }
 }
