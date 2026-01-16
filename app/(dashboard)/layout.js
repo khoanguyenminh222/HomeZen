@@ -1,5 +1,6 @@
 import { auth } from '@/app/api/auth/[...nextauth]/route';
 import { redirect } from 'next/navigation';
+import Link from 'next/link';
 
 export default async function DashboardLayout({ children }) {
   const session = await auth();
@@ -32,6 +33,33 @@ export default async function DashboardLayout({ children }) {
           </div>
         </div>
       </header>
+      
+      {/* Navigation Menu */}
+      <nav className="bg-white border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex space-x-8 py-3">
+            <Link 
+              href="/" 
+              className="text-gray-700 hover:text-primary-600 px-3 py-2 text-sm font-medium"
+            >
+              Dashboard
+            </Link>
+            <Link 
+              href="/rooms" 
+              className="text-gray-700 hover:text-primary-600 px-3 py-2 text-sm font-medium"
+            >
+              Phòng
+            </Link>
+            <Link 
+              href="/settings/property" 
+              className="text-gray-700 hover:text-primary-600 px-3 py-2 text-sm font-medium"
+            >
+              Cài Đặt
+            </Link>
+          </div>
+        </div>
+      </nav>
+      
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {children}
       </main>

@@ -13,6 +13,12 @@ export async function middleware(request) {
 
   const { pathname } = request.nextUrl;
 
+  // If user is authenticated and tries to access login page, redirect to dashboard
+  if (token && pathname.startsWith('/login')) {
+    const dashboardUrl = new URL('/', request.url);
+    return NextResponse.redirect(dashboardUrl);
+  }
+
   // Allow access to login page and auth routes
   if (pathname.startsWith('/login') || pathname.startsWith('/api/auth')) {
     return NextResponse.next();
