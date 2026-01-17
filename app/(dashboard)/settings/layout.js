@@ -1,0 +1,92 @@
+'use client';
+
+import { usePathname } from 'next/navigation';
+import Link from 'next/link';
+import { cn } from '@/lib/utils';
+import { Building2, Zap, Settings } from 'lucide-react';
+
+const settingsNavItems = [
+  {
+    href: '/settings/property',
+    label: 'Thông Tin Nhà Trọ',
+    icon: Building2,
+    description: 'Tên, địa chỉ, logo nhà trọ'
+  },
+  {
+    href: '/settings/utility-rates',
+    label: 'Đơn Giá Điện Nước',
+    icon: Zap,
+    description: 'Cấu hình giá điện, nước, bậc thang'
+  },
+];
+
+export default function SettingsLayout({ children }) {
+  const pathname = usePathname();
+
+  return (
+    <div className="container mx-auto p-6">
+      {/* Header */}
+      <div className="flex items-center space-x-3 mb-8">
+        <div className="p-2 bg-primary/10 rounded-lg">
+          <Settings className="h-6 w-6 text-primary" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold">Cài Đặt Hệ Thống</h1>
+          <p className="text-gray-600">
+            Cấu hình thông tin và tham số cho hệ thống quản lý phòng trọ
+          </p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        {/* Settings Navigation */}
+        <div className="lg:col-span-1">
+          <div className="space-y-2">
+            {settingsNavItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = pathname === item.href;
+              
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    'flex items-start space-x-3 p-4 rounded-lg border transition-all duration-200',
+                    'hover:bg-accent/50 hover:border-primary/20',
+                    isActive
+                      ? 'bg-primary/10 border-primary/30 text-primary'
+                      : 'bg-white border-gray-200 text-gray-700 hover:text-gray-900'
+                  )}
+                >
+                  <Icon className={cn(
+                    'h-5 w-5 mt-0.5 shrink-0',
+                    isActive ? 'text-primary' : 'text-gray-500'
+                  )} />
+                  <div className="flex-1 min-w-0">
+                    <h3 className={cn(
+                      'font-medium text-sm',
+                      isActive ? 'text-primary' : 'text-gray-900'
+                    )}>
+                      {item.label}
+                    </h3>
+                    <p className={cn(
+                      'text-xs mt-1',
+                      isActive ? 'text-primary/70' : 'text-gray-500'
+                    )}>
+                      {item.description}
+                    </p>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Settings Content */}
+        <div className="lg:col-span-3">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,156 @@
+import { NextResponse } from 'next/server';
+import { auth } from '@/app/api/auth/[...nextauth]/route';
+import prisma from '@/lib/prisma';
+import { 
+  globalUtilityRateSchema, 
+  updateGlobalUtilityRateSchema,
+  validateTieredRates 
+} from '@/lib/validations/utilityRate';
+
+// GET /api/settings/utility-rates - Lấy đơn giá chung
+export async function GET() {
+  try {
+    const session = await auth();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Tìm đơn giá chung (isGlobal = true)
+    const globalRate = await prisma.utilityRate.findFirst({
+      where: { isGlobal: true },
+      include: {
+        tieredRates: {
+          orderBy: { minUsage: 'asc' }
+        }
+      }
+    });
+
+    if (!globalRate) {
+      // Tạo đơn giá chung mặc định nếu chưa có
+      const defaultRate = await prisma.utilityRate.create({
+        data: {
+          electricityPrice: 3000, // 3000 VNĐ/kWh
+          waterPrice: 25000, // 25000 VNĐ/m³
+          waterPricingMethod: 'METER',
+          waterPricePerPerson: null,
+          useTieredPricing: false,
+          isGlobal: true,
+        },
+        include: {
+          tieredRates: {
+            orderBy: { minUsage: 'asc' }
+          }
+        }
+      });
+      return NextResponse.json(defaultRate);
+    }
+
+    return NextResponse.json(globalRate);
+  } catch (error) {
+    console.error('Error fetching global utility rates:', error);
+    return NextResponse.json(
+      { error: 'Lỗi khi lấy đơn giá chung' },
+      { status: 500 }
+    );
+  }
+}
+
+// PUT /api/settings/utility-rates - Cập nhật đơn giá chung
+export async function PUT(request) {
+  try {
+    const session = await auth();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await request.json();
+    
+    // Validate input
+    const validatedData = updateGlobalUtilityRateSchema.parse(body);
+
+    // Validate tiered rates nếu có
+    if (validatedData.useTieredPricing && validatedData.tieredRates) {
+      const validation = validateTieredRates(validatedData.tieredRates);
+      if (!validation.isValid) {
+        return NextResponse.json(
+          { error: validation.error },
+          { status: 400 }
+        );
+      }
+      validatedData.tieredRates = validation.sortedRates;
+    }
+
+    // Tìm đơn giá chung hiện tại
+    let globalRate = await prisma.utilityRate.findFirst({
+      where: { isGlobal: true }
+    });
+
+    if (!globalRate) {
+      // Tạo mới nếu chưa có
+      globalRate = await prisma.utilityRate.create({
+        data: {
+          ...validatedData,
+          isGlobal: true,
+        }
+      });
+    } else {
+      // Cập nhật trong transaction để đảm bảo consistency
+      await prisma.$transaction(async (tx) => {
+        // Xóa các bậc thang cũ nếu có
+        if (validatedData.tieredRates !== undefined) {
+          await tx.tieredElectricityRate.deleteMany({
+            where: { utilityRateId: globalRate.id }
+          });
+        }
+
+        // Cập nhật đơn giá chung
+        globalRate = await tx.utilityRate.update({
+          where: { id: globalRate.id },
+          data: {
+            electricityPrice: validatedData.electricityPrice,
+            waterPrice: validatedData.waterPrice,
+            waterPricingMethod: validatedData.waterPricingMethod,
+            waterPricePerPerson: validatedData.waterPricePerPerson,
+            useTieredPricing: validatedData.useTieredPricing,
+          }
+        });
+
+        // Tạo các bậc thang mới nếu có
+        if (validatedData.useTieredPricing && validatedData.tieredRates) {
+          await tx.tieredElectricityRate.createMany({
+            data: validatedData.tieredRates.map(rate => ({
+              ...rate,
+              utilityRateId: globalRate.id
+            }))
+          });
+        }
+      });
+    }
+
+    // Lấy dữ liệu đầy đủ để trả về
+    const updatedRate = await prisma.utilityRate.findUnique({
+      where: { id: globalRate.id },
+      include: {
+        tieredRates: {
+          orderBy: { minUsage: 'asc' }
+        }
+      }
+    });
+
+    return NextResponse.json(updatedRate);
+  } catch (error) {
+    console.error('Error updating global utility rates:', error);
+    
+    if (error.name === 'ZodError') {
+      return NextResponse.json(
+        { error: 'Dữ liệu không hợp lệ', details: error.errors },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json(
+      { error: 'Lỗi khi cập nhật đơn giá chung' },
+      { status: 500 }
+    );
+  }
+}

@@ -6,7 +6,7 @@ import RoomCard from './RoomCard';
  * RoomList - Danh sách phòng với status badges
  * Requirements: 2.5, 2.10
  */
-export default function RoomList({ rooms, onEdit, onDelete }) {
+export default function RoomList({ rooms, onEdit, onDelete, onConfigureUtilityRates }) {
   if (rooms.length === 0) {
     return (
       <div className="text-center py-12">
@@ -28,6 +28,7 @@ export default function RoomList({ rooms, onEdit, onDelete }) {
           room={room}
           onEdit={onEdit}
           onDelete={onDelete}
+          onConfigureUtilityRates={onConfigureUtilityRates}
         />
       ))}
     </div>

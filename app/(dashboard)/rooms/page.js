@@ -7,6 +7,7 @@ import RoomList from '@/components/rooms/RoomList';
 import RoomForm from '@/components/rooms/RoomForm';
 import RoomFilters from '@/components/rooms/RoomFilters';
 import DeleteConfirmDialog from '@/components/rooms/DeleteConfirmDialog';
+import RoomUtilityRateForm from '@/components/settings/RoomUtilityRateForm';
 import { useToast } from '@/hooks/use-toast';
 import { Loading } from '@/components/ui/loading';
 
@@ -24,6 +25,7 @@ export default function RoomsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState({ empty: 0, occupied: 0 });
   const [deleteDialog, setDeleteDialog] = useState({ open: false, room: null });
+  const [utilityRateDialog, setUtilityRateDialog] = useState({ open: false, room: null });
   const { toast } = useToast();
 
   // Fetch rooms
@@ -88,6 +90,10 @@ export default function RoomsPage() {
 
   const handleDeleteRoom = (room) => {
     setDeleteDialog({ open: true, room });
+  };
+
+  const handleConfigureUtilityRates = (room) => {
+    setUtilityRateDialog({ open: true, room });
   };
 
   const confirmDelete = async () => {
@@ -159,6 +165,7 @@ export default function RoomsPage() {
         rooms={filteredRooms}
         onEdit={handleEditRoom}
         onDelete={handleDeleteRoom}
+        onConfigureUtilityRates={handleConfigureUtilityRates}
       />
 
       {/* Room Form Dialog */}
@@ -175,6 +182,17 @@ export default function RoomsPage() {
         onClose={() => setDeleteDialog({ open: false, room: null })}
         onConfirm={confirmDelete}
         room={deleteDialog.room}
+      />
+
+      {/* Utility Rate Configuration Dialog */}
+      <RoomUtilityRateForm
+        room={utilityRateDialog.room}
+        isOpen={utilityRateDialog.open}
+        onClose={() => setUtilityRateDialog({ open: false, room: null })}
+        onSuccess={() => {
+          // Có thể refresh rooms nếu cần hiển thị trạng thái đơn giá
+          // fetchRooms();
+        }}
       />
     </div>
   );

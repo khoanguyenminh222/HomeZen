@@ -42,6 +42,9 @@ model Room {
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
   
+  // Quan hệ
+  utilityRates      UtilityRate?
+  
   @@index([status])
   @@index([code])
 }
@@ -49,4 +52,47 @@ model Room {
 enum RoomStatus {
   EMPTY     // Phòng trống
   OCCUPIED  // Đã thuê
+}
+
+enum WaterPricingMethod {
+  METER   // Theo đồng hồ
+  PERSON  // Theo số người
+}
+
+// Đơn giá điện nước (chung và riêng từng phòng)
+model UtilityRate {
+  id                    String    @id @default(cuid())
+  electricityPrice      Decimal?  @db.Decimal(10, 0)  // VNĐ/kWh
+  waterPrice            Decimal?  @db.Decimal(10, 0)  // VNĐ/m³
+  waterPricingMethod    WaterPricingMethod @default(METER)
+  waterPricePerPerson   Decimal?  @db.Decimal(10, 0)  // VNĐ/người/tháng
+  useTieredPricing      Boolean   @default(false)
+  isGlobal              Boolean   @default(false)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  
+  // Quan hệ (cho đơn giá riêng từng phòng)
+  roomId                String?   @unique
+  room                  Room?     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  
+  // Bậc thang giá điện
+  tieredRates           TieredElectricityRate[]
+  
+  @@index([isGlobal])
+  @@index([roomId])
+}
+
+// Bậc thang giá điện
+model TieredElectricityRate {
+  id              String    @id @default(cuid())
+  minUsage        Int       // kWh
+  maxUsage        Int?      // kWh (null = không giới hạn)
+  price           Decimal   @db.Decimal(10, 0)
+  createdAt       DateTime  @default(now())
+  
+  // Quan hệ
+  utilityRateId   String
+  utilityRate     UtilityRate @relation(fields: [utilityRateId], references: [id], onDelete: Cascade)
+  
+  @@index([utilityRateId])
 }

@@ -2,13 +2,13 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2, Zap } from 'lucide-react';
 
 /**
  * RoomCard - Card phòng với trạng thái màu sắc
  * Requirements: 2.5, 12.6
  */
-export default function RoomCard({ room, onEdit, onDelete }) {
+export default function RoomCard({ room, onEdit, onDelete, onConfigureUtilityRates }) {
   // Màu sắc theo trạng thái (Requirements: 12.6)
   const statusColors = {
     EMPTY: 'bg-room-empty text-white',
@@ -83,6 +83,17 @@ export default function RoomCard({ room, onEdit, onDelete }) {
             <Edit className="w-4 h-4 mr-2" />
             Sửa
           </Button>
+          {onConfigureUtilityRates && (
+            <Button
+              onClick={() => onConfigureUtilityRates(room)}
+              variant="outline"
+              size="sm"
+              className="flex-1"
+            >
+              <Zap className="w-4 h-4 mr-2" />
+              Đơn giá
+            </Button>
+          )}
           <Button
             onClick={() => onDelete(room)}
             variant="destructive"
