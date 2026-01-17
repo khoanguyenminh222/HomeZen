@@ -8,12 +8,14 @@ import RoomForm from '@/components/rooms/RoomForm';
 import RoomFilters from '@/components/rooms/RoomFilters';
 import DeleteConfirmDialog from '@/components/rooms/DeleteConfirmDialog';
 import { useToast } from '@/hooks/use-toast';
+import { Loading } from '@/components/ui/loading';
 
 /**
  * Trang quản lý phòng
  * Requirements: 2.5, 2.10, 2.11
  */
 export default function RoomsPage() {
+
   const [rooms, setRooms] = useState([]);
   const [filteredRooms, setFilteredRooms] = useState([]);
   const [filters, setFilters] = useState({ status: '', search: '' });
@@ -33,7 +35,7 @@ export default function RoomsPage() {
       const data = await response.json();
       setRooms(data);
       setFilteredRooms(data);
-      
+
       // Calculate stats (Requirements: 2.10)
       const empty = data.filter(r => r.status === 'EMPTY').length;
       const occupied = data.filter(r => r.status === 'OCCUPIED').length;
@@ -124,11 +126,7 @@ export default function RoomsPage() {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-lg">Đang tải...</p>
-      </div>
-    );
+    return <Loading fullScreen />;
   }
 
   return (

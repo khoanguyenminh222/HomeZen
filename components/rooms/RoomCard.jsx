@@ -29,12 +29,12 @@ export default function RoomCard({ room, onEdit, onDelete }) {
   };
 
   return (
-    <Card className="hover:shadow-lg transition-shadow">
+    <Card className="hover:shadow-lg transition-shadow flex flex-col h-full">
       <CardHeader className="pb-3">
         <div className="flex justify-between items-start">
           <div>
             <CardTitle className="text-xl font-bold">{room.code}</CardTitle>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               {room.name}
             </p>
           </div>
@@ -47,47 +47,52 @@ export default function RoomCard({ room, onEdit, onDelete }) {
           </span>
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
+      <CardContent className="flex-1 flex flex-col">
+        <div className="space-y-3 flex-1">
           <div>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Giá phòng</p>
-            <p className="text-lg font-bold text-primary-600 dark:text-primary-400">
+            <p className="text-sm text-muted-foreground">Giá phòng</p>
+            <p className="text-lg font-bold text-primary">
               {formatCurrency(room.price)}
             </p>
           </div>
 
-          {room.meterReadingDay && (
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Ngày chốt số
-              </p>
-              <p className="text-base font-medium">
-                Ngày {room.meterReadingDay} hàng tháng
-              </p>
-            </div>
-          )}
-
-          <div className="flex gap-2 pt-2">
-            <Button
-              onClick={() => onEdit(room)}
-              variant="outline"
-              size="sm"
-              className="flex-1"
-            >
-              <Edit className="w-4 h-4 mr-2" />
-              Sửa
-            </Button>
-            <Button
-              onClick={() => onDelete(room)}
-              variant="destructive"
-              size="sm"
-              className="flex-1"
-              disabled={room.status === 'OCCUPIED'}
-            >
-              <Trash2 className="w-4 h-4 mr-2" />
-              Xóa
-            </Button>
+          {/* Placeholder để đảm bảo chiều cao đồng đều */}
+          <div className="min-h-12">
+            {room.meterReadingDay ? (
+              <div>
+                <p className="text-sm text-muted-foreground">
+                  Ngày chốt số
+                </p>
+                <p className="text-base font-medium">
+                  Ngày {room.meterReadingDay} hàng tháng
+                </p>
+              </div>
+            ) : (
+              <div className="h-12"></div>
+            )}
           </div>
+        </div>
+
+        <div className="flex gap-2 pt-4 mt-auto">
+          <Button
+            onClick={() => onEdit(room)}
+            variant="outline"
+            size="sm"
+            className="flex-1"
+          >
+            <Edit className="w-4 h-4 mr-2" />
+            Sửa
+          </Button>
+          <Button
+            onClick={() => onDelete(room)}
+            variant="destructive"
+            size="sm"
+            className="flex-1"
+            disabled={room.status === 'OCCUPIED'}
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            Xóa
+          </Button>
         </div>
       </CardContent>
     </Card>

@@ -22,13 +22,13 @@ ToastViewport.displayName = ToastPrimitives.Viewport.displayName;
 const toastVariants = {
   default: 'border bg-white text-gray-950 dark:bg-gray-950 dark:text-gray-50',
   destructive: 'destructive border-red-500 bg-red-500 text-gray-50 dark:border-red-900 dark:bg-red-900',
-  success: 'border-green-500 bg-green-500 text-white dark:border-green-600 dark:bg-green-600',
+  success: 'border-emerald-600 bg-emerald-600/95 text-white dark:border-emerald-700 dark:bg-emerald-700/95',
 };
 
 const Toast = React.forwardRef(({ className, variant = 'default', ...props }, ref) => {
   const baseClasses = [
-    'group pointer-events-auto relative flex w-full items-center justify-between space-x-4',
-    'overflow-hidden rounded-md border p-6 pr-8 shadow-lg transition-all',
+    'group pointer-events-auto relative flex w-full items-center justify-between space-x-3',
+    'overflow-hidden rounded-lg border p-4 pr-7 shadow-lg transition-all',
     'data-[swipe=cancel]:translate-x-0',
     'data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)]',
     'data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)]',
