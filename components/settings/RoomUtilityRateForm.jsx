@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { updateRoomUtilityRateSchema } from '@/lib/validations/utilityRate';
+import { formatCurrency } from '@/lib/format';
 import TieredPricingForm from './TieredPricingForm';
 import WaterPricingToggle from './WaterPricingToggle';
 import { Loading } from '@/components/ui/loading';
@@ -51,10 +52,10 @@ export default function RoomUtilityRateForm({ room, isOpen, onClose, onSuccess }
       setInitialLoading(true);
       try {
         const response = await fetch(`/api/rooms/${room.id}/utility-rates`);
-        
+
         if (response.ok) {
           const data = await response.json();
-          
+
           if (data) {
             // Phòng có đơn giá riêng
             setHasCustomRates(true);
@@ -151,7 +152,7 @@ export default function RoomUtilityRateForm({ room, isOpen, onClose, onSuccess }
       }
     } catch (error) {
       console.error('Error updating room utility rates:', error);
-      
+
       if (error.name === 'ZodError') {
         toast({
           title: 'Lỗi dữ liệu',
@@ -219,7 +220,7 @@ export default function RoomUtilityRateForm({ room, isOpen, onClose, onSuccess }
             <span>Đơn Giá Riêng - {room.name}</span>
           </DialogTitle>
           <DialogDescription>
-            {hasCustomRates 
+            {hasCustomRates
               ? 'Phòng này đang sử dụng đơn giá riêng. Bạn có thể chỉnh sửa hoặc xóa để dùng đơn giá chung.'
               : 'Phòng này đang sử dụng đơn giá chung. Thiết lập đơn giá riêng để áp dụng giá khác biệt.'
             }
@@ -257,7 +258,7 @@ export default function RoomUtilityRateForm({ room, isOpen, onClose, onSuccess }
                       type="number"
                       step="100"
                       min="0"
-                      {...register('electricityPrice', { 
+                      {...register('electricityPrice', {
                         valueAsNumber: true,
                         onChange: () => setValue('electricityPrice', undefined, { shouldDirty: true })
                       })}
@@ -293,14 +294,14 @@ export default function RoomUtilityRateForm({ room, isOpen, onClose, onSuccess }
               />
 
               <div className="flex space-x-3">
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   disabled={loading}
                   className="flex-1"
                 >
                   {loading ? 'Đang lưu...' : (hasCustomRates ? 'Cập Nhật Đơn Giá Riêng' : 'Thiết Lập Đơn Giá Riêng')}
                 </Button>
-                
+
                 {hasCustomRates && (
                   <Button
                     type="button"
@@ -334,7 +335,7 @@ export default function RoomUtilityRateForm({ room, isOpen, onClose, onSuccess }
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Giá phòng:</span>
-                  <span className="font-medium">{room.price?.toLocaleString('vi-VN')} VNĐ</span>
+                  <span className="font-medium">{formatCurrency(room.price)}</span>
                 </div>
               </CardContent>
             </Card>

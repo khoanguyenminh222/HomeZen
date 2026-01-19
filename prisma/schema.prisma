@@ -43,7 +43,9 @@ model Room {
   updatedAt         DateTime  @updatedAt
   
   // Quan hệ
+  tenant            Tenant?
   utilityRates      UtilityRate?
+  bills             Bill[]
   
   @@index([status])
   @@index([code])
@@ -57,6 +59,16 @@ enum RoomStatus {
 enum WaterPricingMethod {
   METER   // Theo đồng hồ
   PERSON  // Theo số người
+}
+
+enum ResidenceType {
+  TEMPORARY  // Tạm trú
+  PERMANENT  // Thường trú
+}
+
+enum DepositReturnMethod {
+  FULL_RETURN           // Hoàn trả đầy đủ
+  DEDUCT_FROM_LAST_BILL // Trừ vào hóa đơn cuối
 }
 
 // Đơn giá điện nước (chung và riêng từng phòng)
@@ -95,4 +107,128 @@ model TieredElectricityRate {
   utilityRate     UtilityRate @relation(fields: [utilityRateId], references: [id], onDelete: Cascade)
   
   @@index([utilityRateId])
+}
+
+// Model Người thuê chính
+model Tenant {
+  id              String    @id @default(cuid())
+  fullName        String
+  phone           String
+  idCard          String?
+  dateOfBirth     DateTime?
+  hometown        String?
+  moveInDate      DateTime?
+  deposit         Decimal?  @db.Decimal(10, 0)
+  contractFileUrl String?   // Cloudinary URL
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+  deletedBy       String?
+  deleteReason    String?
+  
+  // Quan hệ
+  roomId          String?    @unique
+  room            Room?      @relation(fields: [roomId], references: [id])
+  occupants       Occupant[]
+  depositReturns  DepositReturn[]
+  
+  @@index([deletedAt])
+  @@index([roomId])
+  @@index([phone])
+}
+
+// Model Người ở
+model Occupant {
+  id              String    @id @default(cuid())
+  fullName        String
+  idCard          String?
+  dateOfBirth     DateTime?
+  hometown        String?
+  relationship    String?   // Quan hệ với người thuê chính
+  residenceType   ResidenceType @default(TEMPORARY)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Quan hệ
+  tenantId        String
+  tenant          Tenant    @relation(fields: [tenantId], references: [id])
+  
+  @@index([tenantId])
+}
+
+// Lịch sử hoàn trả cọc
+model DepositReturn {
+  id              String    @id @default(cuid())
+  amount          Decimal   @db.Decimal(10, 0)
+  returnDate      DateTime  @default(now())
+  method          DepositReturnMethod
+  notes           String?
+  createdAt       DateTime  @default(now())
+  
+  // Quan hệ
+  tenantId        String
+  tenant          Tenant    @relation(fields: [tenantId], references: [id])
+  
+  @@index([tenantId])
+}
+
+// Model Hóa đơn
+model Bill {
+  id                    String    @id @default(cuid())
+  month                 Int       // 1-12
+  year                  Int
+  
+  // Chỉ số đồng hồ
+  oldElectricReading    Int
+  newElectricReading    Int
+  electricityUsage      Int
+  electricityRollover   Boolean   @default(false)
+  
+  oldWaterReading       Int
+  newWaterReading       Int
+  waterUsage            Int
+  waterRollover         Boolean   @default(false)
+  
+  // Ảnh đồng hồ (Cloudinary URLs)
+  electricMeterPhotoUrl String?
+  waterMeterPhotoUrl    String?
+  
+  // Chi phí
+  roomPrice             Decimal   @db.Decimal(10, 0)
+  electricityCost       Decimal   @db.Decimal(10, 0)
+  waterCost             Decimal   @db.Decimal(10, 0)
+  totalCost             Decimal   @db.Decimal(10, 0)
+  totalCostText         String    // Số tiền bằng chữ
+  
+  // Trạng thái
+  isPaid                Boolean   @default(false)
+  paidDate              DateTime?
+  notes                 String?
+  
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  
+  // Quan hệ
+  roomId                String
+  room                  Room      @relation(fields: [roomId], references: [id])
+  additionalFees        AdditionalFee[]
+  
+  @@unique([roomId, month, year])
+  @@index([roomId])
+  @@index([isPaid])
+  @@index([month, year])
+}
+
+// Phí phát sinh
+model AdditionalFee {
+  id          String    @id @default(cuid())
+  name        String    // Tiền rác, internet, phạt, thưởng, etc.
+  amount      Decimal   @db.Decimal(10, 0)
+  createdAt   DateTime  @default(now())
+  
+  // Quan hệ
+  billId      String
+  bill        Bill      @relation(fields: [billId], references: [id], onDelete: Cascade)
+  
+  @@index([billId])
 }

@@ -1,0 +1,236 @@
+import { NextResponse } from 'next/server';
+import { auth } from '@/app/api/auth/[...nextauth]/route';
+import prisma from '@/lib/prisma';
+import { updateTenantSchema } from '@/lib/validations/tenant';
+import { TenantService } from '@/lib/services/tenant.service';
+
+// GET /api/tenants/[id] - Chi tiết người thuê
+export async function GET(request, { params }) {
+  try {
+    const session = await auth();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id } = await params;
+
+    const tenant = await prisma.tenant.findUnique({
+      where: { id },
+      include: {
+        room: {
+          select: {
+            id: true,
+            code: true,
+            name: true,
+            price: true,
+            status: true
+          }
+        },
+        occupants: {
+          orderBy: {
+            createdAt: 'asc'
+          }
+        },
+        depositReturns: {
+          orderBy: {
+            returnDate: 'desc'
+          }
+        }
+      }
+    });
+
+    if (!tenant || tenant.deletedAt) {
+      return NextResponse.json(
+        { error: 'Không tìm thấy người thuê hoặc đã bị xóa' },
+        { status: 404 }
+      );
+    }
+
+    // Transform deposit to number
+    const tenantWithDeposit = {
+      ...tenant,
+      deposit: tenant.deposit ? parseFloat(tenant.deposit) : null,
+      depositReturns: tenant.depositReturns.map(dr => ({
+        ...dr,
+        amount: parseFloat(dr.amount)
+      }))
+    };
+
+    return NextResponse.json(tenantWithDeposit);
+  } catch (error) {
+    console.error('Error fetching tenant:', error);
+    return NextResponse.json(
+      { error: 'Lỗi khi lấy thông tin người thuê' },
+      { status: 500 }
+    );
+  }
+}
+
+// PUT /api/tenants/[id] - Cập nhật người thuê
+export async function PUT(request, { params }) {
+  try {
+    const session = await auth();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id } = await params;
+    const body = await request.json();
+
+    // Validate input
+    const validatedData = updateTenantSchema.parse(body);
+
+    // Kiểm tra người thuê có tồn tại không
+    const existingTenant = await prisma.tenant.findUnique({
+      where: { id }
+    });
+
+    if (!existingTenant || existingTenant.deletedAt) {
+      return NextResponse.json(
+        { error: 'Không tìm thấy người thuê hoặc đã bị xóa' },
+        { status: 404 }
+      );
+    }
+
+    // Kiểm tra số điện thoại trùng (nếu có thay đổi)
+    if (validatedData.phone && validatedData.phone !== existingTenant.phone) {
+      const phoneExists = await prisma.tenant.findFirst({
+        where: {
+          phone: validatedData.phone,
+          id: { not: id },
+          deletedAt: null // Only check among active tenants
+        }
+      });
+
+      if (phoneExists) {
+        return NextResponse.json(
+          { error: 'Số điện thoại đã được sử dụng bởi người thuê khác' },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Cập nhật người thuê trong transaction (để xử lý roomId)
+    const updatedTenant = await prisma.$transaction(async (tx) => {
+      // 1. Kiểm tra và cập nhật roomId nếu có
+      if (validatedData.roomId && !existingTenant.roomId) {
+        // Kiểm tra phòng có tồn tại và trống không
+        const room = await tx.room.findUnique({
+          where: { id: validatedData.roomId },
+          include: { tenant: true }
+        });
+
+        if (!room) {
+          throw new Error('ROOM_NOT_FOUND');
+        }
+
+        if (room.tenant) {
+          throw new Error('ROOM_OCCUPIED');
+        }
+
+        // Cập nhật trạng thái phòng thành OCCUPIED
+        await tx.room.update({
+          where: { id: validatedData.roomId },
+          data: { status: 'OCCUPIED' }
+        });
+      }
+
+      // 2. Cập nhật thông tin người thuê
+      return await tx.tenant.update({
+        where: { id },
+        data: {
+          ...(validatedData.fullName && { fullName: validatedData.fullName }),
+          ...(validatedData.phone && { phone: validatedData.phone }),
+          ...(validatedData.idCard !== undefined && { idCard: validatedData.idCard || null }),
+          ...(validatedData.dateOfBirth !== undefined && { dateOfBirth: validatedData.dateOfBirth }),
+          ...(validatedData.hometown !== undefined && { hometown: validatedData.hometown || null }),
+          ...(validatedData.moveInDate !== undefined && { moveInDate: validatedData.moveInDate }),
+          ...(validatedData.deposit !== undefined && { deposit: validatedData.deposit }),
+          ...(validatedData.contractFileUrl !== undefined && { contractFileUrl: validatedData.contractFileUrl || null }),
+          ...(validatedData.roomId && !existingTenant.roomId && { roomId: validatedData.roomId })
+        },
+        include: {
+          room: {
+            select: {
+              id: true,
+              code: true,
+              name: true,
+              price: true
+            }
+          },
+          occupants: true
+        }
+      });
+    });
+
+    return NextResponse.json({
+      ...updatedTenant,
+      deposit: updatedTenant.deposit ? parseFloat(updatedTenant.deposit) : null
+    });
+  } catch (error) {
+    console.error('Error updating tenant:', error);
+
+    if (error.message === 'ROOM_NOT_FOUND') {
+      return NextResponse.json({ error: 'Phòng không tồn tại' }, { status: 404 });
+    }
+    if (error.message === 'ROOM_OCCUPIED') {
+      return NextResponse.json({ error: 'Phòng đã có người thuê' }, { status: 400 });
+    }
+
+    if (error.name === 'ZodError') {
+      return NextResponse.json(
+        {
+          error: 'Dữ liệu không hợp lệ',
+          details: error.errors
+        },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json(
+      { error: 'Lỗi khi cập nhật người thuê' },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE /api/tenants/[id] - Xóa tạm thời người thuê (Soft Delete)
+export async function DELETE(request, { params }) {
+  try {
+    const session = await auth();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id } = await params;
+
+    // Get reason from body
+    let reason = 'Không có lý do';
+    try {
+      const body = await request.json();
+      reason = body.reason || reason;
+    } catch (e) {
+      // Body might be empty
+    }
+
+    const userId = session.user.id || session.user.email || 'Admin';
+
+    await TenantService.softDelete(id, userId, reason);
+
+    return NextResponse.json({ success: true, message: 'Đã xóa tạm thời người thuê' });
+  } catch (error) {
+    console.error('Error soft deleting tenant:', error);
+
+    if (error.message === 'TENANT_NOT_FOUND') {
+      return NextResponse.json({ error: 'Không tìm thấy người thuê' }, { status: 404 });
+    }
+    if (error.message === 'TENANT_ALREADY_DELETED') {
+      return NextResponse.json({ error: 'Người thuê đã bị xóa trước đó' }, { status: 400 });
+    }
+
+    return NextResponse.json(
+      { error: 'Lỗi khi xóa người thuê' },
+      { status: 500 }
+    );
+  }
+}

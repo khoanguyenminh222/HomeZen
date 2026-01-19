@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import RoomUtilityRateForm from './RoomUtilityRateForm';
 import { Loading } from '@/components/ui/loading';
 import { Home, Zap, Droplets, Search, Settings } from 'lucide-react';
+import { formatCurrency } from '@/lib/format';
 
 export default function RoomUtilityRatesList() {
   const [rooms, setRooms] = useState([]);
@@ -75,7 +76,7 @@ export default function RoomUtilityRatesList() {
   }, []);
 
   // Lọc phòng theo từ khóa tìm kiếm
-  const filteredRooms = rooms.filter(room => 
+  const filteredRooms = rooms.filter(room =>
     room.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
     room.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -105,7 +106,7 @@ export default function RoomUtilityRatesList() {
           <div className="flex items-center space-x-2 text-sm text-gray-600">
             <span>Mã: {room.code}</span>
             <span>•</span>
-            <span>Giá: {room.price?.toLocaleString('vi-VN')} VNĐ</span>
+            <span>Giá: {formatCurrency(room.price)}</span>
             <span>•</span>
             <Badge variant={room.status === 'EMPTY' ? 'outline' : 'secondary'}>
               {room.status === 'EMPTY' ? 'Trống' : 'Đã thuê'}
@@ -190,7 +191,7 @@ export default function RoomUtilityRatesList() {
                     </div>
                   </CardContent>
                 </Card>
-                
+
                 <Card className="bg-gray-50 border-gray-200">
                   <CardContent className="p-4">
                     <div className="flex items-center space-x-2">
@@ -202,7 +203,7 @@ export default function RoomUtilityRatesList() {
                     </div>
                   </CardContent>
                 </Card>
-                
+
                 <Card className="bg-green-50 border-green-200">
                   <CardContent className="p-4">
                     <div className="flex items-center space-x-2">
@@ -253,7 +254,7 @@ export default function RoomUtilityRatesList() {
                       {searchTerm ? 'Không tìm thấy phòng nào' : 'Chưa có phòng nào'}
                     </p>
                     <p className="text-sm text-gray-500">
-                      {searchTerm 
+                      {searchTerm
                         ? 'Thử thay đổi từ khóa tìm kiếm'
                         : 'Hãy tạo phòng mới trong trang quản lý phòng'
                       }

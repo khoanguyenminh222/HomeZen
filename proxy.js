@@ -5,7 +5,7 @@ import { getToken } from 'next-auth/jwt';
  * Middleware to protect routes
  * Redirects unauthenticated users to /login
  */
-export async function middleware(request) {
+export async function proxy(request) {
   const token = await getToken({
     req: request,
     secret: process.env.NEXTAUTH_SECRET,

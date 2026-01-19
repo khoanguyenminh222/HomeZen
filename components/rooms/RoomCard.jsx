@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { formatCurrency } from '@/lib/format';
 import { Edit, Trash2, Zap } from 'lucide-react';
 
 /**
@@ -11,21 +12,13 @@ import { Edit, Trash2, Zap } from 'lucide-react';
 export default function RoomCard({ room, onEdit, onDelete, onConfigureUtilityRates }) {
   // Màu sắc theo trạng thái (Requirements: 12.6)
   const statusColors = {
-    EMPTY: 'bg-room-empty text-white',
-    OCCUPIED: 'bg-gray-500 text-white',
+    EMPTY: 'bg-gray-500 text-white',
+    OCCUPIED: 'bg-emerald-500 text-white',
   };
 
   const statusText = {
     EMPTY: 'Phòng trống',
     OCCUPIED: 'Đã thuê',
-  };
-
-  // Format số tiền (Requirements: 12.7)
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND',
-    }).format(amount);
   };
 
   return (
@@ -39,9 +32,7 @@ export default function RoomCard({ room, onEdit, onDelete, onConfigureUtilityRat
             </p>
           </div>
           <span
-            className={`px-3 py-1 rounded-full text-sm font-medium ${
-              statusColors[room.status]
-            }`}
+            className={`px-3 py-1 rounded-full text-sm font-medium ${statusColors[room.status]}`}
           >
             {statusText[room.status]}
           </span>
