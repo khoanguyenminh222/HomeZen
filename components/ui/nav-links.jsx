@@ -18,7 +18,9 @@ import {
   ChevronDown,
   Building2,
   FileText,
-  CreditCard
+  CreditCard,
+  Receipt,
+  DollarSign
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -118,6 +120,11 @@ const navItems = [
     icon: Users,
   },
   {
+    href: '/bills',
+    label: 'Hóa Đơn',
+    icon: Receipt,
+  },
+  {
     label: 'Cài Đặt',
     icon: Settings,
     children: [
@@ -130,6 +137,11 @@ const navItems = [
         href: '/settings/utility-rates',
         label: 'Cài đặt đơn giá',
         icon: FileText,
+      },
+      {
+        href: '/settings/fees',
+        label: 'Quản lý phí',
+        icon: DollarSign,
       },
     ],
   },

@@ -17,7 +17,12 @@ import {
 export default function DeleteConfirmDialog({ open, onClose, onConfirm, room }) {
   return (
     <AlertDialog open={open} onOpenChange={onClose}>
-      <AlertDialogContent>
+      <AlertDialogContent
+        onOverlayClick={onClose}
+        onInteractOutside={(e) => {
+          onClose();
+        }}
+      >
         <AlertDialogHeader>
           <AlertDialogTitle className="text-xl">
             Xác nhận xóa phòng

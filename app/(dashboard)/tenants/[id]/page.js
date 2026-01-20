@@ -42,6 +42,7 @@ export default function TenantDetailPage() {
   const [isReturnDialogOpen, setIsReturnDialogOpen] = useState(false);
   const [isSoftDeleteDialogOpen, setIsSoftDeleteDialogOpen] = useState(false);
   const [editingOccupant, setEditingOccupant] = useState(null);
+  const [deleteOccupantDialogOpen, setDeleteOccupantDialogOpen] = useState({});
 
   // Fetch tenant details
   const fetchTenant = async () => {
@@ -357,14 +358,35 @@ export default function TenantDetailPage() {
                           <Edit className="h-3 w-3 sm:mr-0" />
                           <span className="sm:hidden ml-1">Sửa</span>
                         </Button>
-                        <AlertDialog>
+                        <AlertDialog 
+                          open={deleteOccupantDialogOpen[occupant.id] || false}
+                          onOpenChange={(open) => {
+                            setDeleteOccupantDialogOpen(prev => ({
+                              ...prev,
+                              [occupant.id]: open
+                            }));
+                          }}
+                        >
                           <AlertDialogTrigger asChild>
                             <Button variant="outline" size="sm" className="flex-1 sm:flex-none border-red-200 text-red-600 hover:bg-red-50 hover:text-red-600">
                               <Trash2 className="h-3 w-3 sm:mr-0" />
                               <span className="sm:hidden ml-1">Xóa</span>
                             </Button>
                           </AlertDialogTrigger>
-                          <AlertDialogContent>
+                          <AlertDialogContent
+                            onOverlayClick={() => {
+                              setDeleteOccupantDialogOpen(prev => ({
+                                ...prev,
+                                [occupant.id]: false
+                              }));
+                            }}
+                            onInteractOutside={(e) => {
+                              setDeleteOccupantDialogOpen(prev => ({
+                                ...prev,
+                                [occupant.id]: false
+                              }));
+                            }}
+                          >
                             <AlertDialogHeader>
                               <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
                               <AlertDialogDescription>
@@ -373,7 +395,13 @@ export default function TenantDetailPage() {
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>Hủy</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDeleteOccupant(occupant.id)}>
+                              <AlertDialogAction variant="destructive" onClick={() => {
+                                handleDeleteOccupant(occupant.id);
+                                setDeleteOccupantDialogOpen(prev => ({
+                                  ...prev,
+                                  [occupant.id]: false
+                                }));
+                              }}>
                                 Xóa
                               </AlertDialogAction>
                             </AlertDialogFooter>

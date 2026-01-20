@@ -20,15 +20,17 @@ model User {
 
 // Thông tin nhà trọ
 model PropertyInfo {
-  id          String   @id @default(cuid())
-  name        String
-  address     String
-  phone       String
-  ownerName   String
-  email       String?
-  logoUrl     String?  // Cloudinary URL
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                String   @id @default(cuid())
+  name              String
+  address           String
+  phone             String
+  ownerName         String
+  email             String?
+  logoUrl           String?  // Cloudinary URL
+  maxElectricMeter  Int      @default(999999)  // Giá trị tối đa đồng hồ điện (6 chữ số)
+  maxWaterMeter     Int      @default(99999)  // Giá trị tối đa đồng hồ nước (5 chữ số)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 }
 
 // Model Phòng
@@ -39,6 +41,8 @@ model Room {
   price             Decimal   @db.Decimal(10, 0)
   status            RoomStatus @default(EMPTY)
   meterReadingDay   Int?      // Ngày chốt số hàng tháng (1-31)
+  maxElectricMeter  Int?      // Override giá trị max đồng hồ điện cho phòng này (null = dùng chung)
+  maxWaterMeter     Int?      // Override giá trị max đồng hồ nước cho phòng này (null = dùng chung)
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
   
@@ -46,6 +50,7 @@ model Room {
   tenant            Tenant?
   utilityRates      UtilityRate?
   bills             Bill[]
+  roomFees          RoomFee[]
   
   @@index([status])
   @@index([code])
@@ -211,7 +216,7 @@ model Bill {
   // Quan hệ
   roomId                String
   room                  Room      @relation(fields: [roomId], references: [id])
-  additionalFees        AdditionalFee[]
+  billFees              BillFee[]
   
   @@unique([roomId, month, year])
   @@index([roomId])
@@ -219,11 +224,47 @@ model Bill {
   @@index([month, year])
 }
 
-// Phí phát sinh
-model AdditionalFee {
+// Loại phí (Wifi, rác, gửi xe, v.v.)
+model FeeType {
+  id            String    @id @default(cuid())
+  name          String    @unique // Wifi, Tiền rác, Tiền gửi xe, etc.
+  description   String?   // Mô tả phí
+  isActive      Boolean   @default(true) // Có hiển thị trong danh sách không
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Quan hệ
+  roomFees      RoomFee[]
+  
+  @@index([isActive])
+}
+
+// Phí được gán cho từng phòng
+model RoomFee {
   id          String    @id @default(cuid())
-  name        String    // Tiền rác, internet, phạt, thưởng, etc.
-  amount      Decimal   @db.Decimal(10, 0)
+  amount      Decimal   @db.Decimal(10, 0) // Số tiền cho phòng này
+  isActive    Boolean   @default(true) // Có áp dụng cho phòng này không
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  // Quan hệ
+  roomId      String
+  room        Room      @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  feeTypeId   String
+  feeType     FeeType   @relation(fields: [feeTypeId], references: [id], onDelete: Cascade)
+  
+  @@unique([roomId, feeTypeId]) // Mỗi phòng chỉ có 1 mức phí cho 1 loại phí
+  @@index([roomId])
+  @@index([feeTypeId])
+  @@index([isActive])
+}
+
+// Phí thực tế trong hóa đơn (snapshot tại thời điểm tạo bill)
+model BillFee {
+  id          String    @id @default(cuid())
+  name        String    // Tên phí (snapshot từ FeeType tại thời điểm tạo)
+  amount      Decimal   @db.Decimal(10, 0) // Số tiền thực tế (snapshot)
+  feeTypeId   String?   // ID tham chiếu (chỉ để biết nguồn gốc, không dùng relation)
   createdAt   DateTime  @default(now())
   
   // Quan hệ

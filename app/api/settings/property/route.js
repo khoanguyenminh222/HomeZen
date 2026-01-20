@@ -90,6 +90,8 @@ export async function POST(request) {
           ownerName: data.ownerName,
           email: data.email || null,
           logoUrl: data.logoUrl || null,
+          maxElectricMeter: data.maxElectricMeter,
+          maxWaterMeter: data.maxWaterMeter,
         },
       });
     } else {
@@ -102,6 +104,8 @@ export async function POST(request) {
           ownerName: data.ownerName,
           email: data.email || null,
           logoUrl: data.logoUrl || null,
+          maxElectricMeter: data.maxElectricMeter,
+          maxWaterMeter: data.maxWaterMeter,
         },
       });
     }

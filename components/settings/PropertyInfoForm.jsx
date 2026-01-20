@@ -32,6 +32,8 @@ export default function PropertyInfoForm() {
       ownerName: '',
       email: '',
       logoUrl: '',
+      maxElectricMeter: 999999,
+      maxWaterMeter: 99999,
     },
   });
 
@@ -50,6 +52,8 @@ export default function PropertyInfoForm() {
               ownerName: result.data.ownerName || '',
               email: result.data.email || '',
               logoUrl: result.data.logoUrl || '',
+              maxElectricMeter: result.data.maxElectricMeter || 999999,
+              maxWaterMeter: result.data.maxWaterMeter || 99999,
             });
           }
         }
@@ -220,6 +224,55 @@ export default function PropertyInfoForm() {
             <p className="text-sm text-gray-500">
               Tính năng upload logo sẽ được thêm vào sau (Task 26)
             </p>
+          </div>
+
+          {/* Max chỉ số đồng hồ */}
+          <div className="space-y-4 border-t pt-4">
+            <h3 className="text-lg font-semibold">Cấu hình chỉ số đồng hồ</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="maxElectricMeter" className="text-sm sm:text-base">
+                  Max chỉ số đồng hồ điện <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="maxElectricMeter"
+                  type="number"
+                  {...register('maxElectricMeter', { valueAsNumber: true })}
+                  placeholder="VD: 999999"
+                  className="text-base h-12"
+                  min="9999"
+                  max="9999999"
+                />
+                {errors.maxElectricMeter && (
+                  <p className="text-sm text-red-500">{errors.maxElectricMeter.message}</p>
+                )}
+                <p className="text-sm text-gray-500">
+                  Giá trị tối đa cho đồng hồ điện (mặc định: 999999 - 6 chữ số)
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="maxWaterMeter" className="text-sm sm:text-base">
+                  Max chỉ số đồng hồ nước <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="maxWaterMeter"
+                  type="number"
+                  {...register('maxWaterMeter', { valueAsNumber: true })}
+                  placeholder="VD: 99999"
+                  className="text-base h-12"
+                  min="9999"
+                  max="9999999"
+                />
+                {errors.maxWaterMeter && (
+                  <p className="text-sm text-red-500">{errors.maxWaterMeter.message}</p>
+                )}
+                <p className="text-sm text-gray-500">
+                  Giá trị tối đa cho đồng hồ nước (mặc định: 99999 - 5 chữ số)
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Message */}

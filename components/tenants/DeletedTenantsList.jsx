@@ -35,6 +35,7 @@ export default function DeletedTenantsList() {
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [isProcessing, setIsProcessing] = useState(false);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState({});
     const { toast } = useToast();
 
     const fetchDeletedTenants = async () => {
@@ -181,7 +182,15 @@ export default function DeletedTenantsList() {
                                         Khôi phục
                                     </Button>
 
-                                    <AlertDialog>
+                                    <AlertDialog
+                                        open={deleteDialogOpen[tenant.id] || false}
+                                        onOpenChange={(open) => {
+                                            setDeleteDialogOpen(prev => ({
+                                                ...prev,
+                                                [tenant.id]: open
+                                            }));
+                                        }}
+                                    >
                                         <AlertDialogTrigger asChild>
                                             <Button
                                                 variant="destructive"
@@ -193,7 +202,21 @@ export default function DeletedTenantsList() {
                                                 Xóa vĩnh viễn
                                             </Button>
                                         </AlertDialogTrigger>
-                                        <AlertDialogContent className="w-[95vw] sm:w-full max-w-md">
+                                        <AlertDialogContent 
+                                            className="w-[95vw] sm:w-full max-w-md"
+                                            onOverlayClick={() => {
+                                                setDeleteDialogOpen(prev => ({
+                                                    ...prev,
+                                                    [tenant.id]: false
+                                                }));
+                                            }}
+                                            onInteractOutside={(e) => {
+                                                setDeleteDialogOpen(prev => ({
+                                                    ...prev,
+                                                    [tenant.id]: false
+                                                }));
+                                            }}
+                                        >
                                             <AlertDialogHeader>
                                                 <AlertDialogTitle className="flex items-center gap-2 text-red-600">
                                                     <AlertTriangle className="h-5 w-5" />
@@ -207,8 +230,15 @@ export default function DeletedTenantsList() {
                                             <AlertDialogFooter className="flex-col sm:flex-row gap-2">
                                                 <AlertDialogCancel className="w-full sm:w-auto">Hủy</AlertDialogCancel>
                                                 <AlertDialogAction
-                                                    onClick={() => handlePermanentDelete(tenant.id)}
-                                                    className="w-full sm:w-auto bg-red-600 hover:bg-red-700"
+                                                    onClick={() => {
+                                                        handlePermanentDelete(tenant.id);
+                                                        setDeleteDialogOpen(prev => ({
+                                                            ...prev,
+                                                            [tenant.id]: false
+                                                        }));
+                                                    }}
+                                                    variant="destructive"
+                                                    className="w-full sm:w-auto"
                                                 >
                                                     Xác nhận xóa vĩnh viễn
                                                 </AlertDialogAction>

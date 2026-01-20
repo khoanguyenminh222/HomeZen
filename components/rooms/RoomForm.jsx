@@ -42,6 +42,8 @@ export default function RoomForm({ open, onClose, room, onSuccess }) {
       price: '',
       status: 'EMPTY',
       meterReadingDay: null,
+      maxElectricMeter: null,
+      maxWaterMeter: null,
     },
   });
 
@@ -54,6 +56,8 @@ export default function RoomForm({ open, onClose, room, onSuccess }) {
         price: room.price || '',
         status: room.status || 'EMPTY',
         meterReadingDay: room.meterReadingDay || null,
+        maxElectricMeter: room.maxElectricMeter || null,
+        maxWaterMeter: room.maxWaterMeter || null,
       });
     } else {
       form.reset({
@@ -62,6 +66,8 @@ export default function RoomForm({ open, onClose, room, onSuccess }) {
         price: '',
         status: 'EMPTY',
         meterReadingDay: null,
+        maxElectricMeter: null,
+        maxWaterMeter: null,
       });
     }
   }, [room, form]);
@@ -108,7 +114,7 @@ export default function RoomForm({ open, onClose, room, onSuccess }) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="w-[95vw] sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl">
             {isEdit ? 'Sửa Phòng' : 'Tạo Phòng Mới'}
@@ -208,20 +214,88 @@ export default function RoomForm({ open, onClose, room, onSuccess }) {
               )}
             />
 
-            <DialogFooter className="gap-2 sm:gap-0">
+            {/* Max chỉ số đồng hồ riêng cho phòng */}
+            <div className="space-y-4 border-t pt-4">
+              <h3 className="text-base font-semibold">Cấu hình chỉ số đồng hồ riêng (tùy chọn)</h3>
+              <p className="text-sm text-muted-foreground">
+                Để trống nếu muốn dùng giá trị chung từ cấu hình nhà trọ
+              </p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="maxElectricMeter"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-base">
+                        Max chỉ số đồng hồ điện
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="number"
+                          min="9999"
+                          max="9999999"
+                          placeholder="Để trống = dùng chung"
+                          className="text-base h-12"
+                          value={field.value || ''}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value ? Number(e.target.value) : null
+                            )
+                          }
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="maxWaterMeter"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-base">
+                        Max chỉ số đồng hồ nước
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="number"
+                          min="9999"
+                          max="9999999"
+                          placeholder="Để trống = dùng chung"
+                          className="text-base h-12"
+                          value={field.value || ''}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value ? Number(e.target.value) : null
+                            )
+                          }
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-0">
               <Button
                 type="button"
                 variant="outline"
                 onClick={onClose}
                 disabled={isSubmitting}
-                className="h-12 text-base"
+                className="h-12 text-base w-full sm:w-auto"
               >
                 Hủy
               </Button>
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="h-12 text-base min-w-[120px]"
+                className="h-12 text-base min-w-[120px] w-full sm:w-auto"
               >
                 {isSubmitting ? (
                   <>
