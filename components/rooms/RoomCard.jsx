@@ -24,15 +24,15 @@ export default function RoomCard({ room, onEdit, onDelete, onConfigureUtilityRat
   return (
     <Card className="hover:shadow-lg transition-shadow flex flex-col h-full">
       <CardHeader className="pb-3">
-        <div className="flex justify-between items-start">
-          <div>
-            <CardTitle className="text-xl font-bold">{room.code}</CardTitle>
-            <p className="text-sm text-muted-foreground mt-1">
+        <div className="flex justify-between items-start gap-2">
+          <div className="flex-1 min-w-0">
+            <CardTitle className="text-lg sm:text-xl font-bold wrap-break-word">{room.code}</CardTitle>
+            <p className="text-sm text-muted-foreground mt-1 wrap-break-word">
               {room.name}
             </p>
           </div>
           <span
-            className={`px-3 py-1 rounded-full text-sm font-medium ${statusColors[room.status]}`}
+            className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium ${statusColors[room.status]} shrink-0`}
           >
             {statusText[room.status]}
           </span>
@@ -64,15 +64,15 @@ export default function RoomCard({ room, onEdit, onDelete, onConfigureUtilityRat
           </div>
         </div>
 
-        <div className="flex gap-2 pt-4 mt-auto">
+        <div className="flex flex-col sm:flex-row gap-2 pt-4 mt-auto">
           <Button
             onClick={() => onEdit(room)}
             variant="outline"
             size="sm"
             className="flex-1"
           >
-            <Edit className="w-4 h-4 mr-2" />
-            Sửa
+            <Edit className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Sửa</span>
           </Button>
           {onConfigureUtilityRates && (
             <Button
@@ -81,8 +81,8 @@ export default function RoomCard({ room, onEdit, onDelete, onConfigureUtilityRat
               size="sm"
               className="flex-1"
             >
-              <Zap className="w-4 h-4 mr-2" />
-              Đơn giá
+              <Zap className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Đơn giá</span>
             </Button>
           )}
           <Button
@@ -92,8 +92,8 @@ export default function RoomCard({ room, onEdit, onDelete, onConfigureUtilityRat
             className="flex-1"
             disabled={room.status === 'OCCUPIED'}
           >
-            <Trash2 className="w-4 h-4 mr-2" />
-            Xóa
+            <Trash2 className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Xóa</span>
           </Button>
         </div>
       </CardContent>

@@ -139,16 +139,16 @@ export default function RoomsPage() {
     <div className="container mx-auto px-4 py-6 max-w-7xl">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">Quản Lý Phòng</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
+        <div className="flex-1 min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-bold">Quản Lý Phòng</h1>
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mt-1 wrap-break-word">
             Tổng số: {rooms.length} phòng | Trống: {stats.empty} | Đã thuê: {stats.occupied}
           </p>
         </div>
         <Button
           onClick={handleCreateRoom}
           size="lg"
-          className="h-12 text-base min-w-[160px]"
+          className="w-full sm:w-auto h-12 text-base min-w-[160px]"
         >
           <Plus className="w-5 h-5 mr-2" />
           Tạo Phòng Mới

@@ -142,8 +142,8 @@ export default function UtilityRatesForm() {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Đơn Giá Điện Nước Chung</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-xl sm:text-2xl">Đơn Giá Điện Nước Chung</CardTitle>
+          <CardDescription className="text-sm sm:text-base">
             Cấu hình đơn giá mặc định cho tất cả phòng. Có thể thiết lập đơn giá riêng cho từng phòng.
           </CardDescription>
         </CardHeader>
@@ -151,7 +151,7 @@ export default function UtilityRatesForm() {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Giá điện */}
             <div className="space-y-4">
-              <div className="flex items-center space-x-2">
+              <div className="flex items-start space-x-2">
                 <input
                   type="checkbox"
                   id="useTieredPricing"
@@ -160,16 +160,16 @@ export default function UtilityRatesForm() {
                     setUseTieredPricing(e.target.checked);
                     setValue('useTieredPricing', e.target.checked);
                   }}
-                  className="h-4 w-4"
+                  className="h-4 w-4 mt-1 shrink-0"
                 />
-                <Label htmlFor="useTieredPricing">
+                <Label htmlFor="useTieredPricing" className="text-sm sm:text-base wrap-break-word">
                   Sử dụng bậc thang giá điện (như điện nhà nước)
                 </Label>
               </div>
 
               {!useTieredPricing ? (
                 <div>
-                  <Label htmlFor="electricityPrice">Giá điện cố định (VNĐ/kWh)</Label>
+                  <Label htmlFor="electricityPrice" className="text-sm sm:text-base">Giá điện cố định (VNĐ/kWh)</Label>
                   <Input
                     id="electricityPrice"
                     type="number"

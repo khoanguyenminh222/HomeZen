@@ -23,6 +23,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { formatCurrency } from '@/lib/format';
 
 /**
  * RoomForm - Form tạo/sửa phòng (Dialog)
@@ -38,7 +39,7 @@ export default function RoomForm({ open, onClose, room, onSuccess }) {
     defaultValues: {
       code: '',
       name: '',
-      price: 0,
+      price: '',
       status: 'EMPTY',
       meterReadingDay: null,
     },
@@ -50,7 +51,7 @@ export default function RoomForm({ open, onClose, room, onSuccess }) {
       form.reset({
         code: room.code || '',
         name: room.name || '',
-        price: room.price || 0,
+        price: room.price || '',
         status: room.status || 'EMPTY',
         meterReadingDay: room.meterReadingDay || null,
       });
@@ -58,7 +59,7 @@ export default function RoomForm({ open, onClose, room, onSuccess }) {
       form.reset({
         code: '',
         name: '',
-        price: 0,
+        price: '',
         status: 'EMPTY',
         meterReadingDay: null,
       });
@@ -83,13 +84,13 @@ export default function RoomForm({ open, onClose, room, onSuccess }) {
       }
 
       const result = await response.json();
-      
+
       toast({
         variant: 'success',
         title: 'Thành công',
         description: isEdit ? 'Cập nhật phòng thành công' : 'Tạo phòng thành công',
       });
-      
+
       onSuccess(result);
       onClose();
       form.reset();
@@ -171,6 +172,12 @@ export default function RoomForm({ open, onClose, room, onSuccess }) {
                 </FormItem>
               )}
             />
+            {/* Hiển thị text  giá phòng theo format tiền để người dùng dễ nhìn, không input */}
+            {form.watch("price") > 0 && (
+              <p className="text-sm text-muted-foreground mt-1 font-medium">
+                Giá hiển thị: {formatCurrency(form.watch("price"))}
+              </p>
+            )}
 
             <FormField
               control={form.control}

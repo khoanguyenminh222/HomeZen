@@ -96,29 +96,29 @@ export default function RoomUtilityRatesList() {
   };
 
   const RoomCard = ({ room }) => (
-    <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
-      <div className="flex items-center space-x-3">
-        <div className={`p-2 rounded-lg ${room.hasCustomRates ? 'bg-blue-100' : 'bg-gray-100'}`}>
+    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 p-4 border rounded-lg hover:bg-gray-50">
+      <div className="flex items-start sm:items-center space-x-3 flex-1 min-w-0">
+        <div className={`p-2 rounded-lg shrink-0 ${room.hasCustomRates ? 'bg-blue-100' : 'bg-gray-100'}`}>
           <Home className={`h-4 w-4 ${room.hasCustomRates ? 'text-blue-600' : 'text-gray-600'}`} />
         </div>
-        <div>
-          <h3 className="font-medium">{room.name}</h3>
-          <div className="flex items-center space-x-2 text-sm text-gray-600">
+        <div className="flex-1 min-w-0">
+          <h3 className="font-medium wrap-break-word">{room.name}</h3>
+          <div className="flex flex-wrap items-center gap-1 sm:gap-2 text-sm text-gray-600 mt-1">
             <span>Mã: {room.code}</span>
-            <span>•</span>
+            <span className="hidden sm:inline">•</span>
             <span>Giá: {formatCurrency(room.price)}</span>
-            <span>•</span>
-            <Badge variant={room.status === 'EMPTY' ? 'outline' : 'secondary'}>
+            <span className="hidden sm:inline">•</span>
+            <Badge variant={room.status === 'EMPTY' ? 'outline' : 'secondary'} className="w-fit">
               {room.status === 'EMPTY' ? 'Trống' : 'Đã thuê'}
             </Badge>
           </div>
         </div>
       </div>
 
-      <div className="flex items-center space-x-2">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
         {room.hasCustomRates ? (
           <>
-            <Badge variant="outline" className="text-blue-700 border-blue-300">
+            <Badge variant="outline" className="text-blue-700 border-blue-300 w-fit">
               <Settings className="h-3 w-3 mr-1" />
               Đơn giá riêng
             </Badge>
@@ -126,19 +126,21 @@ export default function RoomUtilityRatesList() {
               variant="outline"
               size="sm"
               onClick={() => handleEditRoom(room)}
+              className="w-full sm:w-auto"
             >
               Chỉnh sửa
             </Button>
           </>
         ) : (
           <>
-            <Badge variant="outline" className="text-gray-600 border-gray-300">
+            <Badge variant="outline" className="text-gray-600 border-gray-300 w-fit">
               Đơn giá chung
             </Badge>
             <Button
               variant="outline"
               size="sm"
               onClick={() => handleEditRoom(room)}
+              className="w-full sm:w-auto"
             >
               Thiết lập riêng
             </Button>
@@ -152,11 +154,11 @@ export default function RoomUtilityRatesList() {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Home className="h-5 w-5" />
-            <span>Quản Lý Đơn Giá Theo Phòng</span>
+          <CardTitle className="flex items-center space-x-2 text-lg sm:text-xl">
+            <Home className="h-5 w-5 shrink-0" />
+            <span className="wrap-break-word">Quản Lý Đơn Giá Theo Phòng</span>
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-sm sm:text-base">
             Xem và quản lý đơn giá điện nước cho từng phòng. Phòng có thể sử dụng đơn giá chung hoặc đơn giá riêng.
           </CardDescription>
         </CardHeader>
@@ -179,7 +181,7 @@ export default function RoomUtilityRatesList() {
           ) : (
             <div className="space-y-6">
               {/* Thống kê */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <Card className="bg-blue-50 border-blue-200">
                   <CardContent className="p-4">
                     <div className="flex items-center space-x-2">
@@ -220,9 +222,9 @@ export default function RoomUtilityRatesList() {
               {/* Phòng có đơn giá riêng */}
               {roomsWithCustomRates.length > 0 && (
                 <div>
-                  <h3 className="text-lg font-medium mb-3 flex items-center space-x-2">
-                    <Settings className="h-5 w-5 text-blue-600" />
-                    <span>Phòng Có Đơn Giá Riêng ({roomsWithCustomRates.length})</span>
+                  <h3 className="text-base sm:text-lg font-medium mb-3 flex items-center space-x-2">
+                    <Settings className="h-5 w-5 text-blue-600 shrink-0" />
+                    <span className="wrap-break-word">Phòng Có Đơn Giá Riêng ({roomsWithCustomRates.length})</span>
                   </h3>
                   <div className="space-y-2">
                     {roomsWithCustomRates.map((room) => (
@@ -235,9 +237,9 @@ export default function RoomUtilityRatesList() {
               {/* Phòng dùng đơn giá chung */}
               {roomsWithGlobalRates.length > 0 && (
                 <div>
-                  <h3 className="text-lg font-medium mb-3 flex items-center space-x-2">
-                    <Home className="h-5 w-5 text-gray-600" />
-                    <span>Phòng Dùng Đơn Giá Chung ({roomsWithGlobalRates.length})</span>
+                  <h3 className="text-base sm:text-lg font-medium mb-3 flex items-center space-x-2">
+                    <Home className="h-5 w-5 text-gray-600 shrink-0" />
+                    <span className="wrap-break-word">Phòng Dùng Đơn Giá Chung ({roomsWithGlobalRates.length})</span>
                   </h3>
                   <div className="space-y-2">
                     {roomsWithGlobalRates.map((room) => (

@@ -16,9 +16,9 @@ export default function UtilityRatesPage() {
       {/* Hướng dẫn sử dụng */}
       <Card className="bg-blue-50 border-blue-200">
         <CardHeader>
-          <CardTitle className="text-blue-900">Hướng Dẫn Sử Dụng</CardTitle>
+          <CardTitle className="text-blue-900 text-lg sm:text-xl">Hướng Dẫn Sử Dụng</CardTitle>
         </CardHeader>
-        <CardContent className="text-blue-800 space-y-2">
+        <CardContent className="text-blue-800 space-y-2 text-sm sm:text-base">
           <div className="space-y-3">
             <div>
               <h4 className="font-medium">1. Đơn Giá Chung</h4>

@@ -24,21 +24,21 @@ export default function SettingsLayout({ children }) {
   const pathname = usePathname();
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="container mx-auto p-4 sm:p-6">
       {/* Header */}
-      <div className="flex items-center space-x-3 mb-8">
-        <div className="p-2 bg-primary/10 rounded-lg">
-          <Settings className="h-6 w-6 text-primary" />
+      <div className="flex items-start sm:items-center space-x-3 mb-6 sm:mb-8">
+        <div className="p-2 bg-primary/10 rounded-lg shrink-0">
+          <Settings className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
         </div>
-        <div>
-          <h1 className="text-2xl font-bold">Cài Đặt Hệ Thống</h1>
-          <p className="text-gray-600">
+        <div className="flex-1 min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold">Cài Đặt Hệ Thống</h1>
+          <p className="text-sm sm:text-base text-gray-600 mt-1">
             Cấu hình thông tin và tham số cho hệ thống quản lý phòng trọ
           </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 sm:gap-8">
         {/* Settings Navigation */}
         <div className="lg:col-span-1">
           <div className="space-y-2">
@@ -51,7 +51,7 @@ export default function SettingsLayout({ children }) {
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    'flex items-start space-x-3 p-4 rounded-lg border transition-all duration-200',
+                    'flex items-start space-x-3 p-3 sm:p-4 rounded-lg border transition-all duration-200',
                     'hover:bg-accent/50 hover:border-primary/20',
                     isActive
                       ? 'bg-primary/10 border-primary/30 text-primary'
@@ -64,13 +64,13 @@ export default function SettingsLayout({ children }) {
                   )} />
                   <div className="flex-1 min-w-0">
                     <h3 className={cn(
-                      'font-medium text-sm',
+                      'font-medium text-sm wrap-break-word',
                       isActive ? 'text-primary' : 'text-gray-900'
                     )}>
                       {item.label}
                     </h3>
                     <p className={cn(
-                      'text-xs mt-1',
+                      'text-xs mt-1 wrap-break-word',
                       isActive ? 'text-primary/70' : 'text-gray-500'
                     )}>
                       {item.description}

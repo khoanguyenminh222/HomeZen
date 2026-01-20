@@ -42,14 +42,14 @@ export default function RoomFilters({ filters, onFilterChange }) {
         <Button
           variant={filters.status === 'EMPTY' ? 'default' : 'outline'}
           onClick={() => handleStatusChange('EMPTY')}
-          className="h-11 text-base"
+          className="h-11 text-sm sm:text-base flex-1 sm:flex-none"
         >
           Phòng trống
         </Button>
         <Button
           variant={filters.status === 'OCCUPIED' ? 'default' : 'outline'}
           onClick={() => handleStatusChange('OCCUPIED')}
-          className="h-11 text-base"
+          className="h-11 text-sm sm:text-base flex-1 sm:flex-none"
         >
           Đã thuê
         </Button>
@@ -57,7 +57,7 @@ export default function RoomFilters({ filters, onFilterChange }) {
           <Button
             variant="ghost"
             onClick={handleClearFilters}
-            className="h-11 text-base"
+            className="h-11 text-sm sm:text-base w-full sm:w-auto"
           >
             <X className="w-4 h-4 mr-2" />
             Xóa bộ lọc

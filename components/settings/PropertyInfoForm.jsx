@@ -117,8 +117,8 @@ export default function PropertyInfoForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-2xl">Thông Tin Nhà Trọ</CardTitle>
-        <CardDescription>
+        <CardTitle className="text-xl sm:text-2xl">Thông Tin Nhà Trọ</CardTitle>
+        <CardDescription className="text-sm sm:text-base">
           Cấu hình thông tin nhà trọ để hiển thị trên hóa đơn và báo cáo
         </CardDescription>
       </CardHeader>
@@ -126,7 +126,7 @@ export default function PropertyInfoForm() {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Tên nhà trọ */}
           <div className="space-y-2">
-            <Label htmlFor="name" className="text-base">
+            <Label htmlFor="name" className="text-sm sm:text-base">
               Tên nhà trọ <span className="text-red-500">*</span>
             </Label>
             <Input
@@ -142,7 +142,7 @@ export default function PropertyInfoForm() {
 
           {/* Địa chỉ */}
           <div className="space-y-2">
-            <Label htmlFor="address" className="text-base">
+            <Label htmlFor="address" className="text-sm sm:text-base">
               Địa chỉ <span className="text-red-500">*</span>
             </Label>
             <Input
@@ -158,7 +158,7 @@ export default function PropertyInfoForm() {
 
           {/* Số điện thoại */}
           <div className="space-y-2">
-            <Label htmlFor="phone" className="text-base">
+            <Label htmlFor="phone" className="text-sm sm:text-base">
               Số điện thoại <span className="text-red-500">*</span>
             </Label>
             <Input
@@ -174,7 +174,7 @@ export default function PropertyInfoForm() {
 
           {/* Tên chủ nhà */}
           <div className="space-y-2">
-            <Label htmlFor="ownerName" className="text-base">
+            <Label htmlFor="ownerName" className="text-sm sm:text-base">
               Tên chủ nhà / Người quản lý <span className="text-red-500">*</span>
             </Label>
             <Input
@@ -190,7 +190,7 @@ export default function PropertyInfoForm() {
 
           {/* Email (tùy chọn) */}
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-base">
+            <Label htmlFor="email" className="text-sm sm:text-base">
               Email (tùy chọn)
             </Label>
             <Input
@@ -207,7 +207,7 @@ export default function PropertyInfoForm() {
 
           {/* Logo URL (tạm thời skip upload, sẽ làm ở Task 26) */}
           <div className="space-y-2">
-            <Label htmlFor="logoUrl" className="text-base">
+            <Label htmlFor="logoUrl" className="text-sm sm:text-base">
               URL Logo (tùy chọn)
             </Label>
             <Input
