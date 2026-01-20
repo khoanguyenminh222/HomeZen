@@ -62,15 +62,32 @@ const FormItem = React.forwardRef(({ className, ...props }, ref) => {
 })
 FormItem.displayName = "FormItem"
 
-const FormLabel = React.forwardRef(({ className, ...props }, ref) => {
+const FormLabel = React.forwardRef(({ className, children, ...props }, ref) => {
   const { error, formItemId } = useFormField()
+
+  // Nếu label có chứa dấu * (bắt buộc) thì tách ra và hiển thị dấu * màu đỏ
+  let content = children
+  if (typeof children === "string" && children.includes("*")) {
+    const lastStarIndex = children.lastIndexOf("*")
+    const labelText = children.slice(0, lastStarIndex).trimEnd()
+
+    content = (
+      <>
+        {labelText}
+        <span className="ml-0.5 text-destructive">*</span>
+      </>
+    )
+  }
 
   return (
     <Label
       ref={ref}
       className={cn(error && "text-destructive", className)}
       htmlFor={formItemId}
-      {...props} />
+      {...props}
+    >
+      {content}
+    </Label>
   );
 })
 FormLabel.displayName = "FormLabel"

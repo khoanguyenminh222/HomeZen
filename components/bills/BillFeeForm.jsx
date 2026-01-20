@@ -23,6 +23,14 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { formatCurrency } from '@/lib/format';
 
 /**
  * BillFeeForm - Form thêm/sửa phí phát sinh
@@ -84,6 +92,18 @@ export default function BillFeeForm({
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
+      // Đảm bảo khi tạo mới phải chọn loại phí, và tự set tên phí theo danh mục
+      if (!isEdit) {
+        if (!data.feeTypeId) {
+          throw new Error('Vui lòng chọn loại phí trong danh mục');
+        }
+
+        const selectedFeeType = feeTypes.find((ft) => ft.id === data.feeTypeId);
+        if (selectedFeeType) {
+          data.name = selectedFeeType.name;
+        }
+      }
+
       let url;
       let method;
 
@@ -135,22 +155,50 @@ export default function BillFeeForm({
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Tên phí *</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      placeholder="Ví dụ: Wifi, Tiền rác, Tiền gửi xe..."
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* Chọn phí từ danh mục khi thêm mới, khi sửa thì chỉ hiển thị tên phí */}
+            {isEdit ? (
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Loại phí</p>
+                <p className="font-medium">{fee?.name}</p>
+              </div>
+            ) : (
+              <FormField
+                control={form.control}
+                name="feeTypeId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Loại phí *</FormLabel>
+                    <Select
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        const selected = feeTypes.find((ft) => ft.id === value);
+                        if (selected) {
+                          form.setValue('name', selected.name, { shouldValidate: true });
+                        }
+                      }}
+                      value={field.value || ''}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Chọn loại phí trong danh mục" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {feeTypes.map((feeType) => (
+                          <SelectItem key={feeType.id} value={feeType.id}>
+                            {feeType.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {/* Field name dùng nội bộ để gửi API, không cần hiển thị */}
+            <input type="hidden" {...form.register('name')} />
 
             <FormField
               control={form.control}
@@ -172,7 +220,12 @@ export default function BillFeeForm({
                 </FormItem>
               )}
             />
-
+            {/* Hiển thị text format thành tiền */}
+            {form.watch("amount") > 0 && (
+              <p className="text-sm text-muted-foreground mt-1 font-medium">
+                Số tiền hiển thị: {formatCurrency(form.watch("amount"))}
+              </p>
+            )}
             <DialogFooter>
               <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
                 Hủy

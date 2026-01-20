@@ -26,6 +26,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { formatCurrency } from '@/lib/format';
 
 /**
  * RoomFeeForm - Form gán/sửa phí cho phòng
@@ -177,6 +178,12 @@ export default function RoomFeeForm({ open, onClose, roomId, roomFee, onSuccess 
                 </FormItem>
               )}
             />
+            {/* Hiển thị text format thành tiền */}
+            {form.watch("amount") > 0 && (
+              <p className="text-sm text-muted-foreground mt-1 font-medium">
+                Số tiền hiển thị: {formatCurrency(form.watch("amount"))}
+              </p>
+            )}
 
             <FormField
               control={form.control}
