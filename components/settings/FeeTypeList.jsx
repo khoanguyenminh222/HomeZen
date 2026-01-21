@@ -150,7 +150,7 @@ export default function FeeTypeList() {
                       variant="ghost"
                       size="sm"
                       onClick={() => handleEditClick(feeType)}
-                      className="h-8 w-8 p-0"
+                      className="h-8 w-8 p-0 hover:bg-amber-50 hover:text-amber-600"
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
@@ -167,7 +167,7 @@ export default function FeeTypeList() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

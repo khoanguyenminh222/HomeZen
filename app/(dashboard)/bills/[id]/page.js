@@ -444,7 +444,7 @@ export default function BillDetailPage() {
             </div>
             {bill.billFees && bill.billFees.length > 0 && (
               <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                <span className="text-muted-foreground">Phí phát sinh</span>
+                <span className="text-muted-foreground">Phí phụ thu</span>
                 <span className="font-medium">
                   {formatCurrency(
                     bill.billFees.reduce((sum, fee) => sum + Number(fee.amount || 0), 0)

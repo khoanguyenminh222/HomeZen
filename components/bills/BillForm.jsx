@@ -62,14 +62,6 @@ export default function BillForm({ open, onClose, bill, onSuccess, roomId: initi
     }
   }, [open]);
 
-  // Fetch last bill when room changes
-  useEffect(() => {
-    const roomId = form.watch('roomId');
-    if (roomId && !isEdit) {
-      fetchLastBill(roomId);
-    }
-  }, [form.watch('roomId'), isEdit]);
-
   // Reset form when bill changes
   useEffect(() => {
     if (bill) {
@@ -146,14 +138,15 @@ export default function BillForm({ open, onClose, bill, onSuccess, roomId: initi
     }
   };
 
-  const fetchLastBill = async (roomId) => {
+  const fetchLastBill = async (roomId, monthValue, yearValue) => {
     try {
-      const currentMonth = new Date().getMonth() + 1;
-      const currentYear = new Date().getFullYear();
-      
-      // Tìm hóa đơn tháng trước
-      let month = currentMonth - 1;
-      let year = currentYear;
+      // Lấy tháng/năm mục tiêu từ form (nếu không có thì fallback về hiện tại)
+      const targetMonth = Number(monthValue) || new Date().getMonth() + 1;
+      const targetYear = Number(yearValue) || new Date().getFullYear();
+
+      // Tìm hóa đơn tháng trước so với tháng/năm đang chọn
+      let month = targetMonth - 1;
+      let year = targetYear;
       if (month === 0) {
         month = 12;
         year = year - 1;
@@ -220,6 +213,13 @@ export default function BillForm({ open, onClose, bill, onSuccess, roomId: initi
   const currentMonth = form.watch('month');
   const currentYear = form.watch('year');
   const roomId = form.watch('roomId');
+
+  // Fetch last bill khi phòng hoặc tháng/năm thay đổi (chỉ khi tạo mới)
+  useEffect(() => {
+    if (roomId && !isEdit) {
+      fetchLastBill(roomId, currentMonth, currentYear);
+    }
+  }, [roomId, currentMonth, currentYear, isEdit]);
 
   return (
     <Dialog open={open} onOpenChange={onClose}>

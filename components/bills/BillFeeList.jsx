@@ -20,7 +20,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 
 /**
- * BillFeeList - Danh sách phí phát sinh trong hóa đơn
+ * BillFeeList - Danh sách phí phụ thu trong hóa đơn
  * Requirements: 6.22-6.25
  */
 export default function BillFeeList({ billId, fees, isPaid, onUpdate }) {
@@ -58,7 +58,7 @@ export default function BillFeeList({ billId, fees, isPaid, onUpdate }) {
 
       toast({
         title: 'Thành công',
-        description: 'Đã xóa phí phát sinh',
+        description: 'Đã xóa phí phụ thu',
         variant: 'success',
       });
       onUpdate?.();
@@ -70,7 +70,7 @@ export default function BillFeeList({ billId, fees, isPaid, onUpdate }) {
       console.error('Error deleting bill fee:', error);
       toast({
         title: 'Lỗi',
-        description: error.message || 'Không thể xóa phí phát sinh',
+        description: error.message || 'Không thể xóa phí phụ thu',
         variant: 'destructive',
       });
     }
@@ -80,7 +80,7 @@ export default function BillFeeList({ billId, fees, isPaid, onUpdate }) {
     return (
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Phí Phát Sinh</CardTitle>
+          <CardTitle>Phí phụ thu</CardTitle>
           {!isPaid && (
             <Button size="sm" onClick={handleAddClick}>
               <Plus className="h-4 w-4 mr-2" />
@@ -90,7 +90,7 @@ export default function BillFeeList({ billId, fees, isPaid, onUpdate }) {
         </CardHeader>
         <CardContent>
           <p className="text-center text-muted-foreground py-4">
-            Chưa có phí phát sinh nào
+            Chưa có phí phụ thu nào
           </p>
         </CardContent>
         <BillFeeForm
@@ -113,7 +113,7 @@ export default function BillFeeList({ billId, fees, isPaid, onUpdate }) {
     <>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Phí Phát Sinh</CardTitle>
+          <CardTitle>Phí phụ thu</CardTitle>
           {!isPaid && (
             <Button size="sm" onClick={handleAddClick}>
               <Plus className="h-4 w-4 mr-2" />
@@ -130,11 +130,11 @@ export default function BillFeeList({ billId, fees, isPaid, onUpdate }) {
               >
                 <div className="flex-1">
                   <p className="font-medium">{fee.name}</p>
-                  {fee.feeTypeId && (
+                  {/* {fee.feeTypeId && (
                     <p className="text-xs text-muted-foreground">
                       ID: {fee.feeTypeId}
                     </p>
-                  )}
+                  )} */}
                 </div>
                 <div className="flex items-center gap-2">
                   <p className="font-bold">
@@ -146,7 +146,7 @@ export default function BillFeeList({ billId, fees, isPaid, onUpdate }) {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleEditClick(fee)}
-                        className="h-8 w-8 p-0"
+                        className="h-8 w-8 p-0 hover:bg-amber-50 hover:text-amber-600"
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -163,7 +163,7 @@ export default function BillFeeList({ billId, fees, isPaid, onUpdate }) {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                            className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -205,7 +205,7 @@ export default function BillFeeList({ billId, fees, isPaid, onUpdate }) {
               </div>
             ))}
             <div className="flex items-center justify-between pt-2 border-t font-bold">
-              <p>Tổng phí phát sinh</p>
+              <p>Tổng phí phụ thu</p>
               <p>{formatCurrency(totalFees)}</p>
             </div>
           </div>

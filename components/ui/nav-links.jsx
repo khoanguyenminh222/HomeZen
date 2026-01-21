@@ -18,7 +18,6 @@ import {
   ChevronDown,
   Building2,
   FileText,
-  CreditCard,
   Receipt,
   DollarSign
 } from 'lucide-react';

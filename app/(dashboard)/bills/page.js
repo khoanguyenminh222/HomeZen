@@ -24,10 +24,12 @@ export default function BillsPage() {
   const [loading, setLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedBill, setSelectedBill] = useState(null);
+  const currentYear = new Date().getFullYear();
+  const currentMonth = new Date().getMonth() + 1;
   const [filters, setFilters] = useState({
     roomId: 'all',
-    month: 'all',
-    year: 'all',
+    month: currentMonth.toString(),
+    year: currentYear.toString(),
     isPaid: 'all',
   });
   const { toast } = useToast();
@@ -103,7 +105,6 @@ export default function BillsPage() {
     .filter(bill => bill.isPaid)
     .reduce((sum, bill) => sum + Number(bill.totalCost || 0), 0);
 
-  const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
 
   return (
@@ -112,7 +113,7 @@ export default function BillsPage() {
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold">Quản Lý Hóa Đơn</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Quản lý và theo dõi hóa đơn tiền phòng
+            Quản lý và theo dõi hóa đơn tiền phòng, bao gồm tạo mới, cập nhật và đánh dấu thanh toán.
           </p>
         </div>
         <Button onClick={handleCreateClick} size="lg">

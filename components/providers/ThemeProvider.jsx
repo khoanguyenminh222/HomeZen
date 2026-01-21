@@ -19,19 +19,27 @@ export function ThemeProvider({ children, ...props }) {
     const initialTheme = savedTheme || systemTheme;
     
     setTheme(initialTheme);
-    root.classList.remove('light', 'dark');
-    root.classList.add(initialTheme);
+    // Chỉ thêm/xóa class 'dark', không cần class 'light'
+    if (initialTheme === 'dark') {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
   }, []);
 
   const value = {
     theme,
-    setTheme: (theme) => {
-      localStorage.setItem('theme', theme);
-      setTheme(theme);
+    setTheme: (newTheme) => {
+      localStorage.setItem('theme', newTheme);
+      setTheme(newTheme);
       
       const root = window.document.documentElement;
-      root.classList.remove('light', 'dark');
-      root.classList.add(theme);
+      // Chỉ thêm/xóa class 'dark', không cần class 'light'
+      if (newTheme === 'dark') {
+        root.classList.add('dark');
+      } else {
+        root.classList.remove('dark');
+      }
     },
   };
 
