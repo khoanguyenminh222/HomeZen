@@ -20,7 +20,8 @@ import {
   Trash2,
   ArrowLeft,
   Home,
-  CreditCard
+  CreditCard,
+  AlertTriangle
 } from 'lucide-react';
 import TenantForm from '@/components/tenants/TenantForm';
 import OccupantForm from '@/components/tenants/OccupantForm';
@@ -37,6 +38,7 @@ export default function TenantDetailPage() {
 
   const [tenant, setTenant] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [debtInfo, setDebtInfo] = useState(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isOccupantDialogOpen, setIsOccupantDialogOpen] = useState(false);
   const [isReturnDialogOpen, setIsReturnDialogOpen] = useState(false);
@@ -64,6 +66,21 @@ export default function TenantDetailPage() {
 
       const data = await response.json();
       setTenant(data);
+
+      // Fetch debt info if tenant has a room
+      if (data.roomId) {
+        try {
+          const debtResponse = await fetch(`/api/rooms/${data.roomId}/debt`);
+          if (debtResponse.ok) {
+            const debtData = await debtResponse.json();
+            setDebtInfo(debtData);
+          }
+        } catch (error) {
+          console.error('Error fetching debt info:', error);
+        }
+      } else {
+        setDebtInfo(null);
+      }
     } catch (error) {
       console.error('Error fetching tenant:', error);
       toast({
@@ -146,7 +163,24 @@ export default function TenantDetailPage() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to return room');
+        const errorData = await response.json().catch(() => ({}));
+        if (errorData.error === 'Không thể trả phòng khi còn nợ') {
+          toast({
+            title: 'Không thể trả phòng',
+            description: errorData.message || `Phòng này còn nợ ${formatCurrency(errorData.debtAmount || 0)}. Vui lòng thanh toán hết nợ trước khi trả phòng.`,
+            variant: 'destructive'
+          });
+          // Refresh debt info
+          if (tenant?.roomId) {
+            const debtResponse = await fetch(`/api/rooms/${tenant.roomId}/debt`);
+            if (debtResponse.ok) {
+              const debtData = await debtResponse.json();
+              setDebtInfo(debtData);
+            }
+          }
+          return;
+        }
+        throw new Error(errorData.error || 'Failed to return room');
       }
 
       toast({
@@ -161,7 +195,7 @@ export default function TenantDetailPage() {
       console.error('Error returning room:', error);
       toast({
         title: 'Lỗi',
-        description: 'Không thể trả phòng',
+        description: error.message || 'Không thể trả phòng',
         variant: 'destructive'
       });
     }
@@ -215,7 +249,7 @@ export default function TenantDetailPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-        <Button variant="outline" size="sm" onClick={() => router.back()} className="w-full sm:w-auto">
+        <Button variant="outline" size="sm" onClick={() => router.push('/tenants')} className="w-full sm:w-auto">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Quay lại
         </Button>
@@ -305,7 +339,16 @@ export default function TenantDetailPage() {
                 <Users className="h-5 w-5" />
                 <span className="wrap-break-word">Danh sách người ở ({tenant.occupants?.length || 0} người)</span>
               </CardTitle>
-              <Dialog open={isOccupantDialogOpen} onOpenChange={setIsOccupantDialogOpen}>
+              <Dialog 
+                open={isOccupantDialogOpen} 
+                onOpenChange={(open) => {
+                  setIsOccupantDialogOpen(open);
+                  if (!open) {
+                    // Reset editingOccupant when dialog closes
+                    setEditingOccupant(null);
+                  }
+                }}
+              >
                 <DialogTrigger asChild>
                   <Button variant="outline" size="sm" className="w-full sm:w-auto border-emerald-200 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700">
                     <Plus className="h-4 w-4 mr-2" />
@@ -520,9 +563,28 @@ export default function TenantDetailPage() {
                     Tạo hóa đơn
                   </Button>
 
+                  {debtInfo && debtInfo.totalDebt > 0 && (
+                    <div className="p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg mb-3">
+                      <div className="flex items-start gap-2">
+                        <AlertTriangle className="h-5 w-5 text-orange-600 shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                          <p className="text-sm font-semibold text-orange-900 dark:text-orange-200">
+                            Phòng còn nợ: {formatCurrency(debtInfo.totalDebt)}
+                          </p>
+                          <p className="text-xs text-orange-700 dark:text-orange-300 mt-1">
+                            Bạn có thể chọn "Trừ vào hóa đơn cuối" để dùng tiền cọc thanh toán nợ.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   <Dialog open={isReturnDialogOpen} onOpenChange={setIsReturnDialogOpen}>
                     <DialogTrigger asChild>
-                      <Button variant="outline" className="w-full border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700">
+                      <Button 
+                        variant="outline" 
+                        className="w-full border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+                      >
                         Trả phòng
                       </Button>
                     </DialogTrigger>
@@ -532,6 +594,7 @@ export default function TenantDetailPage() {
                       </DialogHeader>
                       <DepositReturnForm
                         tenant={tenant}
+                        debtInfo={debtInfo}
                         onConfirm={handleReturnRoom}
                         onCancel={() => setIsReturnDialogOpen(false)}
                       />

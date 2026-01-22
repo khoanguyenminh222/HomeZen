@@ -96,14 +96,28 @@ export default function BillsPage() {
   };
 
   // Tính tổng tiền chưa thanh toán
-  const unpaidTotal = bills
-    .filter(bill => !bill.isPaid)
-    .reduce((sum, bill) => sum + Number(bill.totalCost || 0), 0);
+  const unpaidBills = bills.filter(bill => !bill.isPaid);
+  const unpaidTotal = unpaidBills.reduce((sum, bill) => sum + Number(bill.totalCost || 0), 0);
 
-  // Tính tổng tiền đã thanh toán
-  const paidTotal = bills
-    .filter(bill => bill.isPaid)
-    .reduce((sum, bill) => sum + Number(bill.totalCost || 0), 0);
+  // Tính tổng tiền thanh toán một phần
+  const partialBills = bills.filter(bill => {
+    const totalCost = Number(bill.totalCost || 0);
+    const paidAmount = bill.paidAmount ? Number(bill.paidAmount) : 0;
+    return bill.isPaid && paidAmount > 0 && paidAmount < totalCost;
+  });
+  const partialTotal = partialBills.reduce((sum, bill) => {
+    const totalCost = Number(bill.totalCost || 0);
+    const paidAmount = bill.paidAmount ? Number(bill.paidAmount) : 0;
+    return sum + (totalCost - paidAmount); // Số tiền còn thiếu
+  }, 0);
+
+  // Tính tổng tiền đã thanh toán đầy đủ
+  const fullyPaidBills = bills.filter(bill => {
+    const totalCost = Number(bill.totalCost || 0);
+    const paidAmount = bill.paidAmount ? Number(bill.paidAmount) : 0;
+    return bill.isPaid && (paidAmount >= totalCost || (!paidAmount && bill.isPaid));
+  });
+  const paidTotal = fullyPaidBills.reduce((sum, bill) => sum + Number(bill.totalCost || 0), 0);
 
   const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
 
@@ -123,7 +137,7 @@ export default function BillsPage() {
       </div>
 
       {/* Thống kê */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -146,7 +160,7 @@ export default function BillsPage() {
               {formatCurrency(unpaidTotal)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              {bills.filter(b => !b.isPaid).length} hóa đơn
+              {unpaidBills.length} hóa đơn
             </p>
           </CardContent>
         </Card>
@@ -154,7 +168,23 @@ export default function BillsPage() {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Đã Thanh Toán
+              Thanh Toán Một Phần
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-yellow-600">
+              {formatCurrency(partialTotal)}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {partialBills.length} hóa đơn còn thiếu
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Đã Thanh Toán Đầy Đủ
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -162,7 +192,7 @@ export default function BillsPage() {
               {formatCurrency(paidTotal)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              {bills.filter(b => b.isPaid).length} hóa đơn
+              {fullyPaidBills.length} hóa đơn
             </p>
           </CardContent>
         </Card>
@@ -239,7 +269,8 @@ export default function BillsPage() {
               <SelectContent>
                 <SelectItem value="all">Tất cả trạng thái</SelectItem>
                 <SelectItem value="false">Chưa thanh toán</SelectItem>
-                <SelectItem value="true">Đã thanh toán</SelectItem>
+                <SelectItem value="partial">Thanh toán một phần</SelectItem>
+                <SelectItem value="true">Đã thanh toán đầy đủ</SelectItem>
               </SelectContent>
             </Select>
           </div>

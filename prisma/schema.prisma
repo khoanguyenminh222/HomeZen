@@ -207,8 +207,15 @@ model Bill {
   
   // Trạng thái
   isPaid                Boolean   @default(false)
+  paidAmount            Decimal?  @db.Decimal(10, 0)  // Số tiền đã thanh toán (null = chưa thanh toán, < totalCost = thanh toán một phần)
   paidDate              DateTime?
   notes                 String?
+  
+  // Thông tin người thuê (snapshot tại thời điểm tạo hóa đơn, không dùng foreign key)
+  tenantName            String?
+  tenantPhone           String?
+  tenantDateOfBirth     DateTime?
+  tenantIdCard          String?
   
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt

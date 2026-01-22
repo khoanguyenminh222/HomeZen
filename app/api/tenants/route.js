@@ -113,6 +113,46 @@ export async function POST(request) {
           { status: 400 }
         );
       }
+
+      // Kiểm tra phòng có hóa đơn chưa thanh toán (nợ) không
+      const allBills = await prisma.bill.findMany({
+        where: {
+          roomId: validatedData.roomId
+        },
+        select: {
+          id: true,
+          month: true,
+          year: true,
+          totalCost: true,
+          paidAmount: true,
+          isPaid: true
+        }
+      });
+
+      // Lọc các hóa đơn chưa thanh toán đầy đủ
+      const unpaidBills = allBills.filter(bill => {
+        const totalCost = Number(bill.totalCost || 0);
+        const paidAmount = bill.paidAmount ? Number(bill.paidAmount) : 0;
+        return !bill.isPaid || (bill.isPaid && paidAmount < totalCost);
+      });
+
+      if (unpaidBills.length > 0) {
+        const totalDebt = unpaidBills.reduce((sum, bill) => {
+          const totalCost = Number(bill.totalCost || 0);
+          const paidAmount = bill.paidAmount ? Number(bill.paidAmount) : 0;
+          const debt = bill.isPaid ? Math.max(0, totalCost - paidAmount) : totalCost;
+          return sum + debt;
+        }, 0);
+
+        return NextResponse.json(
+          { 
+            error: `Phòng này còn ${unpaidBills.length} hóa đơn chưa thanh toán đầy đủ. Tổng nợ: ${totalDebt.toLocaleString('vi-VN')} VNĐ. Vui lòng thanh toán hết nợ trước khi gán người thuê mới.`,
+            unpaidBillsCount: unpaidBills.length,
+            totalDebt: totalDebt
+          },
+          { status: 400 }
+        );
+      }
     }
 
     // 2. Kiểm tra số điện thoại đã tồn tại chưa

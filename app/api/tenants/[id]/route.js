@@ -128,6 +128,39 @@ export async function PUT(request, { params }) {
           throw new Error('ROOM_OCCUPIED');
         }
 
+        // Kiểm tra phòng có hóa đơn chưa thanh toán (nợ) không
+        const allBills = await tx.bill.findMany({
+          where: {
+            roomId: validatedData.roomId
+          },
+          select: {
+            id: true,
+            month: true,
+            year: true,
+            totalCost: true,
+            paidAmount: true,
+            isPaid: true
+          }
+        });
+
+        // Lọc các hóa đơn chưa thanh toán đầy đủ
+        const unpaidBills = allBills.filter(bill => {
+          const totalCost = Number(bill.totalCost || 0);
+          const paidAmount = bill.paidAmount ? Number(bill.paidAmount) : 0;
+          return !bill.isPaid || (bill.isPaid && paidAmount < totalCost);
+        });
+
+        if (unpaidBills.length > 0) {
+          const totalDebt = unpaidBills.reduce((sum, bill) => {
+            const totalCost = Number(bill.totalCost || 0);
+            const paidAmount = bill.paidAmount ? Number(bill.paidAmount) : 0;
+            const debt = bill.isPaid ? Math.max(0, totalCost - paidAmount) : totalCost;
+            return sum + debt;
+          }, 0);
+
+          throw new Error(`ROOM_HAS_DEBT:${unpaidBills.length}:${totalDebt}`);
+        }
+
         // Cập nhật trạng thái phòng thành OCCUPIED
         await tx.room.update({
           where: { id: validatedData.roomId },
@@ -175,6 +208,17 @@ export async function PUT(request, { params }) {
     }
     if (error.message === 'ROOM_OCCUPIED') {
       return NextResponse.json({ error: 'Phòng đã có người thuê' }, { status: 400 });
+    }
+    if (error.message?.startsWith('ROOM_HAS_DEBT')) {
+      const [, unpaidBillsCount, totalDebt] = error.message.split(':');
+      return NextResponse.json(
+        { 
+          error: `Phòng này còn ${unpaidBillsCount} hóa đơn chưa thanh toán đầy đủ. Tổng nợ: ${Number(totalDebt).toLocaleString('vi-VN')} VNĐ. Vui lòng thanh toán hết nợ trước khi gán người thuê mới.`,
+          unpaidBillsCount: parseInt(unpaidBillsCount),
+          totalDebt: Number(totalDebt)
+        },
+        { status: 400 }
+      );
     }
 
     if (error.name === 'ZodError') {

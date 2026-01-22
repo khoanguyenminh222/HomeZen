@@ -174,7 +174,31 @@ export async function DELETE(request, { params }) {
       );
     }
 
-    // Delete room
+    // Check if room has tenant (double check for safety)
+    const tenant = await prisma.tenant.findUnique({
+      where: { roomId: id },
+    });
+
+    if (tenant) {
+      return NextResponse.json(
+        { error: 'Không thể xóa phòng vì còn người thuê' },
+        { status: 400 }
+      );
+    }
+
+    // Check if room has bills
+    const billCount = await prisma.bill.count({
+      where: { roomId: id },
+    });
+
+    if (billCount > 0) {
+      return NextResponse.json(
+        { error: `Không thể xóa phòng vì còn ${billCount} hóa đơn liên quan. Vui lòng xóa các hóa đơn trước.` },
+        { status: 400 }
+      );
+    }
+
+    // Delete room (RoomFee will be cascade deleted automatically)
     await prisma.room.delete({
       where: { id: id },
     });
@@ -182,6 +206,15 @@ export async function DELETE(request, { params }) {
     return NextResponse.json({ message: 'Xóa phòng thành công' });
   } catch (error) {
     console.error('Error deleting room:', error);
+    
+    // Handle foreign key constraint error
+    if (error.code === 'P2003') {
+      return NextResponse.json(
+        { error: 'Không thể xóa phòng vì còn dữ liệu liên quan (hóa đơn, người thuê, v.v.)' },
+        { status: 400 }
+      );
+    }
+
     return NextResponse.json(
       { error: 'Lỗi khi xóa phòng' },
       { status: 500 }

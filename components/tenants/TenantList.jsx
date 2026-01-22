@@ -144,16 +144,26 @@ export default function TenantList() {
       ) : (
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {tenants.map((tenant) => (
-            <Card key={tenant.id} className="hover:shadow-md transition-shadow">
+            <Card 
+              key={tenant.id} 
+              className="hover:shadow-md transition-shadow cursor-pointer" 
+              onClick={() => window.location.href = `/tenants/${tenant.id}`}
+            >
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle className="text-lg">{tenant.fullName}</CardTitle>
+                  <div className="flex-1">
+                    <CardTitle className="text-lg">
+                      {tenant.fullName}
+                    </CardTitle>
                     <div className="flex items-center gap-2 mt-1">
                       {tenant.room ? (
                         <>
                           <Badge variant="outline" className="text-xs">
                             {tenant.room.code}
+                          </Badge>
+                          {/* tên phòng */}
+                          <Badge variant="outline" className="text-xs">
+                            {tenant.room.name}
                           </Badge>
                           <Badge
                             className="text-xs bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-none"
@@ -187,13 +197,17 @@ export default function TenantList() {
                     <span>{tenant.phone}</span>
                   </div>
 
-                  {tenant.hometown && (
+                  {tenant.hometown && tenant.hometown !== '' ? (
                     <div className="flex items-center gap-2">
                       <MapPin className="h-3 w-3 text-muted-foreground" />
                       <span className="truncate">{tenant.hometown}</span>
                     </div>
-                  )}
-
+                  ) : 
+                  <div className="flex items-center gap-2">
+                      <MapPin className="h-3 w-3 text-muted-foreground" />
+                      <span className="truncate">Chưa có quê quán</span>
+                    </div>
+                  }
                   <div className="flex items-center gap-2">
                     <Calendar className="h-3 w-3 text-muted-foreground" />
                     <span>Vào: {formatDate(tenant.moveInDate)}</span>
@@ -211,7 +225,10 @@ export default function TenantList() {
                       variant="outline"
                       size="sm"
                       className="flex-1 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
-                      onClick={() => window.location.href = `/tenants/${tenant.id}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        window.location.href = `/tenants/${tenant.id}`;
+                      }}
                     >
                       Chi tiết
                     </Button>
@@ -223,7 +240,12 @@ export default function TenantList() {
                         ? "flex-1 border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 transition-colors"
                         : "flex-1 opacity-50 cursor-not-allowed"
                       }
-                      onClick={() => tenant.room && (window.location.href = `/bills/create?roomId=${tenant.room.id}`)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (tenant.room) {
+                          window.location.href = `/bills/create?roomId=${tenant.room.id}`;
+                        }
+                      }}
                     >
                       Tạo hóa đơn
                     </Button>

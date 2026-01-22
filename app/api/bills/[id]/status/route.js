@@ -27,11 +27,35 @@ export async function PATCH(request, { params }) {
       );
     }
 
+    const totalCost = Number(bill.totalCost);
+    let paidAmount = null;
+
+    // Xử lý paidAmount
+    if (validatedData.isPaid) {
+      if (validatedData.paidAmount !== undefined && validatedData.paidAmount !== null) {
+        // Kiểm tra paidAmount không được vượt quá totalCost
+        if (validatedData.paidAmount > totalCost) {
+          return NextResponse.json(
+            { error: `Số tiền đã thanh toán (${validatedData.paidAmount.toLocaleString('vi-VN')} VNĐ) không được vượt quá tổng tiền hóa đơn (${totalCost.toLocaleString('vi-VN')} VNĐ)` },
+            { status: 400 }
+          );
+        }
+        paidAmount = validatedData.paidAmount;
+      } else {
+        // Nếu không có paidAmount, mặc định là thanh toán đầy đủ
+        paidAmount = totalCost;
+      }
+    } else {
+      // Nếu isPaid = false, thì paidAmount = null
+      paidAmount = null;
+    }
+
     // Cập nhật trạng thái
     const updatedBill = await prisma.bill.update({
       where: { id },
       data: {
         isPaid: validatedData.isPaid,
+        paidAmount: paidAmount,
         paidDate: validatedData.isPaid 
           ? (validatedData.paidDate ? new Date(validatedData.paidDate) : new Date())
           : null,

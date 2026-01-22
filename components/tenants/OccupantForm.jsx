@@ -1,36 +1,60 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { createOccupantSchema } from '@/lib/validations/tenant';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 
 export default function OccupantForm({ tenantId, onSuccess, initialData = null, isEdit = false }) {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    setValue,
-    reset
-  } = useForm({
-    resolver: zodResolver(isEdit ? createOccupantSchema.partial() : createOccupantSchema),
-    defaultValues: initialData || {
-      fullName: '',
-      idCard: '',
-      dateOfBirth: '',
-      hometown: '',
-      relationship: '',
-      residenceType: 'TEMPORARY'
+  // Helper function to normalize initial data
+  const normalizeInitialData = (data) => {
+    if (!data) {
+      return {
+        fullName: '',
+        idCard: '',
+        dateOfBirth: '',
+        hometown: '',
+        relationship: '',
+        residenceType: 'TEMPORARY'
+      };
     }
+
+    return {
+      fullName: data.fullName ?? '',
+      idCard: data.idCard ?? '',
+      dateOfBirth: data.dateOfBirth 
+        ? new Date(data.dateOfBirth).toISOString().split('T')[0] 
+        : '',
+      hometown: data.hometown ?? '',
+      relationship: data.relationship ?? '',
+      residenceType: data.residenceType ?? 'TEMPORARY'
+    };
+  };
+
+  const form = useForm({
+    resolver: zodResolver(isEdit ? createOccupantSchema.partial() : createOccupantSchema),
+    defaultValues: normalizeInitialData(initialData)
   });
+
+  // Reset form when initialData changes
+  useEffect(() => {
+    form.reset(normalizeInitialData(initialData));
+  }, [initialData, form]);
 
   // Handle form submission
   const onSubmit = async (data) => {
@@ -75,7 +99,7 @@ export default function OccupantForm({ tenantId, onSuccess, initialData = null, 
       }
 
       if (!isEdit) {
-        reset();
+        form.reset();
       }
     } catch (error) {
       console.error('Error submitting form:', error);
@@ -90,99 +114,128 @@ export default function OccupantForm({ tenantId, onSuccess, initialData = null, 
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="fullName">Họ và tên *</Label>
-          <Input
-            id="fullName"
-            {...register('fullName')}
-            placeholder="Nguyễn Thị B"
-            className={errors.fullName ? 'border-red-500' : ''}
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="fullName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Họ và tên *</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="Nguyễn Thị B"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-          {errors.fullName && (
-            <p className="text-sm text-red-500 mt-1">{errors.fullName.message}</p>
-          )}
-        </div>
 
-        <div>
-          <Label htmlFor="idCard">CMND/CCCD</Label>
-          <Input
-            id="idCard"
-            {...register('idCard')}
-            placeholder="123456789 hoặc 123456789012"
-            className={errors.idCard ? 'border-red-500' : ''}
+          <FormField
+            control={form.control}
+            name="idCard"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>CMND/CCCD</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="123456789 hoặc 123456789012"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-          {errors.idCard && (
-            <p className="text-sm text-red-500 mt-1">{errors.idCard.message}</p>
-          )}
-        </div>
 
-        <div>
-          <Label htmlFor="dateOfBirth">Ngày sinh</Label>
-          <Input
-            id="dateOfBirth"
-            type="date"
-            {...register('dateOfBirth')}
-            className={errors.dateOfBirth ? 'border-red-500' : ''}
+          <FormField
+            control={form.control}
+            name="dateOfBirth"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Ngày sinh</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    type="date"
+                    value={field.value || ''}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-          {errors.dateOfBirth && (
-            <p className="text-sm text-red-500 mt-1">{errors.dateOfBirth.message}</p>
-          )}
-        </div>
 
-        <div>
-          <Label htmlFor="relationship">Quan hệ với người thuê</Label>
-          <Input
-            id="relationship"
-            {...register('relationship')}
-            placeholder="Vợ/chồng, con, bạn bè..."
-            className={errors.relationship ? 'border-red-500' : ''}
+          <FormField
+            control={form.control}
+            name="relationship"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Quan hệ với người thuê</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="Vợ/chồng, con, bạn bè..."
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-          {errors.relationship && (
-            <p className="text-sm text-red-500 mt-1">{errors.relationship.message}</p>
-          )}
-        </div>
 
-        <div className="md:col-span-2">
-          <Label htmlFor="hometown">Quê quán</Label>
-          <Input
-            id="hometown"
-            {...register('hometown')}
-            placeholder="Hà Nội, Việt Nam"
-            className={errors.hometown ? 'border-red-500' : ''}
+          <FormField
+            control={form.control}
+            name="hometown"
+            render={({ field }) => (
+              <FormItem className="md:col-span-2">
+                <FormLabel>Quê quán</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="Hà Nội, Việt Nam"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-          {errors.hometown && (
-            <p className="text-sm text-red-500 mt-1">{errors.hometown.message}</p>
-          )}
+
+          <FormField
+            control={form.control}
+            name="residenceType"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Loại cư trú</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  value={field.value || 'TEMPORARY'}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Chọn loại cư trú" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="TEMPORARY">Tạm trú</SelectItem>
+                    <SelectItem value="PERMANENT">Thường trú</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
 
-        <div>
-          <Label htmlFor="residenceType">Loại cư trú</Label>
-          <Select
-            onValueChange={(value) => setValue('residenceType', value)}
-            defaultValue={initialData?.residenceType || 'TEMPORARY'}
-          >
-            <SelectTrigger className={errors.residenceType ? 'border-red-500' : ''}>
-              <SelectValue placeholder="Chọn loại cư trú" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="TEMPORARY">Tạm trú</SelectItem>
-              <SelectItem value="PERMANENT">Thường trú</SelectItem>
-            </SelectContent>
-          </Select>
-          {errors.residenceType && (
-            <p className="text-sm text-red-500 mt-1">{errors.residenceType.message}</p>
-          )}
+        {/* Submit button */}
+        <div className="flex gap-2 pt-4">
+          <Button type="submit" disabled={loading} className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white border-none shadow-md">
+            {loading ? 'Đang xử lý...' : (isEdit ? 'Cập nhật' : 'Thêm người ở')}
+          </Button>
         </div>
-      </div>
-
-      {/* Submit button */}
-      <div className="flex gap-2 pt-4">
-        <Button type="submit" disabled={loading} className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white border-none shadow-md">
-          {loading ? 'Đang xử lý...' : (isEdit ? 'Cập nhật' : 'Thêm người ở')}
-        </Button>
-      </div>
-    </form>
+      </form>
+    </Form>
   );
 }

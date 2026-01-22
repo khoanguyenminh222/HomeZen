@@ -6,36 +6,65 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { createTenantSchema } from '@/lib/validations/tenant';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
+import { formatCurrency } from '@/lib/format';
 
 export default function TenantForm({ onSuccess, initialData = null, isEdit = false }) {
   const [loading, setLoading] = useState(false);
   const [rooms, setRooms] = useState([]);
   const { toast } = useToast();
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    setValue,
-    watch,
-    reset
-  } = useForm({
-    resolver: zodResolver(createTenantSchema),
-    defaultValues: initialData || {
-      fullName: '',
-      phone: '',
-      idCard: '',
-      dateOfBirth: '',
-      hometown: '',
-      moveInDate: '',
-      deposit: '',
-      roomId: '',
-      contractFileUrl: ''
+  // Helper function to normalize initial data
+  const normalizeInitialData = (data) => {
+    if (!data) {
+      return {
+        fullName: '',
+        phone: '',
+        idCard: '',
+        dateOfBirth: '',
+        hometown: '',
+        moveInDate: '',
+        deposit: '',
+        roomId: '',
+        contractFileUrl: ''
+      };
     }
+
+    return {
+      fullName: data.fullName ?? '',
+      phone: data.phone ?? '',
+      idCard: data.idCard ?? '',
+      dateOfBirth: data.dateOfBirth 
+        ? new Date(data.dateOfBirth).toISOString().split('T')[0] 
+        : '',
+      hometown: data.hometown ?? '',
+      moveInDate: data.moveInDate 
+        ? new Date(data.moveInDate).toISOString().split('T')[0] 
+        : '',
+      deposit: data.deposit ? String(data.deposit) : '',
+      roomId: data.roomId ?? '',
+      contractFileUrl: data.contractFileUrl ?? ''
+    };
+  };
+
+  const form = useForm({
+    resolver: zodResolver(createTenantSchema),
+    defaultValues: normalizeInitialData(initialData)
   });
+
+  // Reset form when initialData changes
+  useEffect(() => {
+    form.reset(normalizeInitialData(initialData));
+  }, [initialData, form]);
 
   // Fetch available rooms (only empty rooms for new tenant)
   useEffect(() => {
@@ -74,7 +103,8 @@ export default function TenantForm({ onSuccess, initialData = null, isEdit = fal
         hometown: data.hometown || null,
         moveInDate: data.moveInDate || null,
         deposit: data.deposit ? parseFloat(data.deposit) : null,
-        contractFileUrl: data.contractFileUrl || null
+        contractFileUrl: data.contractFileUrl || null,
+        roomId: (data.roomId === 'NONE' || !data.roomId || data.roomId === '') ? null : data.roomId
       };
 
       const url = isEdit ? `/api/tenants/${initialData.id}` : '/api/tenants';
@@ -104,7 +134,7 @@ export default function TenantForm({ onSuccess, initialData = null, isEdit = fal
       }
 
       if (!isEdit) {
-        reset();
+        form.reset();
       }
     } catch (error) {
       console.error('Error submitting form:', error);
@@ -119,157 +149,211 @@ export default function TenantForm({ onSuccess, initialData = null, isEdit = fal
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      {/* Thông tin cơ bản */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Thông tin cơ bản</h3>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        {/* Thông tin cơ bản */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">Thông tin cơ bản</h3>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="fullName">Họ và tên *</Label>
-            <Input
-              id="fullName"
-              {...register('fullName')}
-              placeholder="Nguyễn Văn A"
-              className={errors.fullName ? 'border-red-500' : ''}
-            />
-            {errors.fullName && (
-              <p className="text-sm text-red-500 mt-1">{errors.fullName.message}</p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="phone">Số điện thoại *</Label>
-            <Input
-              id="phone"
-              {...register('phone')}
-              placeholder="0901234567"
-              className={errors.phone ? 'border-red-500' : ''}
-            />
-            {errors.phone && (
-              <p className="text-sm text-red-500 mt-1">{errors.phone.message}</p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="idCard">CMND/CCCD</Label>
-            <Input
-              id="idCard"
-              {...register('idCard')}
-              placeholder="123456789 hoặc 123456789012"
-              className={errors.idCard ? 'border-red-500' : ''}
-            />
-            {errors.idCard && (
-              <p className="text-sm text-red-500 mt-1">{errors.idCard.message}</p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="dateOfBirth">Ngày sinh</Label>
-            <Input
-              id="dateOfBirth"
-              type="date"
-              {...register('dateOfBirth')}
-              className={errors.dateOfBirth ? 'border-red-500' : ''}
-            />
-            {errors.dateOfBirth && (
-              <p className="text-sm text-red-500 mt-1">{errors.dateOfBirth.message}</p>
-            )}
-          </div>
-
-          <div className="md:col-span-2">
-            <Label htmlFor="hometown">Quê quán</Label>
-            <Input
-              id="hometown"
-              {...register('hometown')}
-              placeholder="Hà Nội, Việt Nam"
-              className={errors.hometown ? 'border-red-500' : ''}
-            />
-            {errors.hometown && (
-              <p className="text-sm text-red-500 mt-1">{errors.hometown.message}</p>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Thông tin thuê trọ */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Thông tin thuê trọ</h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {(!isEdit || !initialData?.roomId) && (
-            <div>
-              <Label htmlFor="roomId">Phòng (không bắt buộc)</Label>
-              <Select onValueChange={(value) => setValue('roomId', value === 'NONE' ? null : value)}>
-                <SelectTrigger className={errors.roomId ? 'border-red-500' : ''}>
-                  <SelectValue placeholder="Chọn phòng trống" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="NONE">-- Không chọn phòng --</SelectItem>
-                  {rooms.map((room) => (
-                    <SelectItem key={room.id} value={room.id}>
-                      {room.code} - {room.name} ({new Intl.NumberFormat('vi-VN').format(room.price)} VNĐ)
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.roomId && (
-                <p className="text-sm text-red-500 mt-1">{errors.roomId.message}</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="fullName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Họ và tên *</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="Nguyễn Văn A"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               )}
-            </div>
-          )}
-
-          <div>
-            <Label htmlFor="moveInDate">Ngày vào ở</Label>
-            <Input
-              id="moveInDate"
-              type="date"
-              {...register('moveInDate')}
-              className={errors.moveInDate ? 'border-red-500' : ''}
             />
-            {errors.moveInDate && (
-              <p className="text-sm text-red-500 mt-1">{errors.moveInDate.message}</p>
-            )}
-          </div>
 
-          <div>
-            <Label htmlFor="deposit">Tiền cọc (VNĐ)</Label>
-            <Input
-              id="deposit"
-              type="number"
-              min="0"
-              step="1000"
-              {...register('deposit')}
-              placeholder="0"
-              className={errors.deposit ? 'border-red-500' : ''}
+            <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Số điện thoại *</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="0901234567"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-            {errors.deposit && (
-              <p className="text-sm text-red-500 mt-1">{errors.deposit.message}</p>
-            )}
-          </div>
 
-          <div>
-            <Label htmlFor="contractFileUrl">Link file hợp đồng</Label>
-            <Input
-              id="contractFileUrl"
-              type="url"
-              {...register('contractFileUrl')}
-              placeholder="https://..."
-              className={errors.contractFileUrl ? 'border-red-500' : ''}
+            <FormField
+              control={form.control}
+              name="idCard"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>CMND/CCCD</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="123456789 hoặc 123456789012"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-            {errors.contractFileUrl && (
-              <p className="text-sm text-red-500 mt-1">{errors.contractFileUrl.message}</p>
-            )}
+
+            <FormField
+              control={form.control}
+              name="dateOfBirth"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Ngày sinh</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="date"
+                      value={field.value || ''}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="hometown"
+              render={({ field }) => (
+                <FormItem className="md:col-span-2">
+                  <FormLabel>Quê quán</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="Hà Nội, Việt Nam"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </div>
         </div>
-      </div>
 
-      {/* Submit button */}
-      <div className="flex gap-2 pt-4">
-        <Button type="submit" disabled={loading} className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white border-none shadow-md">
-          {loading ? 'Đang xử lý...' : (isEdit ? 'Cập nhật' : 'Thêm người thuê')}
-        </Button>
-      </div>
-    </form>
+        {/* Thông tin thuê trọ */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">Thông tin thuê trọ</h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {(!isEdit || !initialData?.roomId) && (
+              <FormField
+                control={form.control}
+                name="roomId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Phòng (không bắt buộc)</FormLabel>
+                    <Select
+                      onValueChange={(value) => field.onChange(value === 'NONE' ? '' : value)}
+                      value={field.value || 'NONE'}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Chọn phòng trống" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="NONE">-- Không chọn phòng --</SelectItem>
+                        {rooms.map((room) => (
+                          <SelectItem key={room.id} value={room.id}>
+                            {room.code} - {room.name} ({new Intl.NumberFormat('vi-VN').format(room.price)} VNĐ)
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            <FormField
+              control={form.control}
+              name="moveInDate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Ngày vào ở</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="date"
+                      value={field.value || ''}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="deposit"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tiền cọc (VNĐ)</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="number"
+                      min="0"
+                      step="1000"
+                      placeholder="0"
+                      value={field.value || ''}
+                      onChange={(e) => field.onChange(e.target.value || '')}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                  {/* Hiển thị text format thành tiền */}
+                  {form.watch("deposit") > 0 && (
+                    <p className="text-sm text-muted-foreground mt-1 font-medium">
+                      Tiền cọc hiển thị: {formatCurrency(form.watch("deposit"))}
+                    </p>
+                  )}
+                </FormItem>
+                
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="contractFileUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Link file hợp đồng</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="url"
+                      placeholder="https://..."
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+
+        {/* Submit button */}
+        <div className="flex gap-2 pt-4">
+          <Button type="submit" disabled={loading} className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white border-none shadow-md">
+            {loading ? 'Đang xử lý...' : (isEdit ? 'Cập nhật' : 'Thêm người thuê')}
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 }

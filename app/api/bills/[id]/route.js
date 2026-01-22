@@ -136,6 +136,19 @@ export async function PUT(request, { params }) {
       billFees,
     });
 
+    // Cập nhật thông tin tenant (snapshot tại thời điểm cập nhật)
+    const tenantInfo = room.tenant ? {
+      tenantName: room.tenant.fullName,
+      tenantPhone: room.tenant.phone,
+      tenantDateOfBirth: room.tenant.dateOfBirth,
+      tenantIdCard: room.tenant.idCard,
+    } : {
+      tenantName: null,
+      tenantPhone: null,
+      tenantDateOfBirth: null,
+      tenantIdCard: null,
+    };
+
     // Cập nhật hóa đơn
     const bill = await prisma.bill.update({
       where: { id },
@@ -158,6 +171,7 @@ export async function PUT(request, { params }) {
         totalCost: calculation.totalCost,
         totalCostText: calculation.totalCostText,
         notes: validatedData.notes ?? existingBill.notes,
+        ...tenantInfo,
       },
       include: {
         room: {

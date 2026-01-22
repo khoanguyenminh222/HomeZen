@@ -17,14 +17,22 @@ export async function GET(request) {
     const roomId = searchParams.get('roomId');
     const month = searchParams.get('month') ? parseInt(searchParams.get('month')) : null;
     const year = searchParams.get('year') ? parseInt(searchParams.get('year')) : null;
-    const isPaid = searchParams.get('isPaid') === 'true' ? true : searchParams.get('isPaid') === 'false' ? false : null;
+    const isPaid = searchParams.get('isPaid');
+    const isPartial = isPaid === 'partial';
 
     // Xây dựng filter
     const where = {};
     if (roomId) where.roomId = roomId;
     if (month) where.month = month;
     if (year) where.year = year;
-    if (isPaid !== null) where.isPaid = isPaid;
+    
+    // Xử lý filter isPaid: 'true', 'false', 'partial', hoặc null
+    if (isPaid === 'true') {
+      where.isPaid = true;
+    } else if (isPaid === 'false') {
+      where.isPaid = false;
+    }
+    // Nếu là 'partial', không thêm filter vào where, sẽ filter sau
 
     const bills = await prisma.bill.findMany({
       where,
@@ -45,7 +53,31 @@ export async function GET(request) {
       ],
     });
 
-    return NextResponse.json(bills);
+    // Filter theo trạng thái thanh toán
+    let filteredBills = bills;
+    if (isPartial) {
+      // Filter thanh toán một phần
+      filteredBills = bills.filter(bill => {
+        const totalCost = Number(bill.totalCost || 0);
+        const paidAmount = bill.paidAmount ? Number(bill.paidAmount) : 0;
+        return bill.isPaid && paidAmount > 0 && paidAmount < totalCost;
+      });
+    } else if (isPaid === 'true') {
+      // Filter chỉ thanh toán đầy đủ (không bao gồm thanh toán một phần)
+      filteredBills = bills.filter(bill => {
+        if (!bill.isPaid) return false;
+        const totalCost = Number(bill.totalCost || 0);
+        // Nếu không có paidAmount (null), coi là đã thanh toán đầy đủ (hóa đơn cũ)
+        if (bill.paidAmount === null || bill.paidAmount === undefined) {
+          return true;
+        }
+        const paidAmount = Number(bill.paidAmount);
+        // Đã thanh toán đầy đủ: paidAmount >= totalCost
+        return paidAmount >= totalCost;
+      });
+    }
+
+    return NextResponse.json(filteredBills);
   } catch (error) {
     console.error('Error fetching bills:', error);
     return NextResponse.json(
@@ -175,6 +207,11 @@ export async function POST(request) {
         totalCost: calculation.totalCost,
         totalCostText: calculation.totalCostText,
         notes: validatedData.notes,
+        // Lưu thông tin tenant (snapshot tại thời điểm tạo hóa đơn)
+        tenantName: room.tenant?.fullName || null,
+        tenantPhone: room.tenant?.phone || null,
+        tenantDateOfBirth: room.tenant?.dateOfBirth || null,
+        tenantIdCard: room.tenant?.idCard || null,
         billFees: {
           create: billFees.map(fee => ({
             name: fee.name,

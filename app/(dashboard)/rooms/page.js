@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import RoomList from '@/components/rooms/RoomList';
@@ -16,7 +17,8 @@ import { Loading } from '@/components/ui/loading';
  * Requirements: 2.5, 2.10, 2.11
  */
 export default function RoomsPage() {
-
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [rooms, setRooms] = useState([]);
   const [filteredRooms, setFilteredRooms] = useState([]);
   const [filters, setFilters] = useState({ status: '', search: '' });
@@ -57,6 +59,47 @@ export default function RoomsPage() {
   useEffect(() => {
     fetchRooms();
   }, []);
+
+  // Handle edit query parameter
+  useEffect(() => {
+    const editId = searchParams.get('edit');
+    if (!editId) return;
+
+    const handleEditRoom = async () => {
+      // First, try to find room in current rooms list
+      const roomToEdit = rooms.find(r => r.id === editId);
+      if (roomToEdit) {
+        setSelectedRoom(roomToEdit);
+        setIsFormOpen(true);
+        // Remove query parameter from URL
+        router.replace('/rooms', { scroll: false });
+        return;
+      }
+
+      // If room not found in list, fetch it from API
+      try {
+        const response = await fetch(`/api/rooms/${editId}`);
+        if (!response.ok) throw new Error('Failed to fetch room');
+        const roomData = await response.json();
+        setSelectedRoom(roomData);
+        setIsFormOpen(true);
+        // Remove query parameter from URL
+        router.replace('/rooms', { scroll: false });
+      } catch (error) {
+        console.error('Error fetching room:', error);
+        toast({
+          variant: 'destructive',
+          title: 'Lỗi',
+          description: 'Không tìm thấy phòng cần chỉnh sửa',
+        });
+        // Remove query parameter from URL
+        router.replace('/rooms', { scroll: false });
+      }
+    };
+
+    handleEditRoom();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   // Apply filters (Requirements: 2.11)
   useEffect(() => {
@@ -129,6 +172,16 @@ export default function RoomsPage() {
 
   const handleFormSuccess = () => {
     fetchRooms();
+    setSelectedRoom(null);
+  };
+
+  const handleFormClose = () => {
+    setIsFormOpen(false);
+    setSelectedRoom(null);
+    // Remove query parameter if exists
+    if (searchParams.get('edit')) {
+      router.replace('/rooms', { scroll: false });
+    }
   };
 
   if (isLoading) {
@@ -171,7 +224,7 @@ export default function RoomsPage() {
       {/* Room Form Dialog */}
       <RoomForm
         open={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
+        onClose={handleFormClose}
         room={selectedRoom}
         onSuccess={handleFormSuccess}
       />

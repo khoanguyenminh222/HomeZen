@@ -18,7 +18,8 @@ import {
   Home,
   Calendar,
   DollarSign,
-  Trash2
+  Trash2,
+  Clock
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Loading } from '@/components/ui/loading';
@@ -35,6 +36,16 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 /**
  * Trang chi tiết hóa đơn
@@ -50,6 +61,8 @@ export default function BillDetailPage() {
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
+  const [paidAmount, setPaidAmount] = useState('');
 
   useEffect(() => {
     if (params.id) {
@@ -77,34 +90,76 @@ export default function BillDetailPage() {
     }
   };
 
-  const handleUpdateStatus = async (isPaid) => {
+  const handleUpdateStatus = async (isPaid, paidAmountValue = null) => {
     try {
       setIsUpdatingStatus(true);
       const response = await fetch(`/api/bills/${params.id}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isPaid }),
+        body: JSON.stringify({ 
+          isPaid,
+          paidAmount: paidAmountValue !== null ? Number(paidAmountValue) : null,
+        }),
       });
 
-      if (!response.ok) throw new Error('Failed to update status');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update status');
+      }
       
       toast({
         title: 'Thành công',
-        description: isPaid ? 'Đã đánh dấu thanh toán' : 'Đã hủy thanh toán',
+        description: isPaid 
+          ? (paidAmountValue && Number(paidAmountValue) < Number(bill.totalCost)
+              ? `Đã ghi nhận thanh toán ${formatCurrency(paidAmountValue)}`
+              : 'Đã đánh dấu thanh toán đầy đủ')
+          : 'Đã hủy thanh toán',
         variant: 'success',
       });
       
+      setIsPaymentDialogOpen(false);
+      setPaidAmount('');
       fetchBill();
     } catch (error) {
       console.error('Error updating status:', error);
       toast({
         title: 'Lỗi',
-        description: 'Không thể cập nhật trạng thái',
+        description: error.message || 'Không thể cập nhật trạng thái',
         variant: 'destructive',
       });
     } finally {
       setIsUpdatingStatus(false);
     }
+  };
+
+  const handleOpenPaymentDialog = () => {
+    if (bill.isPaid && bill.paidAmount) {
+      setPaidAmount(bill.paidAmount.toString());
+    } else {
+      setPaidAmount(bill.totalCost.toString());
+    }
+    setIsPaymentDialogOpen(true);
+  };
+
+  const handleConfirmPayment = () => {
+    const amount = paidAmount ? Number(paidAmount) : Number(bill.totalCost);
+    if (amount < 0) {
+      toast({
+        title: 'Lỗi',
+        description: 'Số tiền không được âm',
+        variant: 'destructive',
+      });
+      return;
+    }
+    if (amount > Number(bill.totalCost)) {
+      toast({
+        title: 'Lỗi',
+        description: `Số tiền không được vượt quá tổng tiền hóa đơn (${formatCurrency(bill.totalCost)})`,
+        variant: 'destructive',
+      });
+      return;
+    }
+    handleUpdateStatus(true, amount);
   };
 
   const handleFormSuccess = () => {
@@ -244,75 +299,144 @@ export default function BillDetailPage() {
         )}
       </div>
 
-      {/* Thông tin cơ bản */}
+      {/* Thông tin cơ bản - Layout 2 cột */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Thông Tin Hóa Đơn</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Phòng</p>
-                <p className="font-medium">{bill.room?.code} - {bill.room?.name}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Tháng/Năm</p>
-                <p className="font-medium">{bill.month}/{bill.year}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Trạng thái</p>
-                {bill.isPaid ? (
-                  <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-none">
-                    <CheckCircle2 className="h-3 w-3 mr-1" />
-                    Đã thanh toán
-                  </Badge>
-                ) : (
-                  <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100 border-none">
-                    <XCircle className="h-3 w-3 mr-1" />
-                    Chưa thanh toán
-                  </Badge>
+        {/* Bên trái: Thông tin người thuê và thông tin hóa đơn */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Thông tin người thuê */}
+          {bill.tenantName && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Home className="h-5 w-5" />
+                  Thông Tin Người Thuê
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Họ và tên</p>
+                    <p className="font-medium">{bill.tenantName}</p>
+                  </div>
+                  {bill.tenantPhone && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Số điện thoại</p>
+                      <p className="font-medium">{bill.tenantPhone}</p>
+                    </div>
+                  )}
+                  {bill.tenantDateOfBirth && bill.tenantDateOfBirth !== '' ? (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Ngày sinh</p>
+                      <p className="font-medium">{formatDate(bill.tenantDateOfBirth)}</p>
+                    </div>
+                  ) : (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Ngày sinh</p>
+                      <p className="font-medium">Chưa có</p>
+                    </div>
+                  )}
+                  {bill.tenantIdCard && bill.tenantIdCard !== '' ? (
+                    <div>
+                      <p className="text-sm text-muted-foreground">CMND/CCCD</p>
+                      <p className="font-medium">{bill.tenantIdCard}</p>
+                    </div>
+                  ) : (
+                    <div>
+                      <p className="text-sm text-muted-foreground">CMND/CCCD</p>
+                      <p className="font-medium">Chưa có</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Thông tin hóa đơn */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Thông Tin Hóa Đơn</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 flex flex-col">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Phòng</p>
+                  <p className="font-medium">{bill.room?.code} - {bill.room?.name}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Tháng/Năm</p>
+                  <p className="font-medium">{bill.month}/{bill.year}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Trạng thái</p>
+                  {(() => {
+                    const totalCost = Number(bill.totalCost || 0);
+                    const paidAmount = bill.paidAmount ? Number(bill.paidAmount) : 0;
+                    const isPartiallyPaid = bill.isPaid && paidAmount > 0 && paidAmount < totalCost;
+                    
+                    if (isPartiallyPaid) {
+                      return (
+                        <Badge className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100 border-none">
+                          <Clock className="h-3 w-3 mr-1" />
+                          Thanh toán một phần
+                        </Badge>
+                      );
+                    } else if (bill.isPaid) {
+                      return (
+                        <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-none">
+                          <CheckCircle2 className="h-3 w-3 mr-1" />
+                          Đã thanh toán
+                        </Badge>
+                      );
+                    } else {
+                      return (
+                        <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100 border-none">
+                          <XCircle className="h-3 w-3 mr-1" />
+                          Chưa thanh toán
+                        </Badge>
+                      );
+                    }
+                  })()}
+                </div>
+                {bill.paidDate && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">Ngày thanh toán</p>
+                    <p className="font-medium">{formatDate(bill.paidDate)}</p>
+                  </div>
                 )}
               </div>
-              {bill.paidDate && (
-                <div>
-                  <p className="text-sm text-muted-foreground">Ngày thanh toán</p>
-                  <p className="font-medium">{formatDate(bill.paidDate)}</p>
+
+              {(bill.electricityRollover || bill.waterRollover) && (
+                <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg flex items-start sm:items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-amber-600" />
+                  <div>
+                    <p className="font-medium text-amber-900 dark:text-amber-100">
+                      Cảnh báo: Đồng hồ xoay vòng
+                    </p>
+                    <p className="text-sm text-amber-700 dark:text-amber-200">
+                      {bill.electricityRollover && 'Điện '}
+                      {bill.electricityRollover && bill.waterRollover && 'và '}
+                      {bill.waterRollover && 'Nước'}
+                    </p>
+                  </div>
                 </div>
               )}
-            </div>
 
-            {(bill.electricityRollover || bill.waterRollover) && (
-              <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg flex items-start sm:items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-amber-600" />
+              {bill.notes && (
                 <div>
-                  <p className="font-medium text-amber-900 dark:text-amber-100">
-                    Cảnh báo: Đồng hồ xoay vòng
-                  </p>
-                  <p className="text-sm text-amber-700 dark:text-amber-200">
-                    {bill.electricityRollover && 'Điện '}
-                    {bill.electricityRollover && bill.waterRollover && 'và '}
-                    {bill.waterRollover && 'Nước'}
-                  </p>
+                  <p className="text-sm text-muted-foreground">Ghi chú</p>
+                  <p className="font-medium">{bill.notes}</p>
                 </div>
-              </div>
-            )}
+              )}
+            </CardContent>
+          </Card>
+        </div>
 
-            {bill.notes && (
-              <div>
-                <p className="text-sm text-muted-foreground">Ghi chú</p>
-                <p className="font-medium">{bill.notes}</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Tổng tiền */}
-        <Card>
+        {/* Bên phải: Tổng tiền */}
+        <Card className="lg:col-span-1 flex flex-col h-full">
           <CardHeader>
             <CardTitle>Tổng Tiền</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 flex flex-col flex-1">
             <div>
               <p className="text-3xl font-bold text-primary">
                 {formatCurrency(bill.totalCost)}
@@ -322,10 +446,28 @@ export default function BillDetailPage() {
               </p>
             </div>
 
+            {/* Hiển thị thông tin thanh toán */}
+            {bill.isPaid && bill.paidAmount && (
+              <div className="space-y-2 p-3 bg-muted rounded-lg">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Đã thanh toán:</span>
+                  <span className="font-medium">{formatCurrency(bill.paidAmount)}</span>
+                </div>
+                {Number(bill.paidAmount) < Number(bill.totalCost) && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Còn thiếu:</span>
+                    <span className="font-bold text-red-600">
+                      {formatCurrency(Number(bill.totalCost) - Number(bill.paidAmount))}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+            <div className="mt-auto">
             {!bill.isPaid && (
               <Button
                 className="w-full"
-                onClick={() => handleUpdateStatus(true)}
+                onClick={handleOpenPaymentDialog}
                 disabled={isUpdatingStatus}
               >
                 <CheckCircle2 className="h-4 w-4 mr-2" />
@@ -334,16 +476,28 @@ export default function BillDetailPage() {
             )}
 
             {bill.isPaid && (
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => handleUpdateStatus(false)}
-                disabled={isUpdatingStatus}
-              >
-                <XCircle className="h-4 w-4 mr-2" />
-                Hủy Thanh Toán
-              </Button>
+              <>
+                <Button
+                  variant="outline"
+                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground"
+                  onClick={handleOpenPaymentDialog}
+                  disabled={isUpdatingStatus}
+                >
+                  <Edit className="h-4 w-4 mr-2" />
+                  Cập Nhật Thanh Toán
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full mt-2 bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:text-destructive-foreground"
+                  onClick={() => handleUpdateStatus(false)}
+                  disabled={isUpdatingStatus}
+                >
+                  <XCircle className="h-4 w-4 mr-2" />
+                  Hủy Thanh Toán
+                </Button>
+              </>
             )}
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -351,11 +505,11 @@ export default function BillDetailPage() {
       {/* Chi tiết tính toán */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Điện */}
-        <Card>
-          <CardHeader>
+        <Card className="bg-amber-50/30 dark:bg-amber-950/20 border-amber-200/50 dark:border-amber-800/30">
+          <CardHeader className="bg-amber-100/40 dark:bg-amber-900/20">
             <CardTitle className="flex items-center gap-2">
-              <Zap className="h-5 w-5" />
-              Điện
+              <Zap className="h-5 w-5 text-amber-500 dark:text-amber-400" />
+              <span className="text-amber-600 dark:text-amber-400">Điện</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -383,11 +537,11 @@ export default function BillDetailPage() {
         </Card>
 
         {/* Nước */}
-        <Card>
-          <CardHeader>
+        <Card className="bg-blue-50/30 dark:bg-blue-950/20 border-blue-200/50 dark:border-blue-800/30">
+          <CardHeader className="bg-blue-100/40 dark:bg-blue-900/20">
             <CardTitle className="flex items-center gap-2">
-              <Droplets className="h-5 w-5" />
-              Nước
+              <Droplets className="h-5 w-5 text-blue-500 dark:text-blue-400" />
+              <span className="text-blue-600 dark:text-blue-400">Nước</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -467,6 +621,78 @@ export default function BillDetailPage() {
         bill={bill}
         onSuccess={handleFormSuccess}
       />
+
+      {/* Payment Dialog */}
+      <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Nhập Số Tiền Đã Thanh Toán</DialogTitle>
+            <DialogDescription>
+              Nhập số tiền đã thanh toán. Để trống hoặc nhập bằng tổng tiền để đánh dấu thanh toán đầy đủ.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label htmlFor="totalCost">Tổng tiền hóa đơn</Label>
+              <Input
+                id="totalCost"
+                value={formatCurrency(bill?.totalCost || 0)}
+                disabled
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="paidAmount">Số tiền đã thanh toán (VNĐ)</Label>
+              <Input
+                id="paidAmount"
+                type="number"
+                min="0"
+                max={bill?.totalCost || 0}
+                value={paidAmount}
+                onChange={(e) => setPaidAmount(e.target.value)}
+                placeholder={bill?.totalCost?.toString() || '0'}
+                className="mt-1"
+              />
+              {/* Hiển thị text format thành tiền */}
+              {paidAmount > 0 && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Số tiền hiển thị: {formatCurrency(paidAmount)}
+                </p>
+              )}
+              <p className="text-xs text-muted-foreground mt-1">
+                Để trống hoặc nhập {formatCurrency(bill?.totalCost || 0)} để thanh toán đầy đủ
+              </p>
+            </div>
+            {paidAmount && Number(paidAmount) < Number(bill?.totalCost || 0) && (
+              <div className="p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
+                <p className="text-sm font-medium text-orange-900 dark:text-orange-200">
+                  Còn thiếu: {formatCurrency(Number(bill?.totalCost || 0) - Number(paidAmount))}
+                </p>
+                <p className="text-xs text-orange-700 dark:text-orange-300 mt-1">
+                  Hóa đơn sẽ được đánh dấu là đã thanh toán một phần và phần còn thiếu sẽ được tính vào nợ.
+                </p>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsPaymentDialogOpen(false);
+                setPaidAmount('');
+              }}
+            >
+              Hủy
+            </Button>
+            <Button
+              onClick={handleConfirmPayment}
+              disabled={isUpdatingStatus}
+            >
+              {isUpdatingStatus ? 'Đang xử lý...' : 'Xác nhận'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
