@@ -19,7 +19,8 @@ import {
   Building2,
   FileText,
   Receipt,
-  DollarSign
+  DollarSign,
+  Calendar
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -122,6 +123,11 @@ const navItems = [
     href: '/bills',
     label: 'Hóa Đơn',
     icon: Receipt,
+  },
+  {
+    href: '/meter-history',
+    label: 'Lịch Sử Chỉ Số',
+    icon: Calendar,
   },
   {
     label: 'Cài Đặt',
