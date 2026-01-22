@@ -17,7 +17,7 @@ export default function BillList({ bills, onBillClick }) {
           Chưa có hóa đơn nào
         </p>
         <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
-          Nhấn nút "Tạo Hóa Đơn Mới" để bắt đầu
+          Nhấn nút &ldquo;Tạo Hóa Đơn Mới&rdquo; để bắt đầu
         </p>
       </div>
     );

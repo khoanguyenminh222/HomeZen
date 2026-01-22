@@ -67,7 +67,7 @@ export default function TieredPricingForm({ tieredRates, onTieredRatesChange }) 
       <CardContent className="space-y-4">
         {tieredRates.length === 0 && (
           <div className="text-center py-8 text-gray-500">
-            <p>Chưa có bậc giá nào. Nhấn "Thêm Bậc" để bắt đầu.</p>
+            <p>Chưa có bậc giá nào. Nhấn &ldquo;Thêm Bậc&rdquo; để bắt đầu.</p>
           </div>
         )}
 

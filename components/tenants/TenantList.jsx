@@ -81,7 +81,7 @@ export default function TenantList() {
         <div className="flex flex-col sm:flex-row w-full sm:w-auto gap-2">
           <Button
             variant="outline"
-            className="w-full sm:w-auto border-red-200 text-red-600 hover:bg-red-50 hover:text-red-600"
+            className="w-full sm:w-auto border-red-200 text-red-600 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900 dark:hover:text-red-300"
             onClick={() => window.location.href = '/tenants/deleted'}
           >
             <Trash2 className="h-4 w-4 mr-2" />
@@ -224,7 +224,7 @@ export default function TenantList() {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="flex-1 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
+                      className="flex-1 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 dark:hover:bg-emerald-900 dark:hover:text-emerald-300 transition-colors"
                       onClick={(e) => {
                         e.stopPropagation();
                         window.location.href = `/tenants/${tenant.id}`;
@@ -237,7 +237,7 @@ export default function TenantList() {
                       size="sm"
                       disabled={!tenant.room}
                       className={tenant.room
-                        ? "flex-1 border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                        ? "flex-1 border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-900 dark:hover:text-blue-300 transition-colors"
                         : "flex-1 opacity-50 cursor-not-allowed"
                       }
                       onClick={(e) => {

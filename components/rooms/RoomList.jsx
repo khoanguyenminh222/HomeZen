@@ -14,7 +14,7 @@ export default function RoomList({ rooms, onEdit, onDelete, onConfigureUtilityRa
           Chưa có phòng nào
         </p>
         <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
-          Nhấn nút "Tạo Phòng Mới" để bắt đầu
+          Nhấn nút &ldquo;Tạo Phòng Mới&rdquo; để bắt đầu
         </p>
       </div>
     );

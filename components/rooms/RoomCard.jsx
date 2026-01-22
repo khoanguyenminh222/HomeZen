@@ -14,7 +14,6 @@ import { useState, useEffect } from 'react';
  */
 export default function RoomCard({ room, onEdit, onDelete, onConfigureUtilityRates }) {
   const [debtInfo, setDebtInfo] = useState(null);
-  const [loadingDebt, setLoadingDebt] = useState(false);
 
   // Load debt info cho tất cả phòng (kể cả phòng trống có nợ)
   useEffect(() => {
@@ -23,7 +22,6 @@ export default function RoomCard({ room, onEdit, onDelete, onConfigureUtilityRat
 
   const fetchDebtInfo = async () => {
     try {
-      setLoadingDebt(true);
       const response = await fetch(`/api/rooms/${room.id}/debt`);
       if (response.ok) {
         const data = await response.json();
@@ -31,15 +29,13 @@ export default function RoomCard({ room, onEdit, onDelete, onConfigureUtilityRat
       }
     } catch (error) {
       console.error('Error fetching debt info:', error);
-    } finally {
-      setLoadingDebt(false);
     }
   };
 
-  // Màu sắc theo trạng thái (Requirements: 12.6)
+  // Màu sắc đơn giản theo trạng thái (Requirements: 12.6)
   const statusColors = {
-    EMPTY: 'bg-gray-500 text-white',
-    OCCUPIED: 'bg-emerald-500 text-white',
+    EMPTY: 'bg-muted text-muted-foreground',
+    OCCUPIED: 'bg-primary text-primary-foreground',
   };
 
   const statusText = {
@@ -66,7 +62,7 @@ export default function RoomCard({ room, onEdit, onDelete, onConfigureUtilityRat
               {statusText[room.status]}
             </span>
             {debtInfo?.hasDebtWarning && (
-              <Badge className="bg-red-500 text-white text-xs hover:bg-red-500 hover:text-white">
+              <Badge variant="destructive" className="text-xs">
                 <AlertTriangle className="h-3 w-3 mr-1" />
                 Nợ {debtInfo.consecutiveMonths} tháng
               </Badge>
@@ -118,51 +114,72 @@ export default function RoomCard({ room, onEdit, onDelete, onConfigureUtilityRat
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-3 pt-4 mt-auto">
-          <Link href={`/rooms/${room.id}`} className="col-span-1">
+        {/* Nút chính - Xem chi tiết (nổi bật) */}
+        <div className="pt-4 mt-auto space-y-3">
+          <Link href={`/rooms/${room.id}`} className="block">
             <Button
               variant="outline"
-              size="sm"
-              className="w-full h-10 bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 hover:border-blue-300 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800 dark:hover:bg-blue-900 transition-all duration-200"
-              title="Xem chi tiết"
+              size="lg"
+              className="w-full h-12 border-blue-500 text-blue-500 hover:bg-blue-500/10 hover:text-blue-500 font-medium text-base"
             >
-              <Eye className="w-4 h-4 mr-1.5" />
-              <span className="text-xs font-medium">Chi tiết</span>
+              <Eye className="w-5 h-5 mr-2" />
+              Xem chi tiết phòng
             </Button>
           </Link>
-          <Button
-            onClick={() => onEdit(room)}
-            variant="outline"
-            size="sm"
-            className="col-span-1 h-10 bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800 dark:hover:bg-emerald-900 transition-all duration-200"
-            title="Chỉnh sửa"
-          >
-            <Edit className="w-4 h-4 mr-1.5" />
-            <span className="text-xs font-medium">Sửa</span>
-          </Button>
-          {onConfigureUtilityRates && (
+
+          {/* Các nút phụ - Đơn giản hóa màu sắc */}
+          <div className="grid grid-cols-2 gap-2">
             <Button
-              onClick={() => onConfigureUtilityRates(room)}
+              onClick={() => onEdit(room)}
               variant="outline"
               size="sm"
-              className="col-span-1 h-10 bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 hover:border-amber-300 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800 dark:hover:bg-amber-900 transition-all duration-200"
-              title="Cấu hình đơn giá"
+              className="h-10 text-sm font-medium"
+              title="Chỉnh sửa thông tin phòng"
             >
-              <Zap className="w-4 h-4 mr-1.5" />
-              <span className="text-xs font-medium">Đơn giá</span>
+              <Edit className="w-4 h-4 mr-1" />
+              Sửa
+            </Button>
+            
+            {onConfigureUtilityRates ? (
+              <Button
+                onClick={() => onConfigureUtilityRates(room)}
+                variant="outline"
+                size="sm"
+                className="h-10 text-sm font-medium"
+                title="Cấu hình đơn giá điện nước"
+              >
+                <Zap className="w-4 h-4 mr-1" />
+                Đơn giá
+              </Button>
+            ) : (
+              <Button
+                onClick={() => onDelete(room)}
+                variant="outline"
+                size="sm"
+                className="h-10 text-sm font-medium text-destructive hover:text-destructive disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={room.status === 'OCCUPIED'}
+                title={room.status === 'OCCUPIED' ? 'Không thể xóa phòng đang thuê' : 'Xóa phòng'}
+              >
+                <Trash2 className="w-4 h-4 mr-1" />
+                Xóa
+              </Button>
+            )}
+          </div>
+          
+          {/* Nút xóa riêng nếu có cả đơn giá và xóa */}
+          {onConfigureUtilityRates && (
+            <Button
+              onClick={() => onDelete(room)}
+              variant="outline"
+              size="sm"
+              className="w-full h-10 text-sm font-medium text-destructive hover:text-destructive disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={room.status === 'OCCUPIED'}
+              title={room.status === 'OCCUPIED' ? 'Không thể xóa phòng đang thuê' : 'Xóa phòng'}
+            >
+              <Trash2 className="w-4 h-4 mr-1" />
+              Xóa phòng
             </Button>
           )}
-          <Button
-            onClick={() => onDelete(room)}
-            variant="outline"
-            size="sm"
-            className="col-span-1 h-10 bg-red-50 text-red-700 border-red-200 hover:bg-red-100 hover:border-red-300 dark:bg-red-950 dark:text-red-300 dark:border-red-800 dark:hover:bg-red-900 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-red-50 dark:disabled:hover:bg-red-950"
-            disabled={room.status === 'OCCUPIED'}
-            title={room.status === 'OCCUPIED' ? 'Không thể xóa phòng đang thuê' : 'Xóa phòng'}
-          >
-            <Trash2 className="w-4 h-4 mr-1.5" />
-            <span className="text-xs font-medium">Xóa</span>
-          </Button>
         </div>
       </CardContent>
     </Card>

@@ -284,11 +284,11 @@ export default function BillDetailPage() {
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel disabled={isDeleting}>Hủy</AlertDialogCancel>
+                  <AlertDialogCancel disabled={isDeleting} className="dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200">Hủy</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={handleDelete}
                     disabled={isDeleting}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90 dark:hover:bg-destructive-900 dark:hover:text-destructive-300"
                   >
                     {isDeleting ? 'Đang xóa...' : 'Xóa'}
                   </AlertDialogAction>

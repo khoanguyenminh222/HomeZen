@@ -150,7 +150,7 @@ export default function FeeTypeList() {
                       variant="ghost"
                       size="sm"
                       onClick={() => handleEditClick(feeType)}
-                      className="h-8 w-8 p-0 hover:bg-amber-50 hover:text-amber-600"
+                      className="h-8 w-8 p-0 hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-900 dark:hover:text-amber-300"
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
@@ -198,7 +198,7 @@ export default function FeeTypeList() {
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                          <AlertDialogCancel>Hủy</AlertDialogCancel>
+                          <AlertDialogCancel className="dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200">Hủy</AlertDialogCancel>
                           <AlertDialogAction
                             onClick={() => handleDelete(feeType.id)}
                             variant="destructive"

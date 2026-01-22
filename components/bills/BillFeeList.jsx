@@ -146,7 +146,7 @@ export default function BillFeeList({ billId, fees, isPaid, onUpdate }) {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleEditClick(fee)}
-                        className="h-8 w-8 p-0 hover:bg-amber-50 hover:text-amber-600"
+                        className="h-8 w-8 p-0 hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-900 dark:hover:text-amber-300"
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -163,7 +163,7 @@ export default function BillFeeList({ billId, fees, isPaid, onUpdate }) {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 dark:hover:bg-destructive-900 dark:hover:text-destructive-300"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -185,11 +185,11 @@ export default function BillFeeList({ billId, fees, isPaid, onUpdate }) {
                           <AlertDialogHeader>
                             <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
                             <AlertDialogDescription>
-                              Bạn có chắc chắn muốn xóa phí "{fee.name}"?
+                              Bạn có chắc chắn muốn xóa phí &ldquo;{fee.name}&rdquo;?
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel>Hủy</AlertDialogCancel>
+                            <AlertDialogCancel className="dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200">Hủy</AlertDialogCancel>
                             <AlertDialogAction
                               onClick={() => handleDelete(fee.id)}
                               variant="destructive"

@@ -278,7 +278,7 @@ export default function TenantDetailPage() {
               </CardTitle>
               <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button variant="outline" size="sm" className="w-full sm:w-auto border-amber-200 text-amber-600 hover:bg-amber-50 hover:text-amber-700">
+                  <Button variant="outline" size="sm" className="w-full sm:w-auto border-amber-200 text-amber-600 hover:bg-amber-50 hover:text-amber-700 dark:hover:bg-amber-900 dark:hover:text-amber-300">
                     <Edit className="h-4 w-4 mr-2" />
                     Sửa
                   </Button>
@@ -350,7 +350,7 @@ export default function TenantDetailPage() {
                 }}
               >
                 <DialogTrigger asChild>
-                  <Button variant="outline" size="sm" className="w-full sm:w-auto border-emerald-200 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700">
+                  <Button variant="outline" size="sm" className="w-full sm:w-auto border-emerald-200 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 dark:hover:bg-emerald-900 dark:hover:text-emerald-300">
                     <Plus className="h-4 w-4 mr-2" />
                     Thêm người ở
                   </Button>
@@ -411,7 +411,7 @@ export default function TenantDetailPage() {
                           }}
                         >
                           <AlertDialogTrigger asChild>
-                            <Button variant="outline" size="sm" className="flex-1 sm:flex-none border-red-200 text-red-600 hover:bg-red-50 hover:text-red-600">
+                            <Button variant="outline" size="sm" className="flex-1 sm:flex-none border-red-200 text-red-600 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900 dark:hover:text-red-300">
                               <Trash2 className="h-3 w-3 sm:mr-0" />
                               <span className="sm:hidden ml-1">Xóa</span>
                             </Button>
@@ -433,11 +433,11 @@ export default function TenantDetailPage() {
                             <AlertDialogHeader>
                               <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
                               <AlertDialogDescription>
-                                Bạn có chắc chắn muốn xóa người ở "{occupant.fullName}"?
+                                Bạn có chắc chắn muốn xóa người ở &ldquo;{occupant.fullName}&rdquo;?
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                              <AlertDialogCancel>Hủy</AlertDialogCancel>
+                              <AlertDialogCancel className="dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200">Hủy</AlertDialogCancel>
                               <AlertDialogAction variant="destructive" onClick={() => {
                                 handleDeleteOccupant(occupant.id);
                                 setDeleteOccupantDialogOpen(prev => ({
@@ -572,7 +572,7 @@ export default function TenantDetailPage() {
                             Phòng còn nợ: {formatCurrency(debtInfo.totalDebt)}
                           </p>
                           <p className="text-xs text-orange-700 dark:text-orange-300 mt-1">
-                            Bạn có thể chọn "Trừ vào hóa đơn cuối" để dùng tiền cọc thanh toán nợ.
+                            Bạn có thể chọn &ldquo;Trừ vào hóa đơn cuối&rdquo; để dùng tiền cọc thanh toán nợ.
                           </p>
                         </div>
                       </div>

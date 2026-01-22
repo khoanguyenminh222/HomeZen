@@ -318,24 +318,24 @@ export default function RoomUtilityRateForm({ room, isOpen, onClose, onSuccess }
             </form>
 
             {/* Thông tin hiện tại */}
-            <Card className="bg-gray-50">
+            <Card className="bg-gray-50 dark:bg-gray-900">
               <CardHeader>
                 <CardTitle className="text-sm">Trạng Thái Hiện Tại</CardTitle>
               </CardHeader>
               <CardContent className="text-sm space-y-2">
                 <div className="flex items-center justify-between">
                   <span>Loại đơn giá:</span>
-                  <span className={hasCustomRates ? 'text-blue-600 font-medium' : 'text-gray-600'}>
+                  <span className={hasCustomRates ? 'text-blue-600 font-medium' : 'text-gray-600 dark:text-gray-400'}>
                     {hasCustomRates ? 'Đơn giá riêng' : 'Đơn giá chung'}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Mã phòng:</span>
-                  <span className="font-medium">{room.code}</span>
+                  <span className="font-medium dark:text-gray-400">{room.code}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Giá phòng:</span>
-                  <span className="font-medium">{formatCurrency(room.price)}</span>
+                  <span className="font-medium dark:text-gray-400">{formatCurrency(room.price)}</span>
                 </div>
               </CardContent>
             </Card>

@@ -8,24 +8,26 @@ const ThemeContext = createContext({
 });
 
 export function ThemeProvider({ children, ...props }) {
-  const [theme, setTheme] = useState('light');
+  const [theme, setTheme] = useState(() => {
+    // Initialize theme from localStorage if available
+    if (typeof window !== 'undefined') {
+      const savedTheme = localStorage.getItem('theme');
+      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      return savedTheme || systemTheme;
+    }
+    return 'light';
+  });
 
   useEffect(() => {
     const root = window.document.documentElement;
     
-    // Get saved theme from localStorage
-    const savedTheme = localStorage.getItem('theme');
-    const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    const initialTheme = savedTheme || systemTheme;
-    
-    setTheme(initialTheme);
-    // Chỉ thêm/xóa class 'dark', không cần class 'light'
-    if (initialTheme === 'dark') {
+    // Apply theme class to document
+    if (theme === 'dark') {
       root.classList.add('dark');
     } else {
       root.classList.remove('dark');
     }
-  }, []);
+  }, [theme]);
 
   const value = {
     theme,

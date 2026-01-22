@@ -38,7 +38,7 @@ export default function SettingsLayout({ children }) {
         </div>
         <div className="flex-1 min-w-0">
           <h1 className="text-xl sm:text-2xl font-bold">Cài Đặt Hệ Thống</h1>
-          <p className="text-sm sm:text-base text-gray-600 mt-1">
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mt-1">
             Cấu hình thông tin và tham số cho hệ thống quản lý phòng trọ
           </p>
         </div>
@@ -61,23 +61,23 @@ export default function SettingsLayout({ children }) {
                     'hover:bg-accent/50 hover:border-primary/20',
                     isActive
                       ? 'bg-primary/10 border-primary/30 text-primary'
-                      : 'bg-white border-gray-200 text-gray-700 hover:text-gray-900'
+                      : 'bg-white border-gray-200 text-gray-700 hover:text-gray-900 dark:bg-gray-900 dark:border-gray-800 dark:text-gray-300 dark:hover:text-gray-100'
                   )}
                 >
                   <Icon className={cn(
                     'h-5 w-5 mt-0.5 shrink-0',
-                    isActive ? 'text-primary' : 'text-gray-500'
+                    isActive ? 'text-primary' : 'text-gray-500 dark:text-gray-400'
                   )} />
                   <div className="flex-1 min-w-0">
                     <h3 className={cn(
                       'font-medium text-sm wrap-break-word',
-                      isActive ? 'text-primary' : 'text-gray-900'
+                      isActive ? 'text-primary' : 'text-gray-900 dark:text-gray-100'
                     )}>
                       {item.label}
                     </h3>
                     <p className={cn(
                       'text-xs mt-1 wrap-break-word',
-                      isActive ? 'text-primary/70' : 'text-gray-500'
+                      isActive ? 'text-primary/70' : 'text-gray-500 dark:text-gray-400'
                     )}>
                       {item.description}
                     </p>

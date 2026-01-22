@@ -74,7 +74,7 @@ export default function WaterPricingToggle({
                 {errors.waterPrice.message}
               </p>
             )}
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               Tiền nước = Số m³ tiêu thụ × Giá nước/m³
             </p>
           </div>
@@ -98,23 +98,23 @@ export default function WaterPricingToggle({
                 {errors.waterPricePerPerson.message}
               </p>
             )}
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               Tiền nước = Số người ở × Giá nước/người/tháng
             </p>
           </div>
         )}
 
         {/* Ví dụ tính toán */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-          <h4 className="font-medium text-blue-900 mb-2">Ví dụ tính toán:</h4>
+        <div className="bg-blue-50 border border-blue-200 dark:bg-gray-900 dark:border-gray-800 rounded-lg p-3">
+          <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">Ví dụ tính toán:</h4>
           {waterPricingMethod === 'METER' ? (
-            <div className="text-sm text-blue-800">
+            <div className="text-sm text-blue-800 dark:text-blue-200">
               <p>• Phòng tiêu thụ 5 m³ nước</p>
               <p>• Giá nước: 25.000 VNĐ/m³</p>
               <p>• <strong>Tiền nước = 5 × 25.000 = 125.000 VNĐ</strong></p>
             </div>
           ) : (
-            <div className="text-sm text-blue-800">
+            <div className="text-sm text-blue-800 dark:text-blue-200">
               <p>• Phòng có 3 người ở</p>
               <p>• Giá nước: 100.000 VNĐ/người/tháng</p>
               <p>• <strong>Tiền nước = 3 × 100.000 = 300.000 VNĐ</strong></p>

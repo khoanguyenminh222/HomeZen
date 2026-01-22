@@ -35,7 +35,7 @@ export default function DeleteConfirmDialog({ open, onClose, onConfirm, room }) 
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="gap-2 sm:gap-0">
-          <AlertDialogCancel className="h-12 text-base">
+          <AlertDialogCancel className="h-12 text-base dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200">
             Hủy
           </AlertDialogCancel>
           <AlertDialogAction

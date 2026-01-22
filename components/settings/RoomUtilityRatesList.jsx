@@ -96,14 +96,14 @@ export default function RoomUtilityRatesList() {
   };
 
   const RoomCard = ({ room }) => (
-    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 p-4 border rounded-lg hover:bg-gray-50">
+    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900">
       <div className="flex items-start sm:items-center space-x-3 flex-1 min-w-0">
-        <div className={`p-2 rounded-lg shrink-0 ${room.hasCustomRates ? 'bg-blue-100' : 'bg-gray-100'}`}>
-          <Home className={`h-4 w-4 ${room.hasCustomRates ? 'text-blue-600' : 'text-gray-600'}`} />
+        <div className={`p-2 rounded-lg shrink-0 ${room.hasCustomRates ? 'bg-blue-100 dark:bg-blue-900' : 'bg-gray-100 dark:bg-gray-900'}`}>
+          <Home className={`h-4 w-4 ${room.hasCustomRates ? 'text-blue-600' : 'text-gray-600 dark:text-gray-400'}`} />
         </div>
         <div className="flex-1 min-w-0">
           <h3 className="font-medium wrap-break-word">{room.name}</h3>
-          <div className="flex flex-wrap items-center gap-1 sm:gap-2 text-sm text-gray-600 mt-1">
+          <div className="flex flex-wrap items-center gap-1 sm:gap-2 text-sm text-gray-600 dark:text-gray-400 mt-1">
             <span>Mã: {room.code}</span>
             <span className="hidden sm:inline">•</span>
             <span>Giá: {formatCurrency(room.price)}</span>
@@ -118,7 +118,7 @@ export default function RoomUtilityRatesList() {
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
         {room.hasCustomRates ? (
           <>
-            <Badge variant="outline" className="text-blue-700 border-blue-300 w-fit">
+            <Badge variant="outline" className="text-blue-700 border-blue-300 dark:text-blue-300 dark:border-blue-700 w-fit">
               <Settings className="h-3 w-3 mr-1" />
               Đơn giá riêng
             </Badge>
@@ -133,7 +133,7 @@ export default function RoomUtilityRatesList() {
           </>
         ) : (
           <>
-            <Badge variant="outline" className="text-gray-600 border-gray-300 w-fit">
+            <Badge variant="outline" className="text-gray-600 border-gray-300 dark:text-gray-400 dark:border-gray-700 w-fit">
               Đơn giá chung
             </Badge>
             <Button
@@ -154,11 +154,11 @@ export default function RoomUtilityRatesList() {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2 text-lg sm:text-xl">
+          <CardTitle className="flex items-center space-x-2 text-lg sm:text-xl text-gray-900 dark:text-gray-100">
             <Home className="h-5 w-5 shrink-0" />
             <span className="wrap-break-word">Quản Lý Đơn Giá Theo Phòng</span>
           </CardTitle>
-          <CardDescription className="text-sm sm:text-base">
+          <CardDescription className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
             Xem và quản lý đơn giá điện nước cho từng phòng. Phòng có thể sử dụng đơn giá chung hoặc đơn giá riêng.
           </CardDescription>
         </CardHeader>
@@ -166,7 +166,7 @@ export default function RoomUtilityRatesList() {
           {/* Tìm kiếm */}
           <div className="mb-6">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-600" />
               <Input
                 placeholder="Tìm kiếm phòng theo mã hoặc tên..."
                 value={searchTerm}
@@ -177,7 +177,7 @@ export default function RoomUtilityRatesList() {
           </div>
 
           {loading ? (
-            <Loading text="Đang tải danh sách phòng..." />
+            <Loading text="Đang tải danh sách phòng..." className="text-gray-600 dark:text-gray-400" />
           ) : (
             <div className="space-y-6">
               {/* Thống kê */}

@@ -104,8 +104,8 @@ export default function RoomDetailPage() {
             <h1 className="text-2xl sm:text-3xl font-bold">{room.code}</h1>
             <p className="text-lg text-muted-foreground mt-1">{room.name}</p>
           </div>
-          <Badge className={`${statusColors[room.status]} text-sm px-3 py-1`}>
-            {statusText[room.status]}
+          <Badge className={`${statusColors[room.status]} text-sm px-3 py-1 hover:bg-${statusColors[room.status]}/10 hover:text-${statusColors[room.status]}`}>
+              {statusText[room.status]}
           </Badge>
         </div>
       </div>
