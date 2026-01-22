@@ -30,6 +30,13 @@ export async function proxy(request) {
     return NextResponse.redirect(loginUrl);
   }
 
+  // Check if user is active
+  if (token.isActive === false) {
+    const loginUrl = new URL('/login', request.url);
+    loginUrl.searchParams.set('error', 'account_deactivated');
+    return NextResponse.redirect(loginUrl);
+  }
+
   return NextResponse.next();
 }
 

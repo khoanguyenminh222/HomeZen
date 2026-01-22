@@ -31,6 +31,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           throw new Error('Tên đăng nhập hoặc mật khẩu không đúng');
         }
 
+        // Check if user is active
+        if (!user.isActive) {
+          throw new Error('Tài khoản đã bị vô hiệu hóa');
+        }
+
         // Verify password
         const isValid = await verifyPassword(credentials.password, user.password);
 
@@ -42,6 +47,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return {
           id: user.id,
           username: user.username,
+          role: user.role,
+          isActive: user.isActive,
         };
       },
     }),

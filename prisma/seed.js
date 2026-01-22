@@ -9,19 +9,25 @@ async function main() {
   // Hash password
   const hashedPassword = await bcrypt.hash('admin123', 10);
 
-  // Create default admin user
+  // Create default Super Admin user
   const user = await prisma.user.upsert({
     where: { username: 'admin' },
-    update: {},
+    update: {
+      role: 'SUPER_ADMIN',
+      isActive: true,
+    },
     create: {
       username: 'admin',
       password: hashedPassword,
+      role: 'SUPER_ADMIN',
+      isActive: true,
     },
   });
 
-  console.log('✅ Created default user:', { username: user.username });
+  console.log('✅ Created default Super Admin user:', { username: user.username, role: user.role });
   console.log('   Username: admin');
   console.log('   Password: admin123');
+  console.log('   Role: SUPER_ADMIN');
 }
 
 main()

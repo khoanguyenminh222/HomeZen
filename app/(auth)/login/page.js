@@ -48,6 +48,8 @@ export default function LoginPage() {
       if (result?.error) {
         setError(result.error);
       } else if (result?.ok) {
+        // Role-based redirect
+        // TODO: Add Super Admin dashboard route when implemented
         router.push('/');
         router.refresh();
       }
