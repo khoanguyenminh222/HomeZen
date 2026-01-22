@@ -19,6 +19,7 @@ export async function GET(request) {
     const year = searchParams.get('year') ? parseInt(searchParams.get('year')) : null;
     const isPaid = searchParams.get('isPaid');
     const isPartial = isPaid === 'partial';
+    const status = searchParams.get('status'); // Hỗ trợ status=unpaid
 
     // Xây dựng filter
     const where = {};
@@ -27,10 +28,13 @@ export async function GET(request) {
     if (year) where.year = year;
     
     // Xử lý filter isPaid: 'true', 'false', 'partial', hoặc null
-    if (isPaid === 'true') {
-      where.isPaid = true;
-    } else if (isPaid === 'false') {
-      where.isPaid = false;
+    // Nếu status=unpaid, không filter ở đây, sẽ filter sau để bao gồm cả thanh toán một phần
+    if (status !== 'unpaid') {
+      if (isPaid === 'true') {
+        where.isPaid = true;
+      } else if (isPaid === 'false') {
+        where.isPaid = false;
+      }
     }
     // Nếu là 'partial', không thêm filter vào where, sẽ filter sau
 
@@ -55,7 +59,17 @@ export async function GET(request) {
 
     // Filter theo trạng thái thanh toán
     let filteredBills = bills;
-    if (isPartial) {
+    if (status === 'unpaid' || isPaid === 'false') {
+      // Filter hóa đơn chưa thanh toán (bao gồm cả thanh toán một phần)
+      filteredBills = bills.filter(bill => {
+        const totalCost = Number(bill.totalCost || 0);
+        const paidAmount = bill.paidAmount ? Number(bill.paidAmount) : 0;
+        const remainingDebt = totalCost - paidAmount;
+        
+        // Chưa thanh toán hoặc thanh toán một phần (còn nợ)
+        return remainingDebt > 0;
+      });
+    } else if (isPartial) {
       // Filter thanh toán một phần
       filteredBills = bills.filter(bill => {
         const totalCost = Number(bill.totalCost || 0);

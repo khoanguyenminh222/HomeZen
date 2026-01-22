@@ -1,38 +1,92 @@
-import Link from 'next/link';
+'use client';
 
+import { useEffect, useState } from 'react';
+import DashboardStats from '@/components/dashboard/DashboardStats';
+import RoomStatusChart from '@/components/dashboard/RoomStatusChart';
+import RevenueChart from '@/components/dashboard/RevenueChart';
+import UnpaidBillsList from '@/components/dashboard/UnpaidBillsList';
+import MeterReadingReminders from '@/components/dashboard/MeterReadingReminders';
+import DebtWarningList from '@/components/dashboard/DebtWarningList';
+import { Card, CardContent } from '@/components/ui/card';
+
+/**
+ * Trang Dashboard (Tổng Quan)
+ * Requirements: 13.1-13.11
+ */
 export default function DashboardPage() {
+  const [stats, setStats] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        const response = await fetch('/api/dashboard/stats');
+        if (!response.ok) {
+          throw new Error('Không thể tải thống kê');
+        }
+        const data = await response.json();
+        setStats(data);
+      } catch (err) {
+        console.error('Lỗi khi tải dashboard stats:', err);
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchStats();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex h-[50vh] items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 text-center text-red-500">
+        <p>Đã xảy ra lỗi: {error}</p>
+        <p className="text-sm mt-2 text-muted-foreground">Vui lòng tải lại trang.</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
-      <div className="bg-card rounded-lg shadow p-6 border">
-        <h2 className="text-xl font-semibold mb-4 text-card-foreground">Chào mừng đến với Hệ Thống Quản Lý Phòng Trọ</h2>
-        <p className="text-muted-foreground mb-4">
-          Đăng nhập thành công! Hệ thống xác thực đã hoạt động.
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <div className="flex items-center justify-between">
+        <h2 className="text-3xl font-bold tracking-tight">Tổng Quan</h2>
+        <p className="text-muted-foreground">
+          Tháng {stats?.currentMonth}/{stats?.currentYear}
         </p>
-        <div className="bg-accent border border-primary/20 rounded-lg p-4">
-          <p className="text-accent-foreground mb-2">
-            <strong>Bước tiếp theo:</strong> Cấu hình thông tin nhà trọ của bạn
-          </p>
-          <Link 
-            href="/settings/property"
-            className="inline-block px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
-          >
-            Đi đến Cài Đặt →
-          </Link>
-        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-card rounded-lg shadow p-6 border">
-          <h3 className="text-lg font-semibold text-card-foreground mb-2">Phòng Trống</h3>
-          <p className="text-3xl font-bold text-primary">0</p>
+      {/* Thống kê tổng quan */}
+      <DashboardStats stats={stats} />
+
+      <div className="grid grid-cols-1 lg:grid-cols-7 gap-6">
+        {/* Cột chính (Rộng hơn) */}
+        <div className="lg:col-span-4 space-y-6">
+          {/* Biểu đồ doanh thu */}
+          <RevenueChart />
+
+          {/* Danh sách hóa đơn chưa thanh toán */}
+          <UnpaidBillsList />
         </div>
-        <div className="bg-card rounded-lg shadow p-6 border">
-          <h3 className="text-lg font-semibold text-card-foreground mb-2">Phòng Đã Thuê</h3>
-          <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">0</p>
-        </div>
-        <div className="bg-card rounded-lg shadow p-6 border">
-          <h3 className="text-lg font-semibold text-card-foreground mb-2">Hóa Đơn Chưa Thanh Toán</h3>
-          <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">0</p>
+
+        {/* Cột phụ (Bên phải) */}
+        <div className="lg:col-span-3 space-y-6">
+          {/* Biểu đồ trạng thái phòng */}
+          <RoomStatusChart stats={stats} />
+
+          {/* Nhắc nhở chốt số - Rất quan trọng */}
+          <MeterReadingReminders />
+
+          {/* Cảnh báo nợ - Rất quan trọng */}
+          <DebtWarningList />
         </div>
       </div>
     </div>
