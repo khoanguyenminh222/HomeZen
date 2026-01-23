@@ -2,15 +2,18 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/app/api/auth/[...nextauth]/route';
 import prisma from '@/lib/prisma';
 import { updateRoomSchema } from '@/lib/validations/room';
+import { validateResourceOwnership, isSuperAdmin } from '@/lib/middleware/authorization';
+import { logUnauthorizedAccess, logAuthorizationViolation } from '@/lib/middleware/security-logging';
 
 /**
  * GET /api/rooms/[id] - Lấy chi tiết phòng
- * Requirements: 2.6
+ * Requirements: 2.6, 5.1, 5.2
  */
 export async function GET(request, { params }) {
   try {
     const session = await auth();
     if (!session) {
+      logUnauthorizedAccess(request, null, 'No session found');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -35,6 +38,18 @@ export async function GET(request, { params }) {
       );
     }
 
+    // Validate property access
+    if (!isSuperAdmin(session)) {
+      const hasAccess = await validateResourceOwnership(session.user.id, id, 'room');
+      if (!hasAccess) {
+        logAuthorizationViolation(request, session, `No access to room ${id}`, id, 'room');
+        return NextResponse.json(
+          { error: 'Forbidden: No access to this room' },
+          { status: 403 }
+        );
+      }
+    }
+
     // Convert Decimal to number
     const roomWithNumber = {
       ...room,
@@ -53,12 +68,13 @@ export async function GET(request, { params }) {
 
 /**
  * PUT /api/rooms/[id] - Cập nhật phòng
- * Requirements: 2.7
+ * Requirements: 2.7, 5.1, 5.2
  */
 export async function PUT(request, { params }) {
   try {
     const session = await auth();
     if (!session) {
+      logUnauthorizedAccess(request, null, 'No session found');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -89,10 +105,25 @@ export async function PUT(request, { params }) {
       );
     }
 
-    // If updating code, check uniqueness (Requirements: 2.2)
+    // Validate property access
+    if (!isSuperAdmin(session)) {
+      const hasAccess = await validateResourceOwnership(session.user.id, id, 'room');
+      if (!hasAccess) {
+        logAuthorizationViolation(request, session, `No access to room ${id}`, id, 'room');
+        return NextResponse.json(
+          { error: 'Forbidden: No access to this room' },
+          { status: 403 }
+        );
+      }
+    }
+
+    // If updating code, check uniqueness within the same property owner (Requirements: 2.2)
     if (validatedData.code && validatedData.code !== existingRoom.code) {
-      const roomWithSameCode = await prisma.room.findUnique({
-        where: { code: validatedData.code },
+      const roomWithSameCode = await prisma.room.findFirst({
+        where: { 
+          code: validatedData.code,
+          userId: existingRoom.userId
+        },
       });
 
       if (roomWithSameCode) {
@@ -135,12 +166,13 @@ export async function PUT(request, { params }) {
 
 /**
  * DELETE /api/rooms/[id] - Xóa phòng
- * Requirements: 2.8, 2.9 - Không cho phép xóa phòng có người thuê
+ * Requirements: 2.8, 2.9, 5.1, 5.2 - Không cho phép xóa phòng có người thuê
  */
 export async function DELETE(request, { params }) {
   try {
     const session = await auth();
     if (!session) {
+      logUnauthorizedAccess(request, null, 'No session found');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -164,6 +196,18 @@ export async function DELETE(request, { params }) {
         { error: 'Không tìm thấy phòng' },
         { status: 404 }
       );
+    }
+
+    // Validate property access
+    if (!isSuperAdmin(session)) {
+      const hasAccess = await validateResourceOwnership(session.user.id, id, 'room');
+      if (!hasAccess) {
+        logAuthorizationViolation(request, session, `No access to room ${id}`, id, 'room');
+        return NextResponse.json(
+          { error: 'Forbidden: No access to this room' },
+          { status: 403 }
+        );
+      }
     }
 
     // Check if room is occupied (Requirements: 2.9)

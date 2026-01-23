@@ -6,6 +6,7 @@ import {
   updateRoomUtilityRateSchema,
   validateTieredRates 
 } from '@/lib/validations/utilityRate';
+import { validateResourceOwnership } from '@/lib/middleware/authorization';
 
 // GET /api/rooms/[id]/utility-rates - Lấy đơn giá riêng của phòng
 export async function GET(request, { params }) {
@@ -33,6 +34,15 @@ export async function GET(request, { params }) {
       return NextResponse.json(
         { error: 'Không tìm thấy phòng' },
         { status: 404 }
+      );
+    }
+
+    // Validate property access
+    const hasAccess = await validateResourceOwnership(session.user.id, roomId, 'room');
+    if (!hasAccess) {
+      return NextResponse.json(
+        { error: 'Forbidden: No access to this room' },
+        { status: 403 }
       );
     }
 
@@ -88,6 +98,15 @@ export async function PUT(request, { params }) {
       return NextResponse.json(
         { error: 'Không tìm thấy phòng' },
         { status: 404 }
+      );
+    }
+
+    // Validate property access
+    const hasAccess = await validateResourceOwnership(session.user.id, roomId, 'room');
+    if (!hasAccess) {
+      return NextResponse.json(
+        { error: 'Forbidden: No access to this room' },
+        { status: 403 }
       );
     }
 
@@ -224,6 +243,15 @@ export async function DELETE(request, { params }) {
       return NextResponse.json(
         { error: 'Không tìm thấy phòng' },
         { status: 404 }
+      );
+    }
+
+    // Validate property access
+    const hasAccess = await validateResourceOwnership(session.user.id, roomId, 'room');
+    if (!hasAccess) {
+      return NextResponse.json(
+        { error: 'Forbidden: No access to this room' },
+        { status: 403 }
       );
     }
 

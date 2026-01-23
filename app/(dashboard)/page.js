@@ -23,6 +23,11 @@ export default function DashboardPage() {
       try {
         const response = await fetch('/api/dashboard/stats');
         if (!response.ok) {
+          if (response.status === 401) {
+            // Session expired, redirect to login
+            window.location.href = '/login?error=Session expired';
+            return;
+          }
           throw new Error('Không thể tải thống kê');
         }
         const data = await response.json();

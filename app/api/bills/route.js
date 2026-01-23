@@ -4,12 +4,15 @@ import prisma from '@/lib/prisma';
 import { createBillSchema } from '@/lib/validations/bill';
 import { calculateBill } from '@/lib/bills/calculateBill';
 import { getUtilityRateForRoom } from '@/lib/bills/getUtilityRateForRoom';
+import { isSuperAdmin, validateResourceOwnership } from '@/lib/middleware/authorization';
+import { logUnauthorizedAccess, logAuthorizationViolation } from '@/lib/middleware/security-logging';
 
 // GET /api/bills - Danh sách hóa đơn (với filters)
 export async function GET(request) {
   try {
     const session = await auth();
     if (!session) {
+      logUnauthorizedAccess(request, null, 'No session found');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -23,7 +26,29 @@ export async function GET(request) {
 
     // Xây dựng filter
     const where = {};
-    if (roomId) where.roomId = roomId;
+    if (roomId) {
+      where.roomId = roomId;
+      
+      // Validate property access for room if Property Owner
+      if (!isSuperAdmin(session)) {
+        const hasAccess = await validateResourceOwnership(session.user.id, roomId, 'room');
+        if (!hasAccess) {
+          logAuthorizationViolation(request, session, `No access to room ${roomId}`, roomId, 'room');
+          return NextResponse.json(
+            { error: 'Forbidden: No access to this room' },
+            { status: 403 }
+          );
+        }
+      }
+    } else {
+      // If no roomId specified, filter by userId for Property Owners
+      if (!isSuperAdmin(session)) {
+        where.room = {
+          userId: session.user.id
+        };
+      }
+    }
+    
     if (month) where.month = month;
     if (year) where.year = year;
     
@@ -106,6 +131,7 @@ export async function POST(request) {
   try {
     const session = await auth();
     if (!session) {
+      logUnauthorizedAccess(request, null, 'No session found');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -131,6 +157,18 @@ export async function POST(request) {
       );
     }
 
+    // Validate property access for room
+    if (!isSuperAdmin(session)) {
+      const hasAccess = await validateResourceOwnership(session.user.id, validatedData.roomId, 'room');
+      if (!hasAccess) {
+        logAuthorizationViolation(request, session, `No access to room ${validatedData.roomId}`, validatedData.roomId, 'room');
+        return NextResponse.json(
+          { error: 'Forbidden: No access to this room' },
+          { status: 403 }
+        );
+      }
+    }
+
     // Kiểm tra hóa đơn đã tồn tại chưa
     const existingBill = await prisma.bill.findUnique({
       where: {
@@ -150,13 +188,25 @@ export async function POST(request) {
     }
 
     // Lấy PropertyInfo để có max meter chung
-    const propertyInfo = await prisma.propertyInfo.findFirst();
-    if (!propertyInfo) {
+    const user = await prisma.user.findUnique({
+      where: { id: room.userId },
+      include: {
+        propertyInfo: true
+      }
+    });
+
+    if (!user || !user.propertyInfo) {
       return NextResponse.json(
-        { error: 'Chưa cấu hình thông tin nhà trọ' },
+        { error: 'Không tìm thấy thông tin property' },
         { status: 400 }
       );
     }
+
+    // Create propertyInfo-like object for compatibility
+    const propertyInfo = {
+      maxElectricMeter: room.maxElectricMeter || user.propertyInfo.maxElectricMeter || 999999,
+      maxWaterMeter: room.maxWaterMeter || user.propertyInfo.maxWaterMeter || 99999,
+    };
 
     // Lấy utility rate (riêng hoặc chung)
     const utilityRate = await getUtilityRateForRoom(validatedData.roomId);

@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { NavLinks } from '@/components/ui/nav-links';
 import { LogoutButton } from '@/components/ui/LogoutButton';
-import { User } from 'lucide-react';
+import { User, Shield } from 'lucide-react';
 
 export default async function DashboardLayout({ children }) {
   const session = await auth();
@@ -12,6 +12,13 @@ export default async function DashboardLayout({ children }) {
   if (!session) {
     redirect('/login');
   }
+
+  // Check if user is active
+  if (!session.user?.isActive) {
+    redirect('/login?error=Account is deactivated');
+  }
+
+  const isSuperAdmin = session.user?.role === 'SUPER_ADMIN';
 
   return (
     <div className="min-h-screen bg-background">
@@ -41,10 +48,16 @@ export default async function DashboardLayout({ children }) {
             <div className="flex items-center gap-2 sm:gap-3">
               <ThemeToggle />
               <div className="flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-lg bg-muted/50">
+                {isSuperAdmin && <Shield className="h-4 w-4 text-primary" />}
                 <User className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm font-medium text-foreground hidden sm:inline">
                   {session.user?.username || 'Admin'}
                 </span>
+                {isSuperAdmin && (
+                  <span className="text-xs text-primary font-semibold hidden sm:inline">
+                    (Admin)
+                  </span>
+                )}
               </div>
               <div className="hidden sm:block">
                 <LogoutButton />

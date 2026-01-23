@@ -5,7 +5,7 @@ import { propertyInfoSchema } from '@/lib/validations/propertyInfo';
 
 /**
  * GET /api/settings/property
- * Lấy thông tin nhà trọ
+ * Lấy thông tin nhà trọ của user hiện tại
  * Validates: Requirements 4.1, 4.8
  */
 export async function GET() {
@@ -19,8 +19,10 @@ export async function GET() {
       );
     }
 
-    // Lấy thông tin nhà trọ (chỉ có 1 bản ghi)
-    const propertyInfo = await prisma.propertyInfo.findFirst();
+    // Lấy thông tin nhà trọ của user hiện tại
+    const propertyInfo = await prisma.propertyInfo.findUnique({
+      where: { userId: session.user.id }
+    });
 
     if (!propertyInfo) {
       return NextResponse.json(
@@ -44,7 +46,7 @@ export async function GET() {
 
 /**
  * POST /api/settings/property
- * Tạo hoặc cập nhật thông tin nhà trọ
+ * Tạo hoặc cập nhật thông tin nhà trọ của user hiện tại
  * Validates: Requirements 4.1-4.8
  */
 export async function POST(request) {
@@ -76,7 +78,9 @@ export async function POST(request) {
     const data = validationResult.data;
 
     // Kiểm tra xem đã có thông tin nhà trọ chưa
-    const existingPropertyInfo = await prisma.propertyInfo.findFirst();
+    const existingPropertyInfo = await prisma.propertyInfo.findUnique({
+      where: { userId: session.user.id }
+    });
 
     let propertyInfo;
     if (existingPropertyInfo) {
@@ -95,9 +99,10 @@ export async function POST(request) {
         },
       });
     } else {
-      // Tạo mới thông tin nhà trọ
+      // Tạo mới thông tin nhà trọ cho user hiện tại
       propertyInfo = await prisma.propertyInfo.create({
         data: {
+          userId: session.user.id,
           name: data.name,
           address: data.address,
           phone: data.phone,
@@ -119,6 +124,15 @@ export async function POST(request) {
     );
   } catch (error) {
     console.error('Error saving property info:', error);
+    
+    // Handle unique constraint error (user already has propertyInfo)
+    if (error.code === 'P2002') {
+      return NextResponse.json(
+        { error: 'User đã có thông tin property. Vui lòng sử dụng PATCH để cập nhật.' },
+        { status: 400 }
+      );
+    }
+    
     return NextResponse.json(
       { error: 'Không thể lưu thông tin nhà trọ. Vui lòng thử lại.' },
       { status: 500 }

@@ -8,21 +8,21 @@ import { SuperAdminService } from '@/lib/services/superAdmin.service';
  * Get system statistics
  * Requirements: 1.3
  */
-export async function GET() {
-  return requireSuperAdmin(async () => {
-    try {
-      const stats = await SuperAdminService.getSystemStats();
+async function getHandler() {
+  try {
+    const stats = await SuperAdminService.getSystemStats();
 
-      return NextResponse.json(
-        { data: stats },
-        { status: 200 }
-      );
-    } catch (error) {
-      console.error('Error getting system stats:', error);
-      return NextResponse.json(
-        { error: error.message || 'Failed to get system stats' },
-        { status: 500 }
-      );
-    }
-  })();
+    return NextResponse.json(
+      { data: stats },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error('Error getting system stats:', error);
+    return NextResponse.json(
+      { error: error.message || 'Failed to get system stats' },
+      { status: 500 }
+    );
+  }
 }
+
+export const GET = requireSuperAdmin(getHandler);

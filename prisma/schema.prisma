@@ -9,7 +9,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Model User cho xác thực
+// Model User cho xác thực và property owner
 model User {
   id        String   @id @default(cuid())
   username  String   @unique
@@ -19,16 +19,22 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
-  // Quan hệ
-  propertyOwnerships PropertyOwnership[]
+  // Quan hệ - one-to-one với PropertyInfo
+  propertyInfo      PropertyInfo?
+  
+  // Quan hệ - direct ownership (one-to-many)
+  rooms             Room[]
+  feeTypes          FeeType[]
+  utilityRates      UtilityRate[]
   
   @@index([role])
   @@index([isActive])
 }
 
-// Thông tin nhà trọ (legacy - giữ lại để tương thích ngược)
+// Thông tin nhà trọ (one-to-one với User)
 model PropertyInfo {
   id                String   @id @default(cuid())
+  userId            String   @unique // Foreign key to User (property owner)
   name              String
   address           String
   phone             String
@@ -36,49 +42,17 @@ model PropertyInfo {
   email             String?
   logoUrl           String?  // Cloudinary URL
   maxElectricMeter  Int      @default(999999)  // Giá trị tối đa đồng hồ điện (6 chữ số)
-  maxWaterMeter     Int      @default(99999)  // Giá trị tối đa đồng hồ nước (5 chữ số)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-}
-
-// Model Property cho multi-tenant (extends PropertyInfo concept)
-model Property {
-  id                String   @id @default(cuid())
-  name              String
-  address           String
-  phone             String
-  ownerName         String
-  email             String?
-  logoUrl           String?  // Cloudinary URL
-  maxElectricMeter  Int      @default(999999)  // Giá trị tối đa đồng hồ điện (6 chữ số)
-  maxWaterMeter     Int      @default(99999)  // Giá trị tối đa đồng hồ nước (5 chữ số)
+  maxWaterMeter     Int      @default(99999)   // Giá trị tối đa đồng hồ nước (5 chữ số)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
   
   // Quan hệ
-  propertyOwnerships PropertyOwnership[]
-  rooms             Room[]
-  feeTypes          FeeType[]
-  utilityRates      UtilityRate[]
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
+  @@index([userId])
   @@index([name])
 }
 
-// Junction table cho User-Property many-to-many relationship
-model PropertyOwnership {
-  id         String   @id @default(cuid())
-  userId     String
-  propertyId String
-  createdAt  DateTime @default(now())
-  
-  // Quan hệ
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  
-  @@unique([userId, propertyId])
-  @@index([userId])
-  @@index([propertyId])
-}
 
 // Model Phòng
 model Room {
@@ -90,21 +64,21 @@ model Room {
   meterReadingDay   Int?      // Ngày chốt số hàng tháng (1-31)
   maxElectricMeter  Int?      // Override giá trị max đồng hồ điện cho phòng này (null = dùng chung)
   maxWaterMeter     Int?      // Override giá trị max đồng hồ nước cho phòng này (null = dùng chung)
-  propertyId        String?   // Foreign key to Property (nullable for migration)
+  userId            String?   // Foreign key to User (property owner) - nullable for migration
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
   
   // Quan hệ
-  property          Property? @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  user              User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
   tenant            Tenant?
   utilityRates      UtilityRate?
   bills             Bill[]
   roomFees          RoomFee[]
   
-  @@unique([propertyId, code]) // Mã phòng unique trong từng property (propertyId có thể null trong migration)
+  @@unique([userId, code]) // Mã phòng unique trong từng property owner (userId có thể null trong migration)
   @@index([status])
   @@index([code])
-  @@index([propertyId])
+  @@index([userId])
 }
 
 enum RoomStatus {
@@ -141,12 +115,12 @@ model UtilityRate {
   waterPricePerPerson   Decimal?  @db.Decimal(10, 0)  // VNĐ/người/tháng
   useTieredPricing      Boolean   @default(false)
   isGlobal              Boolean   @default(false)
-  propertyId            String?   // Foreign key to Property (nullable for migration)
+  userId                String?   // Foreign key to User (property owner) - nullable for migration
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
   
   // Quan hệ
-  property              Property? @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  user                  User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
   // Quan hệ (cho đơn giá riêng từng phòng)
   roomId                String?   @unique
   room                  Room?     @relation(fields: [roomId], references: [id], onDelete: Cascade)
@@ -156,7 +130,7 @@ model UtilityRate {
   
   @@index([isGlobal])
   @@index([roomId])
-  @@index([propertyId])
+  @@index([userId])
 }
 
 // Bậc thang giá điện
@@ -297,17 +271,17 @@ model FeeType {
   name          String    // Wifi, Tiền rác, Tiền gửi xe, etc.
   description   String?   // Mô tả phí
   isActive      Boolean   @default(true) // Có hiển thị trong danh sách không
-  propertyId    String?   // Foreign key to Property (nullable for migration)
+  userId        String?   // Foreign key to User (property owner) - nullable for migration
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   
   // Quan hệ
-  property      Property? @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  user          User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
   roomFees      RoomFee[]
   
-  @@unique([propertyId, name]) // Tên phí unique trong từng property (propertyId có thể null trong migration)
+  @@unique([userId, name]) // Tên phí unique trong từng property owner (userId có thể null trong migration)
   @@index([isActive])
-  @@index([propertyId])
+  @@index([userId])
 }
 
 // Phí được gán cho từng phòng
@@ -343,28 +317,4 @@ model BillFee {
   bill        Bill      @relation(fields: [billId], references: [id], onDelete: Cascade)
   
   @@index([billId])
-}
-
-// Model ReportTemplate (đã có trong database từ migration trước)
-enum ReportType {
-  BILL_BASIC
-  BILL_DETAILED
-  BILL_OFFICIAL
-  REPORT_BASIC
-  REPORT_DETAILED
-}
-
-model ReportTemplate {
-  id          String     @id @default(cuid())
-  name        String
-  type        ReportType
-  logoUrl     String?
-  primaryColor String?
-  isDefault   Boolean    @default(false)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  
-  @@unique([name, type])
-  @@index([type])
-  @@index([isDefault])
 }

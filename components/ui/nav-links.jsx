@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import * as React from 'react';
 import { createPortal } from 'react-dom';
 import * as NavigationMenuPrimitive from '@radix-ui/react-navigation-menu';
@@ -20,7 +21,9 @@ import {
   FileText,
   Receipt,
   DollarSign,
-  Calendar
+  Calendar,
+  Shield,
+  BarChart3
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -102,8 +105,8 @@ const NavigationMenuViewport = React.forwardRef(({ className, ...props }, ref) =
 ));
 NavigationMenuViewport.displayName = NavigationMenuPrimitive.Viewport.displayName;
 
-// Cấu trúc menu với hỗ trợ menu cha-con
-const navItems = [
+// Menu items cho Property Owner
+const propertyOwnerNavItems = [
   {
     href: '/',
     label: 'Dashboard',
@@ -149,6 +152,30 @@ const navItems = [
         icon: DollarSign,
       },
     ],
+  },
+];
+
+// Menu items cho Super Admin
+const superAdminNavItems = [
+  {
+    href: '/admin',
+    label: 'Dashboard',
+    icon: LayoutDashboard,
+  },
+  {
+    href: '/admin/property-owners',
+    label: 'Quản lý chủ trọ',
+    icon: Users,
+  },
+  {
+    href: '/admin/properties',
+    label: 'Quản lý nhà trọ',
+    icon: Building2,
+  },
+  {
+    href: '/admin/stats',
+    label: 'Thống kê hệ thống',
+    icon: BarChart3,
   },
 ];
 
@@ -349,8 +376,13 @@ function MobileNavItem({ item, pathname, onClose }) {
 
 export function NavLinks() {
   const pathname = usePathname();
+  const { data: session } = useSession();
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+
+  // Get role-based menu items
+  const isSuperAdmin = session?.user?.role === 'SUPER_ADMIN';
+  const navItems = isSuperAdmin ? superAdminNavItems : propertyOwnerNavItems;
 
   useEffect(() => {
     // Use a timeout to avoid synchronous setState in effect

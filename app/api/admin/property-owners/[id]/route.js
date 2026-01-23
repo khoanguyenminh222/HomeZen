@@ -8,43 +8,43 @@ import { SuperAdminService } from '@/lib/services/superAdmin.service';
  * Activate a property owner account
  * Requirements: 1.4
  */
-export async function PATCH(request, { params }) {
-  return requireSuperAdmin(async () => {
-    try {
-      const { id } = params;
-      const body = await request.json();
-      const { action } = body;
+async function patchHandler(request, { params }) {
+  try {
+    const { id } = params;
+    const body = await request.json();
+    const { action } = body;
 
-      if (action === 'activate') {
-        const user = await SuperAdminService.activatePropertyOwner(id);
-        return NextResponse.json(
-          {
-            message: 'Property owner activated successfully',
-            data: user
-          },
-          { status: 200 }
-        );
-      } else if (action === 'deactivate') {
-        const user = await SuperAdminService.deactivatePropertyOwner(id);
-        return NextResponse.json(
-          {
-            message: 'Property owner deactivated successfully',
-            data: user
-          },
-          { status: 200 }
-        );
-      } else {
-        return NextResponse.json(
-          { error: 'Invalid action. Use "activate" or "deactivate"' },
-          { status: 400 }
-        );
-      }
-    } catch (error) {
-      console.error('Error updating property owner:', error);
+    if (action === 'activate') {
+      const user = await SuperAdminService.activatePropertyOwner(id);
       return NextResponse.json(
-        { error: error.message || 'Failed to update property owner' },
-        { status: 500 }
+        {
+          message: 'Property owner activated successfully',
+          data: user
+        },
+        { status: 200 }
+      );
+    } else if (action === 'deactivate') {
+      const user = await SuperAdminService.deactivatePropertyOwner(id);
+      return NextResponse.json(
+        {
+          message: 'Property owner deactivated successfully',
+          data: user
+        },
+        { status: 200 }
+      );
+    } else {
+      return NextResponse.json(
+        { error: 'Invalid action. Use "activate" or "deactivate"' },
+        { status: 400 }
       );
     }
-  })();
+  } catch (error) {
+    console.error('Error updating property owner:', error);
+    return NextResponse.json(
+      { error: error.message || 'Failed to update property owner' },
+      { status: 500 }
+    );
+  }
 }
+
+export const PATCH = requireSuperAdmin(patchHandler);

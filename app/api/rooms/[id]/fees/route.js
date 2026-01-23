@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/app/api/auth/[...nextauth]/route';
 import prisma from '@/lib/prisma';
 import { createRoomFeeSchema } from '@/lib/validations/roomFee';
+import { validateResourceOwnership } from '@/lib/middleware/authorization';
 
 // GET /api/rooms/[id]/fees - Lấy danh sách phí của phòng
 export async function GET(request, { params }) {
@@ -24,6 +25,15 @@ export async function GET(request, { params }) {
       return NextResponse.json(
         { error: 'Không tìm thấy phòng' },
         { status: 404 }
+      );
+    }
+
+    // Validate property access
+    const hasAccess = await validateResourceOwnership(session.user.id, roomId, 'room');
+    if (!hasAccess) {
+      return NextResponse.json(
+        { error: 'Forbidden: No access to this room' },
+        { status: 403 }
       );
     }
 
@@ -84,6 +94,15 @@ export async function POST(request, { params }) {
       );
     }
 
+    // Validate property access for room
+    const hasRoomAccess = await validateResourceOwnership(session.user.id, roomId, 'room');
+    if (!hasRoomAccess) {
+      return NextResponse.json(
+        { error: 'Forbidden: No access to this room' },
+        { status: 403 }
+      );
+    }
+
     // Kiểm tra loại phí có tồn tại không
     const feeType = await prisma.feeType.findUnique({
       where: { id: validatedData.feeTypeId }
@@ -93,6 +112,14 @@ export async function POST(request, { params }) {
       return NextResponse.json(
         { error: 'Không tìm thấy loại phí' },
         { status: 404 }
+      );
+    }
+
+    // Validate feeType ownership (must be same property owner as room)
+    if (feeType.userId !== room.userId) {
+      return NextResponse.json(
+        { error: 'Loại phí không thuộc cùng property owner với phòng' },
+        { status: 400 }
       );
     }
 

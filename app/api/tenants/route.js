@@ -2,12 +2,15 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/app/api/auth/[...nextauth]/route';
 import prisma from '@/lib/prisma';
 import { createTenantSchema } from '@/lib/validations/tenant';
+import { isSuperAdmin, validateResourceOwnership } from '@/lib/middleware/authorization';
+import { logUnauthorizedAccess, logAuthorizationViolation } from '@/lib/middleware/security-logging';
 
 // GET /api/tenants - Danh sách người thuê
 export async function GET(request) {
   try {
     const session = await auth();
     if (!session) {
+      logUnauthorizedAccess(request, null, 'No session found');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -31,6 +34,14 @@ export async function GET(request) {
 
     if (roomId) {
       where.roomId = roomId;
+    }
+
+    // Add user filter for Property Owners (filter by rooms they own)
+    if (!isSuperAdmin(session)) {
+      where.room = {
+        ...where.room,
+        userId: session.user.id
+      };
     }
 
     const tenants = await prisma.tenant.findMany({
@@ -85,6 +96,7 @@ export async function POST(request) {
   try {
     const session = await auth();
     if (!session) {
+      logUnauthorizedAccess(request, null, 'No session found');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -105,6 +117,18 @@ export async function POST(request) {
           { error: 'Phòng không tồn tại' },
           { status: 404 }
         );
+      }
+
+      // Validate room ownership
+      if (!isSuperAdmin(session)) {
+        const hasAccess = await validateResourceOwnership(session.user.id, room.id, 'room');
+        if (!hasAccess) {
+          logAuthorizationViolation(request, session, `No access to room ${room.id}`, room.id, 'room');
+          return NextResponse.json(
+            { error: 'Forbidden: No access to this room' },
+            { status: 403 }
+          );
+        }
       }
 
       if (room.tenant) {

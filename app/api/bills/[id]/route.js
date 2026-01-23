@@ -4,6 +4,7 @@ import prisma from '@/lib/prisma';
 import { updateBillSchema } from '@/lib/validations/bill';
 import { calculateBill } from '@/lib/bills/calculateBill';
 import { getUtilityRateForRoom } from '@/lib/bills/getUtilityRateForRoom';
+import { validateResourceOwnership, isSuperAdmin } from '@/lib/middleware/authorization';
 
 // GET /api/bills/[id] - Chi tiết hóa đơn
 export async function GET(request, { params }) {
@@ -36,6 +37,17 @@ export async function GET(request, { params }) {
         { error: 'Không tìm thấy hóa đơn' },
         { status: 404 }
       );
+    }
+
+    // Validate property access through room
+    if (!isSuperAdmin(session)) {
+      const hasAccess = await validateResourceOwnership(session.user.id, bill.roomId, 'room');
+      if (!hasAccess) {
+        return NextResponse.json(
+          { error: 'Forbidden: No access to this bill' },
+          { status: 403 }
+        );
+      }
     }
 
     return NextResponse.json(bill);
@@ -80,6 +92,17 @@ export async function PUT(request, { params }) {
         { error: 'Không tìm thấy hóa đơn' },
         { status: 404 }
       );
+    }
+
+    // Validate property access through room
+    if (!isSuperAdmin(session)) {
+      const hasAccess = await validateResourceOwnership(session.user.id, existingBill.roomId, 'room');
+      if (!hasAccess) {
+        return NextResponse.json(
+          { error: 'Forbidden: No access to this bill' },
+          { status: 403 }
+        );
+      }
     }
 
     // Không cho phép sửa hóa đơn đã thanh toán
@@ -223,6 +246,17 @@ export async function DELETE(request, { params }) {
         { error: 'Không tìm thấy hóa đơn' },
         { status: 404 }
       );
+    }
+
+    // Validate property access through room
+    if (!isSuperAdmin(session)) {
+      const hasAccess = await validateResourceOwnership(session.user.id, bill.roomId, 'room');
+      if (!hasAccess) {
+        return NextResponse.json(
+          { error: 'Forbidden: No access to this bill' },
+          { status: 403 }
+        );
+      }
     }
 
     // Không cho phép xóa hóa đơn đã thanh toán

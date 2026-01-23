@@ -2,10 +2,12 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/app/api/auth/[...nextauth]/route';
 import prisma from '@/lib/prisma';
 import { createRoomSchema } from '@/lib/validations/room';
+import { addUserFilter, isSuperAdmin } from '@/lib/middleware/authorization';
+import { logUnauthorizedAccess, logAuthorizationViolation } from '@/lib/middleware/security-logging';
 
 /**
  * GET /api/rooms - Lấy danh sách phòng
- * Requirements: 2.5, 2.10, 2.11
+ * Requirements: 2.5, 2.10, 2.11, 5.1, 5.2
  * Query params: status (EMPTY|OCCUPIED), search (string)
  */
 export async function GET(request) {
@@ -35,11 +37,14 @@ export async function GET(request) {
       ];
     }
 
-    // Fetch rooms
-    const rooms = await prisma.room.findMany({
+    // Add user filter for Property Owners
+    const queryOptions = await addUserFilter({
       where,
       orderBy: { code: 'asc' },
-    });
+    }, session.user.id);
+
+    // Fetch rooms
+    const rooms = await prisma.room.findMany(queryOptions);
 
     // Convert Decimal to number for JSON serialization
     const roomsWithNumbers = rooms.map(room => ({
@@ -59,12 +64,13 @@ export async function GET(request) {
 
 /**
  * POST /api/rooms - Tạo phòng mới
- * Requirements: 2.1, 2.2
+ * Requirements: 2.1, 2.2, 5.1, 5.2
  */
 export async function POST(request) {
   try {
     const session = await auth();
     if (!session) {
+      logUnauthorizedAccess(request, null, 'No session found');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -73,21 +79,39 @@ export async function POST(request) {
     // Validate input
     const validatedData = createRoomSchema.parse(body);
 
-    // Check if room code already exists (Requirements: 2.2)
-    const existingRoom = await prisma.room.findUnique({
-      where: { code: validatedData.code },
+    // For Property Owners, automatically set userId (remove propertyId if present)
+    const dataToCreate = { ...validatedData };
+    if (!isSuperAdmin(session)) {
+      // Property owners can only create rooms for their own property
+      dataToCreate.userId = session.user.id;
+      delete dataToCreate.propertyId; // Remove propertyId if schema allows it
+    } else {
+      // Super Admin can specify userId or leave it null
+      if (dataToCreate.propertyId) {
+        // If propertyId is provided, we need to find the userId
+        // But in new model, we use userId directly
+        delete dataToCreate.propertyId;
+      }
+    }
+
+    // Check if room code already exists within the same property owner (Requirements: 2.2)
+    const existingRoom = await prisma.room.findFirst({
+      where: { 
+        code: validatedData.code,
+        userId: dataToCreate.userId || null
+      },
     });
 
     if (existingRoom) {
       return NextResponse.json(
-        { error: 'Mã phòng đã tồn tại' },
+        { error: 'Mã phòng đã tồn tại trong property này' },
         { status: 400 }
       );
     }
 
     // Create room
     const room = await prisma.room.create({
-      data: validatedData,
+      data: dataToCreate,
     });
 
     // Convert Decimal to number
