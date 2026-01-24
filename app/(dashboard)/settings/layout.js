@@ -3,7 +3,7 @@
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
-import { Building2, Zap, Settings, DollarSign } from 'lucide-react';
+import { Building2, Zap, Settings, DollarSign, Send, Bell } from 'lucide-react';
 
 const settingsNavItems = [
   {
@@ -23,6 +23,12 @@ const settingsNavItems = [
     label: 'Quản Lý Phí',
     icon: DollarSign,
     description: 'Quản lý loại phí và phí của phòng'
+  },
+  {
+    href: '/settings/telegram',
+    label: 'Cấu Hình Telegram',
+    icon: Send,
+    description: 'Cấu hình Chat ID để nhận thông báo'
   },
 ];
 

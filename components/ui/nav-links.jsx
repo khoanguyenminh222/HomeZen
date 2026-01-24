@@ -23,7 +23,10 @@ import {
   DollarSign,
   Calendar,
   Shield,
-  BarChart3
+  BarChart3,
+  Mail,
+  Send,
+  Bell
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -151,7 +154,17 @@ const propertyOwnerNavItems = [
         label: 'Quản lý phí',
         icon: DollarSign,
       },
+      {
+        href: '/settings/telegram',
+        label: 'Cấu hình Telegram',
+        icon: Send,
+      },
     ],
+  },
+  {
+    href: '/notifications',
+    label: 'Lịch Sử Thông Báo',
+    icon: Bell,
   },
 ];
 
@@ -172,6 +185,23 @@ const superAdminNavItems = [
     label: 'Quản lý nhà trọ',
     icon: Building2,
   },
+  {
+    href: '/admin',
+    label: 'Cấu hình',
+    icon: Settings,
+    children: [
+      {
+        href: '/admin/email-config',
+        label: 'Cấu hình Email',
+        icon: Mail,
+      },
+      {
+        href: '/admin/telegram-bot-config',
+        label: 'Cấu hình Telegram Bot',
+        icon: Send,
+      },
+    ],
+  },
 ];
 
 // Component cho menu item desktop
@@ -181,10 +211,14 @@ function DesktopNavItem({ item, pathname }) {
   const isChildActive = item.children?.some(child =>
     pathname === child.href || (child.href !== '/' && pathname?.startsWith(child.href))
   );
-  const isActive = (item.href && (
-    pathname === item.href ||
-    (item.href !== '/' && item.href !== '/admin' && pathname?.startsWith(item.href))
-  )) || isChildActive;
+  // Nếu menu có children, chỉ active khi có child active
+  // Nếu menu không có children, active dựa vào href
+  const isActive = hasChildren 
+    ? isChildActive 
+    : (item.href && (
+        pathname === item.href ||
+        (item.href !== '/' && item.href !== '/admin' && pathname?.startsWith(item.href))
+      ));
 
   if (hasChildren) {
     return (
@@ -260,10 +294,14 @@ function MobileNavItem({ item, pathname, onClose }) {
   const isChildActive = item.children?.some(child =>
     pathname === child.href || (child.href !== '/' && pathname?.startsWith(child.href))
   );
-  const isActive = (item.href && (
-    pathname === item.href ||
-    (item.href !== '/' && item.href !== '/admin' && pathname?.startsWith(item.href))
-  )) || isChildActive;
+  // Nếu menu có children, chỉ active khi có child active
+  // Nếu menu không có children, active dựa vào href
+  const isActive = hasChildren 
+    ? isChildActive 
+    : (item.href && (
+        pathname === item.href ||
+        (item.href !== '/' && item.href !== '/admin' && pathname?.startsWith(item.href))
+      ));
 
   if (hasChildren) {
     return (
@@ -371,11 +409,12 @@ function MobileNavItem({ item, pathname, onClose }) {
 
 export function NavLinks() {
   const pathname = usePathname();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   // Get role-based menu items
+  // Default to property owner items if session is not loaded yet
   const isSuperAdmin = session?.user?.role === 'SUPER_ADMIN';
   const navItems = isSuperAdmin ? superAdminNavItems : propertyOwnerNavItems;
 

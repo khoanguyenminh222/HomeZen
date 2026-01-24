@@ -23,12 +23,15 @@ model User {
   propertyInfo      PropertyInfo?
   
   // Quan hệ - direct ownership (one-to-many)
-  rooms             Room[]
-  feeTypes          FeeType[]
-  utilityRates      UtilityRate[]
-  tenants           Tenant[]
-  bills             Bill[]
-  
+  rooms               Room[]
+  feeTypes            FeeType[]
+  utilityRates        UtilityRate[]
+  tenants             Tenant[]
+  bills               Bill[]
+  passwordResetTokens PasswordResetToken[]
+  telegramConfiguration TelegramConfiguration?
+  notificationLogs    NotificationLog[]
+
   @@index([role])
   @@index([isActive])
 }
@@ -348,4 +351,105 @@ model BillFee {
   bill        Bill      @relation(fields: [billId], references: [id], onDelete: Cascade)
   
   @@index([billId])
+}
+
+// Model Token đặt lại mật khẩu
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  // Quan hệ
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([used])
+}
+
+// Model Cấu hình Email (Super Admin only)
+model EmailConfiguration {
+  id          String   @id @default(cuid())
+  smtpHost    String   // Encrypted
+  smtpPort    Int
+  smtpUser    String   // Encrypted
+  smtpPassword String  // Encrypted
+  fromName    String?
+  useTLS      Boolean  @default(true)
+  useSSL      Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String   // Super Admin ID
+
+  @@map("email_configurations")
+}
+
+// Model Cấu hình Telegram Bot Global (Super Admin only)
+model TelegramBotConfig {
+  id          String   @id @default(cuid())
+  botToken    String   // Encrypted
+  botUsername String?  // Username của bot (VD: @BotHomeZen_bot)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String   // Super Admin ID
+
+  @@map("telegram_bot_configs")
+}
+
+// Model Cấu hình Telegram (Property Owner - chỉ lưu chatId)
+model TelegramConfiguration {
+  id          String   @id @default(cuid())
+  userId      String   @unique // Foreign key to User (property owner)
+  chatId      String   // Encrypted
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Quan hệ
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("telegram_configurations")
+}
+
+// Model Lịch sử thông báo
+model NotificationLog {
+  id            String            @id @default(cuid())
+  type          NotificationType
+  recipient     String
+  subject       String?
+  message       String
+  status        NotificationStatus
+  errorMessage  String?
+  retryCount    Int               @default(0)
+  sentAt        DateTime?
+  createdAt     DateTime          @default(now())
+  userId        String?           // Foreign key to User (property owner)
+
+  // Quan hệ
+  user          User?             @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([type])
+  @@index([status])
+  @@index([createdAt])
+  @@map("notification_logs")
+}
+
+enum NotificationType {
+  EMAIL
+  TELEGRAM
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+  RETRY
 }

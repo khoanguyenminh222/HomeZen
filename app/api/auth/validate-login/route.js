@@ -54,7 +54,10 @@ export async function POST(request) {
 
     // All validations passed
     return NextResponse.json(
-      { success: true },
+      { 
+        success: true,
+        role: user.role 
+      },
       { status: 200 }
     );
   } catch (error) {

@@ -54,14 +54,14 @@ export async function proxy(request) {
   const { pathname } = request.nextUrl;
 
   // Public routes that don't need authentication
-  const publicRoutes = ['/login', '/api/auth'];
+  const publicRoutes = ['/login', '/forgot-password', '/reset-password', '/api/auth'];
   if (publicRoutes.some(route => pathname.startsWith(route))) {
-    // If user is authenticated and tries to access login page, redirect to appropriate dashboard
-    if (token && pathname.startsWith('/login')) {
+    // If user is authenticated and tries to access login/forgot-password/reset-password page, redirect to appropriate dashboard
+    if (token && (pathname.startsWith('/login') || pathname.startsWith('/forgot-password') || pathname.startsWith('/reset-password'))) {
       // Validate user still exists before redirecting
       const validation = await validateUserInDatabase(token.id);
       if (!validation.isValid) {
-        // User doesn't exist, allow access to login page
+        // User doesn't exist, allow access to auth pages
         return NextResponse.next();
       }
       
@@ -144,6 +144,6 @@ export const config = {
      * - /favicon.ico
      * - /public files
      */
-    '/((?!login|api/auth|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!login|forgot-password|reset-password|api/auth|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };

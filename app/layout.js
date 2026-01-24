@@ -27,7 +27,7 @@ export default function RootLayout({ children }) {
         className={`${beVietnamPro.variable} ${geistMono.variable} antialiased`}
       >
         <ThemeProvider>
-          <SessionProvider>
+          <SessionProvider session={null}>
             {children}
             <Toaster />
           </SessionProvider>

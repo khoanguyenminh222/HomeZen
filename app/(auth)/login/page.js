@@ -112,13 +112,9 @@ export default function LoginPage() {
         }, 100);
       } else if (result?.ok) {
         // Role-based redirect
-        // TODO: Đổi sang super admin dashboard khi có route riêng
-        // Lưu ý: Phải fetch user role; ở đây có thể getSession/get user info, nhưng vì đây chỉ là xử lý sau signIn, ta tạm dùng localStorage/sessionStorage lưu role khi validate thành công
-        // Tuy nhiên, nếu muốn chuẩn xác, ta nên dùng session hoặc fetch lại user
+        // Lấy role từ validateResult (API đã trả về role)
+        const role = validateResult.role;
         
-        // Lấy role từ validateResult nếu response trả về, fallback sang lấy từ session nếu cần
-        // Giả sử validateResult.role có trả về từ API (nếu không, sẽ cần fetch lại session sau này)
-        const role = validateResult.role; // API /api/auth/validate-login phải trả về role mới hoạt động
         if (role === 'SUPER_ADMIN') {
           router.push('/admin');
         } else {
@@ -165,7 +161,7 @@ export default function LoginPage() {
             </div>
             <h1 className="text-5xl font-black tracking-tighter leading-tight text-foreground">
               Chào Mừng Đến Với <br />
-              <span className="text-primary italic">HomeZen</span>
+              <span className="text-primary italic text-2xl">HomeZen</span>
             </h1>
             <p className="text-muted-foreground text-lg leading-relaxed">
               Giải pháp quản lý nhà trọ thảnh thơi và hiệu quả nhất. Đăng nhập để bắt đầu hành trình của bạn.
@@ -253,7 +249,7 @@ export default function LoginPage() {
                   <Label htmlFor="password" className="text-sm font-semibold">
                     Mật khẩu
                   </Label>
-                  <Link href="#" className="text-xs text-primary hover:underline font-medium" tabIndex={-1}>Quên mật khẩu?</Link>
+                  <Link href="/forgot-password" className="text-xs text-primary hover:underline font-medium" tabIndex={-1}>Quên mật khẩu?</Link>
                 </div>
                 <div className="relative group">
                   <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors">
