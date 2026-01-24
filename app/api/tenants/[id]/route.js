@@ -92,27 +92,45 @@ export async function PUT(request, { params }) {
       );
     }
 
-    // Kiểm tra số điện thoại trùng (nếu có thay đổi)
+    // Kiểm tra số điện thoại trùng (nếu có thay đổi) - chỉ trong cùng property owner
     if (validatedData.phone && validatedData.phone !== existingTenant.phone) {
-      const phoneExists = await prisma.tenant.findFirst({
-        where: {
-          phone: validatedData.phone,
-          id: { not: id },
-          deletedAt: null // Only check among active tenants
-        }
-      });
+      // Xác định userId của tenant hiện tại
+      let tenantUserId = existingTenant.userId;
+      
+      // Nếu tenant có phòng, lấy userId từ phòng (để đảm bảo chính xác)
+      if (existingTenant.roomId && !tenantUserId) {
+        const room = await prisma.room.findUnique({
+          where: { id: existingTenant.roomId },
+          select: { userId: true }
+        });
+        tenantUserId = room?.userId || null;
+      }
 
-      if (phoneExists) {
-        return NextResponse.json(
-          { error: 'Số điện thoại đã được sử dụng bởi người thuê khác' },
-          { status: 400 }
-        );
+      // Chỉ kiểm tra trùng phone trong cùng property owner
+      if (tenantUserId) {
+        const phoneExists = await prisma.tenant.findFirst({
+          where: {
+            phone: validatedData.phone,
+            userId: tenantUserId,
+            id: { not: id },
+            deletedAt: null // Only check among active tenants
+          }
+        });
+
+        if (phoneExists) {
+          return NextResponse.json(
+            { error: 'Số điện thoại đã được sử dụng bởi người thuê khác trong cùng dãy trọ' },
+            { status: 400 }
+          );
+        }
       }
     }
 
     // Cập nhật người thuê trong transaction (để xử lý roomId)
     const updatedTenant = await prisma.$transaction(async (tx) => {
       // 1. Kiểm tra và cập nhật roomId nếu có
+      let newUserId = existingTenant.userId; // Giữ nguyên userId mặc định
+      
       if (validatedData.roomId && !existingTenant.roomId) {
         // Kiểm tra phòng có tồn tại và trống không
         const room = await tx.room.findUnique({
@@ -127,6 +145,9 @@ export async function PUT(request, { params }) {
         if (room.tenant) {
           throw new Error('ROOM_OCCUPIED');
         }
+
+        // Cập nhật userId từ room.userId
+        newUserId = room.userId;
 
         // Kiểm tra phòng có hóa đơn chưa thanh toán (nợ) không
         const allBills = await tx.bill.findMany({
@@ -180,7 +201,10 @@ export async function PUT(request, { params }) {
           ...(validatedData.moveInDate !== undefined && { moveInDate: validatedData.moveInDate }),
           ...(validatedData.deposit !== undefined && { deposit: validatedData.deposit }),
           ...(validatedData.contractFileUrl !== undefined && { contractFileUrl: validatedData.contractFileUrl || null }),
-          ...(validatedData.roomId && !existingTenant.roomId && { roomId: validatedData.roomId })
+          ...(validatedData.roomId && !existingTenant.roomId && { 
+            roomId: validatedData.roomId,
+            userId: newUserId // Cập nhật userId từ room
+          })
         },
         include: {
           room: {

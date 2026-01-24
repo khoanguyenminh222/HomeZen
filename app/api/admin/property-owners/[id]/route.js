@@ -8,8 +8,9 @@ import { SuperAdminService } from '@/lib/services/superAdmin.service';
  * Activate a property owner account
  * Requirements: 1.4
  */
-async function patchHandler(request, { params }) {
+async function patchHandler(request, props) {
   try {
+    const params = await props.params;
     const { id } = params;
     const body = await request.json();
     const { action } = body;

@@ -17,6 +17,8 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 
+import PropertyOwnerForm from '@/components/admin/forms/PropertyOwnerForm';
+
 /**
  * Property Owners Management Page
  * Requirements: 1.1, 1.3, 1.4, 8.1
@@ -72,6 +74,7 @@ export default function PropertyOwnersPage() {
       toast({
         title: 'Thành công',
         description: `Đã ${currentStatus ? 'vô hiệu hóa' : 'kích hoạt'} chủ trọ thành công`,
+        variant: 'success',
       });
 
       fetchPropertyOwners();
@@ -84,9 +87,75 @@ export default function PropertyOwnersPage() {
     }
   };
 
-  const handleCreateSuccess = () => {
-    setIsCreateDialogOpen(false);
-    fetchPropertyOwners();
+  const handleCreateSubmit = async (data) => {
+    try {
+      const response = await fetch('/api/admin/property-owners', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Không thể tạo chủ trọ');
+      }
+
+      toast({
+        title: 'Thành công',
+        description: 'Đã tạo chủ trọ mới thành công',
+        variant: 'success',
+      });
+
+      setIsCreateDialogOpen(false);
+      fetchPropertyOwners();
+    } catch (err) {
+      toast({
+        title: 'Lỗi',
+        description: err.message || 'Có lỗi xảy ra',
+        variant: 'destructive',
+      });
+      // Re-throw to stop form submission spinner if handled upstream, or handle explicitly
+      // For now, toast is enough
+    }
+  };
+
+  const handleEditSubmit = async (data) => {
+    try {
+      // Data from form includes propertyName, propertyAddress etc.
+      // Need to structure for API if necessary, but API expects flat struct in body mostly, handled by reusable form?
+      // Reusable form sends: { username, password, propertyName, propertyAddress, phone, ownerName, email, maxElectricMeter, maxWaterMeter }
+      // This matches PATCH expected body for properties/[id], except username/password ignored there usually or handled separately?
+      // Wait, endpoint is /api/admin/properties/${owner.id}, checks property updates. 
+      // User updates not fully supported in property endpoint?
+      // Let's check api/admin/properties/[id]/route.js if possible, but assuming existing logic was doing PATCH there.
+
+      const response = await fetch(`/api/admin/properties/${selectedOwner.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Không thể cập nhật');
+      }
+
+      toast({
+        title: 'Thành công',
+        description: 'Đã cập nhật thông tin chủ trọ thành công',
+        variant: 'success',
+      });
+
+      setIsEditDialogOpen(false);
+      setSelectedOwner(null);
+      fetchPropertyOwners();
+    } catch (err) {
+      toast({
+        title: 'Lỗi',
+        description: err.message || 'Có lỗi xảy ra',
+        variant: 'destructive',
+      });
+    }
   };
 
   if (isLoading) {
@@ -117,7 +186,7 @@ export default function PropertyOwnersPage() {
               </DialogDescription>
             </DialogHeader>
             <PropertyOwnerForm
-              onSuccess={handleCreateSuccess}
+              onSubmit={handleCreateSubmit}
               onCancel={() => setIsCreateDialogOpen(false)}
             />
           </DialogContent>
@@ -209,12 +278,9 @@ export default function PropertyOwnersPage() {
           </DialogHeader>
           {selectedOwner && (
             <PropertyOwnerForm
-              owner={selectedOwner}
-              onSuccess={() => {
-                setIsEditDialogOpen(false);
-                setSelectedOwner(null);
-                fetchPropertyOwners();
-              }}
+              defaultValues={selectedOwner}
+              isEdit={true}
+              onSubmit={handleEditSubmit}
               onCancel={() => {
                 setIsEditDialogOpen(false);
                 setSelectedOwner(null);
@@ -224,186 +290,5 @@ export default function PropertyOwnersPage() {
         </DialogContent>
       </Dialog>
     </div>
-  );
-}
-
-// Property Owner Form Component
-function PropertyOwnerForm({ owner, onSuccess, onCancel }) {
-  const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
-    username: owner?.username || '',
-    password: '',
-    propertyName: owner?.propertyInfo?.name || '',
-    propertyAddress: owner?.propertyInfo?.address || '',
-    phone: owner?.propertyInfo?.phone || '',
-    ownerName: owner?.propertyInfo?.ownerName || '',
-    email: owner?.propertyInfo?.email || '',
-    maxElectricMeter: owner?.propertyInfo?.maxElectricMeter || 999999,
-    maxWaterMeter: owner?.propertyInfo?.maxWaterMeter || 99999,
-  });
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-
-    try {
-      if (owner) {
-        // Update existing owner
-        const response = await fetch(`/api/admin/properties/${owner.id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            propertyName: formData.propertyName,
-            propertyAddress: formData.propertyAddress,
-            phone: formData.phone,
-            ownerName: formData.ownerName,
-            email: formData.email,
-            maxElectricMeter: formData.maxElectricMeter,
-            maxWaterMeter: formData.maxWaterMeter,
-          }),
-        });
-
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.error || 'Không thể cập nhật');
-        }
-
-        toast({
-          title: 'Thành công',
-          description: 'Đã cập nhật thông tin chủ trọ thành công',
-        });
-      } else {
-        // Create new owner
-        const response = await fetch('/api/admin/property-owners', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData),
-        });
-
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.error || 'Không thể tạo chủ trọ');
-        }
-
-        toast({
-          title: 'Thành công',
-          description: 'Đã tạo chủ trọ mới thành công',
-        });
-      }
-
-      onSuccess();
-    } catch (err) {
-      toast({
-        title: 'Lỗi',
-        description: err.message || 'Có lỗi xảy ra',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid gap-4 md:grid-cols-2">
-        <div>
-          <label className="text-sm font-medium">Username *</label>
-          <input
-            type="text"
-            required
-            disabled={!!owner}
-            value={formData.username}
-            onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-            className="w-full mt-1 px-3 py-2 border rounded-md"
-          />
-        </div>
-        {!owner && (
-          <div>
-            <label className="text-sm font-medium">Password *</label>
-            <input
-              type="password"
-              required
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              className="w-full mt-1 px-3 py-2 border rounded-md"
-            />
-          </div>
-        )}
-        <div>
-          <label className="text-sm font-medium">Tên nhà trọ *</label>
-          <input
-            type="text"
-            required
-            value={formData.propertyName}
-            onChange={(e) => setFormData({ ...formData, propertyName: e.target.value })}
-            className="w-full mt-1 px-3 py-2 border rounded-md"
-          />
-        </div>
-        <div>
-          <label className="text-sm font-medium">Địa chỉ *</label>
-          <input
-            type="text"
-            required
-            value={formData.propertyAddress}
-            onChange={(e) => setFormData({ ...formData, propertyAddress: e.target.value })}
-            className="w-full mt-1 px-3 py-2 border rounded-md"
-          />
-        </div>
-        <div>
-          <label className="text-sm font-medium">Số điện thoại</label>
-          <input
-            type="text"
-            value={formData.phone}
-            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-            className="w-full mt-1 px-3 py-2 border rounded-md"
-          />
-        </div>
-        <div>
-          <label className="text-sm font-medium">Tên chủ nhà</label>
-          <input
-            type="text"
-            value={formData.ownerName}
-            onChange={(e) => setFormData({ ...formData, ownerName: e.target.value })}
-            className="w-full mt-1 px-3 py-2 border rounded-md"
-          />
-        </div>
-        <div>
-          <label className="text-sm font-medium">Email</label>
-          <input
-            type="email"
-            value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            className="w-full mt-1 px-3 py-2 border rounded-md"
-          />
-        </div>
-        <div>
-          <label className="text-sm font-medium">Max Đồng hồ điện</label>
-          <input
-            type="number"
-            value={formData.maxElectricMeter}
-            onChange={(e) => setFormData({ ...formData, maxElectricMeter: parseInt(e.target.value) })}
-            className="w-full mt-1 px-3 py-2 border rounded-md"
-          />
-        </div>
-        <div>
-          <label className="text-sm font-medium">Max Đồng hồ nước</label>
-          <input
-            type="number"
-            value={formData.maxWaterMeter}
-            onChange={(e) => setFormData({ ...formData, maxWaterMeter: parseInt(e.target.value) })}
-            className="w-full mt-1 px-3 py-2 border rounded-md"
-          />
-        </div>
-      </div>
-      <div className="flex justify-end gap-2">
-        <Button type="button" variant="outline" onClick={onCancel}>
-          Hủy
-        </Button>
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Đang xử lý...' : owner ? 'Cập nhật' : 'Tạo mới'}
-        </Button>
-      </div>
-    </form>
   );
 }

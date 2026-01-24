@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { signIn } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -22,6 +22,7 @@ const loginSchema = z.object({
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -30,15 +31,72 @@ export default function LoginPage() {
     register,
     handleSubmit,
     formState: { errors },
+    setFocus,
   } = useForm({
     resolver: zodResolver(loginSchema),
   });
+
+  // Check for error messages from URL parameters (from middleware redirects)
+  useEffect(() => {
+    const urlError = searchParams.get('error');
+    if (urlError) {
+      const errorMessages = {
+        'User not found': 'Tài khoản không tồn tại trong hệ thống',
+        'Account deactivated': 'Tài khoản đã bị vô hiệu hóa',
+        'Session expired': 'Phiên đăng nhập đã hết hạn',
+        'Database error during validation': 'Lỗi hệ thống, vui lòng thử lại sau'
+      };
+      setError(errorMessages[urlError] || urlError);
+    }
+  }, [searchParams]);
+
+  // Auto focus vào input username khi vào trang
+  useEffect(() => {
+    setFocus('username');
+  }, [setFocus]);
+
+  // Auto focus vào input username khi có lỗi
+  useEffect(() => {
+    if (error && !isLoading) {
+      // Delay nhỏ để đảm bảo error message đã được render
+      const timer = setTimeout(() => {
+        setFocus('username');
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [error, isLoading, setFocus]);
 
   const onSubmit = async (data) => {
     setIsLoading(true);
     setError('');
 
     try {
+      // Bước 1: Validate login credentials trước
+      const validateResponse = await fetch('/api/auth/validate-login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: data.username,
+          password: data.password,
+        }),
+      });
+
+      const validateResult = await validateResponse.json();
+
+      // Nếu validation thất bại, hiển thị error message cụ thể
+      if (!validateResponse.ok || !validateResult.success) {
+        setError(validateResult.error || 'Đã xảy ra lỗi. Vui lòng thử lại.');
+        setIsLoading(false);
+        // Delay nhỏ để đảm bảo DOM đã cập nhật trước khi focus
+        setTimeout(() => {
+          setFocus('username');
+        }, 100);
+        return;
+      }
+
+      // Bước 2: Nếu validation thành công, gọi NextAuth signIn
       const result = await signIn('credentials', {
         username: data.username,
         password: data.password,
@@ -46,15 +104,35 @@ export default function LoginPage() {
       });
 
       if (result?.error) {
-        setError(result.error);
+        // Nếu NextAuth vẫn trả về error (trường hợp hiếm), hiển thị error message
+        setError('Đã xảy ra lỗi đăng nhập. Vui lòng thử lại.');
+        // Delay nhỏ để đảm bảo DOM đã cập nhật trước khi focus
+        setTimeout(() => {
+          setFocus('username');
+        }, 100);
       } else if (result?.ok) {
         // Role-based redirect
-        // TODO: Add Super Admin dashboard route when implemented
-        router.push('/');
+        // TODO: Đổi sang super admin dashboard khi có route riêng
+        // Lưu ý: Phải fetch user role; ở đây có thể getSession/get user info, nhưng vì đây chỉ là xử lý sau signIn, ta tạm dùng localStorage/sessionStorage lưu role khi validate thành công
+        // Tuy nhiên, nếu muốn chuẩn xác, ta nên dùng session hoặc fetch lại user
+        
+        // Lấy role từ validateResult nếu response trả về, fallback sang lấy từ session nếu cần
+        // Giả sử validateResult.role có trả về từ API (nếu không, sẽ cần fetch lại session sau này)
+        const role = validateResult.role; // API /api/auth/validate-login phải trả về role mới hoạt động
+        if (role === 'SUPER_ADMIN') {
+          router.push('/admin');
+        } else {
+          router.push('/');
+        }
         router.refresh();
       }
     } catch (err) {
+      console.error('Login error:', err);
       setError('Đã xảy ra lỗi. Vui lòng thử lại.');
+      // Delay nhỏ để đảm bảo DOM đã cập nhật trước khi focus
+      setTimeout(() => {
+        setFocus('username');
+      }, 100);
     } finally {
       setIsLoading(false);
     }
@@ -175,7 +253,7 @@ export default function LoginPage() {
                   <Label htmlFor="password" className="text-sm font-semibold">
                     Mật khẩu
                   </Label>
-                  <Link href="#" className="text-xs text-primary hover:underline font-medium">Quên mật khẩu?</Link>
+                  <Link href="#" className="text-xs text-primary hover:underline font-medium" tabIndex={-1}>Quên mật khẩu?</Link>
                 </div>
                 <div className="relative group">
                   <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors">
@@ -193,6 +271,7 @@ export default function LoginPage() {
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors p-1"
+                    tabIndex={-1}
                   >
                     {showPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
                   </button>

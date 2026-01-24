@@ -83,6 +83,16 @@ export async function POST(request) {
     const dataToCreate = { ...validatedData };
     if (!isSuperAdmin(session)) {
       // Property owners can only create rooms for their own property
+      // First verify the user exists in the database
+      const userExists = await prisma.user.findUnique({
+        where: { id: session.user.id }
+      });
+      
+      if (!userExists) {
+        logAuthorizationViolation(request, session.user.id, 'User not found in database');
+        return NextResponse.json({ error: 'User not found' }, { status: 401 });
+      }
+      
       dataToCreate.userId = session.user.id;
       delete dataToCreate.propertyId; // Remove propertyId if schema allows it
     } else {
@@ -91,6 +101,20 @@ export async function POST(request) {
         // If propertyId is provided, we need to find the userId
         // But in new model, we use userId directly
         delete dataToCreate.propertyId;
+      }
+      
+      // If userId is specified for Super Admin, verify it exists
+      if (dataToCreate.userId) {
+        const userExists = await prisma.user.findUnique({
+          where: { id: dataToCreate.userId }
+        });
+        
+        if (!userExists) {
+          return NextResponse.json(
+            { error: 'Specified user not found' },
+            { status: 400 }
+          );
+        }
       }
     }
 

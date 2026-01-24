@@ -13,8 +13,8 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
+import PropertyOwnerForm from '@/components/admin/forms/PropertyOwnerForm';
 
 /**
  * Properties Management Page
@@ -61,6 +61,43 @@ export default function PropertiesPage() {
   const handleTransfer = (property) => {
     setSelectedProperty(property);
     setIsTransferDialogOpen(true);
+  };
+
+  const handleEditSubmit = async (data) => {
+    try {
+      const response = await fetch(`/api/admin/properties/${selectedProperty.userId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Không thể cập nhật');
+      }
+
+      toast({
+        title: 'Thành công',
+        description: 'Đã cập nhật thông tin nhà trọ thành công',
+        variant: 'success',
+      });
+
+      setIsEditDialogOpen(false);
+      setSelectedProperty(null);
+      fetchProperties();
+    } catch (err) {
+      toast({
+        title: 'Lỗi',
+        description: err.message || 'Có lỗi xảy ra',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleTransferSuccess = () => {
+    setIsTransferDialogOpen(false);
+    setSelectedProperty(null);
+    fetchProperties();
   };
 
   if (isLoading) {
@@ -160,13 +197,11 @@ export default function PropertiesPage() {
             </DialogDescription>
           </DialogHeader>
           {selectedProperty && (
-            <PropertyEditForm
-              property={selectedProperty}
-              onSuccess={() => {
-                setIsEditDialogOpen(false);
-                setSelectedProperty(null);
-                fetchProperties();
-              }}
+            <PropertyOwnerForm
+              defaultValues={selectedProperty}
+              isEdit={true}
+              isPropertyEditOnly={true}
+              onSubmit={handleEditSubmit}
               onCancel={() => {
                 setIsEditDialogOpen(false);
                 setSelectedProperty(null);
@@ -188,11 +223,7 @@ export default function PropertiesPage() {
           {selectedProperty && (
             <PropertyTransferForm
               property={selectedProperty}
-              onSuccess={() => {
-                setIsTransferDialogOpen(false);
-                setSelectedProperty(null);
-                fetchProperties();
-              }}
+              onSuccess={handleTransferSuccess}
               onCancel={() => {
                 setIsTransferDialogOpen(false);
                 setSelectedProperty(null);
@@ -202,134 +233,6 @@ export default function PropertiesPage() {
         </DialogContent>
       </Dialog>
     </div>
-  );
-}
-
-// Property Edit Form
-function PropertyEditForm({ property, onSuccess, onCancel }) {
-  const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
-    propertyName: property.name,
-    propertyAddress: property.address,
-    phone: property.phone || '',
-    ownerName: property.ownerName || '',
-    email: property.email || '',
-    maxElectricMeter: property.maxElectricMeter || 999999,
-    maxWaterMeter: property.maxWaterMeter || 99999,
-  });
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-
-    try {
-      const response = await fetch(`/api/admin/properties/${property.userId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Không thể cập nhật');
-      }
-
-      toast({
-        title: 'Thành công',
-        description: 'Đã cập nhật thông tin nhà trọ thành công',
-      });
-
-      onSuccess();
-    } catch (err) {
-      toast({
-        title: 'Lỗi',
-        description: err.message || 'Có lỗi xảy ra',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid gap-4 md:grid-cols-2">
-        <div>
-          <label className="text-sm font-medium">Tên nhà trọ *</label>
-          <input
-            type="text"
-            required
-            value={formData.propertyName}
-            onChange={(e) => setFormData({ ...formData, propertyName: e.target.value })}
-            className="w-full mt-1 px-3 py-2 border rounded-md"
-          />
-        </div>
-        <div>
-          <label className="text-sm font-medium">Địa chỉ *</label>
-          <input
-            type="text"
-            required
-            value={formData.propertyAddress}
-            onChange={(e) => setFormData({ ...formData, propertyAddress: e.target.value })}
-            className="w-full mt-1 px-3 py-2 border rounded-md"
-          />
-        </div>
-        <div>
-          <label className="text-sm font-medium">Số điện thoại</label>
-          <input
-            type="text"
-            value={formData.phone}
-            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-            className="w-full mt-1 px-3 py-2 border rounded-md"
-          />
-        </div>
-        <div>
-          <label className="text-sm font-medium">Tên chủ nhà</label>
-          <input
-            type="text"
-            value={formData.ownerName}
-            onChange={(e) => setFormData({ ...formData, ownerName: e.target.value })}
-            className="w-full mt-1 px-3 py-2 border rounded-md"
-          />
-        </div>
-        <div>
-          <label className="text-sm font-medium">Email</label>
-          <input
-            type="email"
-            value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            className="w-full mt-1 px-3 py-2 border rounded-md"
-          />
-        </div>
-        <div>
-          <label className="text-sm font-medium">Max Đồng hồ điện</label>
-          <input
-            type="number"
-            value={formData.maxElectricMeter}
-            onChange={(e) => setFormData({ ...formData, maxElectricMeter: parseInt(e.target.value) })}
-            className="w-full mt-1 px-3 py-2 border rounded-md"
-          />
-        </div>
-        <div>
-          <label className="text-sm font-medium">Max Đồng hồ nước</label>
-          <input
-            type="number"
-            value={formData.maxWaterMeter}
-            onChange={(e) => setFormData({ ...formData, maxWaterMeter: parseInt(e.target.value) })}
-            className="w-full mt-1 px-3 py-2 border rounded-md"
-          />
-        </div>
-      </div>
-      <div className="flex justify-end gap-2">
-        <Button type="button" variant="outline" onClick={onCancel}>
-          Hủy
-        </Button>
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Đang xử lý...' : 'Cập nhật'}
-        </Button>
-      </div>
-    </form>
   );
 }
 
@@ -391,6 +294,7 @@ function PropertyTransferForm({ property, onSuccess, onCancel }) {
       toast({
         title: 'Thành công',
         description: 'Đã chuyển quyền sở hữu nhà trọ thành công',
+        variant: 'success',
       });
 
       onSuccess();
@@ -448,3 +352,4 @@ function PropertyTransferForm({ property, onSuccess, onCancel }) {
     </form>
   );
 }
+

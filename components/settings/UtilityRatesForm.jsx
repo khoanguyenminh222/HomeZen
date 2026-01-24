@@ -45,7 +45,7 @@ export default function UtilityRatesForm() {
       try {
         const response = await fetch('/api/settings/utility-rates');
         if (response.ok) {
-          const data = await response.json();
+          const data = await response.json() || {};
 
           // Reset form với dữ liệu từ server
           reset({

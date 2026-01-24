@@ -1,8 +1,48 @@
 import { NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
+import { PrismaClient } from '@prisma/client';
+
+// Create Prisma client for proxy
+const prisma = new PrismaClient();
 
 /**
- * Proxy middleware to protect routes with role-based access control
+ * Validate user exists and is active in database
+ * @param {string} userId - User ID from token
+ * @returns {Promise<{isValid: boolean, user?: Object, reason?: string}>}
+ */
+async function validateUserInDatabase(userId) {
+  if (!userId) {
+    return { isValid: false, reason: 'No user ID provided' };
+  }
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        username: true,
+        role: true,
+        isActive: true
+      }
+    });
+
+    if (!user) {
+      return { isValid: false, reason: 'User not found in database' };
+    }
+
+    if (!user.isActive) {
+      return { isValid: false, reason: 'User account is deactivated' };
+    }
+
+    return { isValid: true, user };
+  } catch (error) {
+    console.error('Error validating user in proxy:', error);
+    return { isValid: false, reason: 'Database error during validation' };
+  }
+}
+
+/**
+ * Proxy to protect routes with role-based access control and user validation
  * Requirements: 4.3, 7.1, 7.2, 7.4, 7.5
  */
 export async function proxy(request) {
@@ -18,7 +58,14 @@ export async function proxy(request) {
   if (publicRoutes.some(route => pathname.startsWith(route))) {
     // If user is authenticated and tries to access login page, redirect to appropriate dashboard
     if (token && pathname.startsWith('/login')) {
-      const dashboardUrl = new URL(token.role === 'SUPER_ADMIN' ? '/admin' : '/', request.url);
+      // Validate user still exists before redirecting
+      const validation = await validateUserInDatabase(token.id);
+      if (!validation.isValid) {
+        // User doesn't exist, allow access to login page
+        return NextResponse.next();
+      }
+      
+      const dashboardUrl = new URL(validation.user.role === 'SUPER_ADMIN' ? '/admin' : '/', request.url);
       return NextResponse.redirect(dashboardUrl);
     }
     return NextResponse.next();
@@ -36,10 +83,12 @@ export async function proxy(request) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // Check if user is active
-  if (token.isActive === false) {
+  // Validate user still exists and is active in database
+  const validation = await validateUserInDatabase(token.id);
+  if (!validation.isValid) {
+    console.log(`User validation failed: ${validation.reason} for user ${token.id}`);
     const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('error', 'Account is deactivated');
+    loginUrl.searchParams.set('error', validation.reason === 'User not found in database' ? 'User not found' : 'Account deactivated');
     return NextResponse.redirect(loginUrl);
   }
 
@@ -53,8 +102,8 @@ export async function proxy(request) {
     }
   }
 
-  // Role-based route protection
-  const userRole = token.role;
+  // Use current user role from database (not from token)
+  const userRole = validation.user.role;
 
   // Protect Super Admin routes
   if (pathname.startsWith('/admin')) {

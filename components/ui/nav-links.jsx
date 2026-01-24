@@ -81,7 +81,7 @@ const NavigationMenuContent = React.forwardRef(({ className, ...props }, ref) =>
   <NavigationMenuPrimitive.Content
     ref={ref}
     className={cn(
-      'left-0 top-0 w-full data-[motion^=from-]:animate-in data-[motion^=to-]:animate-out data-[motion^=from-]:fade-in data-[motion^=to-]:fade-out data-[motion=from-end]:slide-in-from-right-52 data-[motion=from-start]:slide-in-from-left-52 data-[motion=to-end]:slide-out-to-right-52 data-[motion=to-start]:slide-out-to-left-52 md:absolute md:w-auto',
+      'left-0 top-0 w-full data-[motion^=from-]:animate-in data-[motion^=to-]:animate-out data-[motion^=from-]:fade-in data-[motion^=to-]:fade-out data-[motion=from-end]:slide-in-from-right-52 data-[motion=from-start]:slide-in-from-left-52 data-[motion=to-end]:slide-out-to-right-52 data-[motion=to-start]:slide-out-to-left-52 lg:absolute lg:w-auto lg:left-0',
       className
     )}
     {...props}
@@ -92,10 +92,10 @@ NavigationMenuContent.displayName = NavigationMenuPrimitive.Content.displayName;
 const NavigationMenuLink = NavigationMenuPrimitive.Link;
 
 const NavigationMenuViewport = React.forwardRef(({ className, ...props }, ref) => (
-  <div className={cn('absolute left-0 top-full flex justify-center')}>
+  <div className={cn('absolute right-0 top-full flex justify-end')}>
     <NavigationMenuPrimitive.Viewport
       className={cn(
-        'origin-top-center relative mt-1.5 h-(--radix-navigation-menu-viewport-height) w-full overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-90 md:w-(--radix-navigation-menu-viewport-width)',
+        'origin-top-right relative mt-1.5 h-(--radix-navigation-menu-viewport-height) w-full overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-90 lg:w-(--radix-navigation-menu-viewport-width)',
         className
       )}
       ref={ref}
@@ -172,11 +172,6 @@ const superAdminNavItems = [
     label: 'Quản lý nhà trọ',
     icon: Building2,
   },
-  {
-    href: '/admin/stats',
-    label: 'Thống kê hệ thống',
-    icon: BarChart3,
-  },
 ];
 
 // Component cho menu item desktop
@@ -188,7 +183,7 @@ function DesktopNavItem({ item, pathname }) {
   );
   const isActive = (item.href && (
     pathname === item.href ||
-    (item.href !== '/' && pathname?.startsWith(item.href))
+    (item.href !== '/' && item.href !== '/admin' && pathname?.startsWith(item.href))
   )) || isChildActive;
 
   if (hasChildren) {
@@ -204,7 +199,7 @@ function DesktopNavItem({ item, pathname }) {
           <span>{item.label}</span>
         </NavigationMenuTrigger>
         <NavigationMenuContent>
-          <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
+          <ul className="grid w-[400px] gap-3 p-4 lg:w-[500px] lg:grid-cols-2">
             {item.children.map((child) => {
               const ChildIcon = child.icon;
               const childIsActive = pathname === child.href ||
@@ -267,7 +262,7 @@ function MobileNavItem({ item, pathname, onClose }) {
   );
   const isActive = (item.href && (
     pathname === item.href ||
-    (item.href !== '/' && pathname?.startsWith(item.href))
+    (item.href !== '/' && item.href !== '/admin' && pathname?.startsWith(item.href))
   )) || isChildActive;
 
   if (hasChildren) {
@@ -414,7 +409,7 @@ export function NavLinks() {
   return (
     <>
       {/* Mobile Hamburger Button */}
-      <div className="flex md:hidden items-center">
+      <div className="flex lg:hidden items-center">
         <Button
           variant="ghost"
           size="icon"
@@ -428,7 +423,7 @@ export function NavLinks() {
       </div>
 
       {/* Desktop Navigation */}
-      <NavigationMenu className="hidden md:flex">
+      <NavigationMenu className="hidden lg:flex">
         <NavigationMenuList className="gap-1">
           {navItems.map((item) => (
             <DesktopNavItem key={item.label || item.href} item={item} pathname={pathname} />
@@ -438,7 +433,7 @@ export function NavLinks() {
 
       {/* Mobile Menu Overlay */}
       {isOpen && mounted && createPortal(
-        <div className="fixed inset-0 z-100 md:hidden" role="dialog" aria-modal="true" aria-label="Navigation menu">
+        <div className="fixed inset-0 z-100 lg:hidden" role="dialog" aria-modal="true" aria-label="Navigation menu">
           {/* Backdrop với blur và gradient */}
           <div
             className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300 pointer-events-auto"

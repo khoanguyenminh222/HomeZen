@@ -23,25 +23,44 @@ export async function GET(request) {
       deletedAt: null
     };
 
-    if (search) {
+    if (roomId) {
+      where.roomId = roomId;
+    }
+
+    // Add user filter for Property Owners (filter by rooms they own or tenants without room)
+    if (!isSuperAdmin(session)) {
+      const ownershipFilter = {
+        OR: [
+          { room: { userId: session.user.id } },
+          { userId: session.user.id }
+        ]
+      };
+
+      if (search) {
+        // Kết hợp ownership filter và search filter
+        where.AND = [
+          ownershipFilter,
+          {
+            OR: [
+              { fullName: { contains: search, mode: 'insensitive' } },
+              { phone: { contains: search } },
+              { room: { code: { contains: search, mode: 'insensitive' } } },
+              { room: { name: { contains: search, mode: 'insensitive' } } }
+            ]
+          }
+        ];
+      } else {
+        // Chỉ có ownership filter
+        where.OR = ownershipFilter.OR;
+      }
+    } else if (search) {
+      // Super admin với search
       where.OR = [
         { fullName: { contains: search, mode: 'insensitive' } },
         { phone: { contains: search } },
         { room: { code: { contains: search, mode: 'insensitive' } } },
         { room: { name: { contains: search, mode: 'insensitive' } } }
       ];
-    }
-
-    if (roomId) {
-      where.roomId = roomId;
-    }
-
-    // Add user filter for Property Owners (filter by rooms they own)
-    if (!isSuperAdmin(session)) {
-      where.room = {
-        ...where.room,
-        userId: session.user.id
-      };
     }
 
     const tenants = await prisma.tenant.findMany({
@@ -179,19 +198,41 @@ export async function POST(request) {
       }
     }
 
-    // 2. Kiểm tra số điện thoại đã tồn tại chưa
-    const existingTenant = await prisma.tenant.findFirst({
-      where: { phone: validatedData.phone }
-    });
-
-    if (existingTenant) {
-      return NextResponse.json(
-        { error: 'Số điện thoại đã được sử dụng bởi người thuê khác' },
-        { status: 400 }
-      );
+    // 2. Xác định userId cho tenant
+    let tenantUserId = null;
+    if (validatedData.roomId) {
+      // Nếu có phòng, lấy userId từ phòng
+      const room = await prisma.room.findUnique({
+        where: { id: validatedData.roomId },
+        select: { userId: true }
+      });
+      tenantUserId = room?.userId || null;
+    } else {
+      // Nếu không có phòng, lấy userId từ session (property owner)
+      if (!isSuperAdmin(session)) {
+        tenantUserId = session.user.id;
+      }
     }
 
-    // 3. Tạo người thuê mới (có hoặc không có phòng)
+    // 3. Kiểm tra số điện thoại đã tồn tại chưa (chỉ trong cùng property owner)
+    if (tenantUserId) {
+      const existingTenant = await prisma.tenant.findFirst({
+        where: { 
+          phone: validatedData.phone,
+          userId: tenantUserId,
+          deletedAt: null // Chỉ kiểm tra tenant chưa bị xóa
+        }
+      });
+
+      if (existingTenant) {
+        return NextResponse.json(
+          { error: 'Số điện thoại đã được sử dụng bởi người thuê khác trong cùng dãy trọ' },
+          { status: 400 }
+        );
+      }
+    }
+
+    // 4. Tạo người thuê mới (có hoặc không có phòng)
     const result = await prisma.$transaction(async (tx) => {
       // Tạo người thuê
       const tenant = await tx.tenant.create({
@@ -204,7 +245,8 @@ export async function POST(request) {
           moveInDate: validatedData.moveInDate || null,
           deposit: validatedData.deposit || null,
           contractFileUrl: validatedData.contractFileUrl || null,
-          roomId: validatedData.roomId || null
+          roomId: validatedData.roomId || null,
+          userId: tenantUserId
         },
         include: {
           room: {

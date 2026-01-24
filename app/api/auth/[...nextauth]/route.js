@@ -17,6 +17,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
       async authorize(credentials) {
         if (!credentials?.username || !credentials?.password) {
+          // Return null và throw error với message để NextAuth có thể xử lý
           throw new Error('Vui lòng nhập tên đăng nhập và mật khẩu');
         }
 
@@ -31,16 +32,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           throw new Error('Tên đăng nhập hoặc mật khẩu không đúng');
         }
 
-        // Check if user is active
-        if (!user.isActive) {
-          throw new Error('Tài khoản đã bị vô hiệu hóa');
-        }
-
-        // Verify password
+        // Verify password FIRST - để bảo mật, không tiết lộ trạng thái tài khoản nếu mật khẩu sai
         const isValid = await verifyPassword(credentials.password, user.password);
 
         if (!isValid) {
+          // Nếu mật khẩu sai, luôn trả về lỗi mật khẩu (không tiết lộ trạng thái tài khoản)
           throw new Error('Tên đăng nhập hoặc mật khẩu không đúng');
+        }
+
+        // Chỉ kiểm tra trạng thái tài khoản SAU KHI mật khẩu đã đúng
+        if (!user.isActive) {
+          throw new Error('Tài khoản đã bị vô hiệu hóa');
         }
 
         // Return user object (without password)
@@ -53,6 +55,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
     }),
   ],
+  callbacks: {
+    ...authConfig.callbacks,
+    async signIn({ user, account, profile, email, credentials }) {
+      // Allow sign in if user exists (authorize already validated)
+      return true;
+    },
+  },
+  pages: {
+    ...authConfig.pages,
+    signIn: '/login',
+  },
 });
 
 export const GET = handlers.GET;

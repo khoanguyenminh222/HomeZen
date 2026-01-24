@@ -75,16 +75,31 @@ export default function RoomUtilityRateForm({ room, isOpen, onClose, onSuccess }
             const globalResponse = await fetch('/api/settings/utility-rates');
             if (globalResponse.ok) {
               const globalData = await globalResponse.json();
-              reset({
-                electricityPrice: globalData.electricityPrice || 3000,
-                waterPrice: globalData.waterPrice || 25000,
-                waterPricingMethod: globalData.waterPricingMethod || 'METER',
-                waterPricePerPerson: globalData.waterPricePerPerson,
-                useTieredPricing: globalData.useTieredPricing || false,
-              });
-              setUseTieredPricing(globalData.useTieredPricing || false);
-              setWaterPricingMethod(globalData.waterPricingMethod || 'METER');
-              setTieredRates(globalData.tieredRates || []);
+              // Kiểm tra globalData có tồn tại và hợp lệ không
+              if (globalData && typeof globalData === 'object') {
+                reset({
+                  electricityPrice: globalData.electricityPrice || 3000,
+                  waterPrice: globalData.waterPrice || 25000,
+                  waterPricingMethod: globalData.waterPricingMethod || 'METER',
+                  waterPricePerPerson: globalData.waterPricePerPerson,
+                  useTieredPricing: globalData.useTieredPricing || false,
+                });
+                setUseTieredPricing(globalData.useTieredPricing || false);
+                setWaterPricingMethod(globalData.waterPricingMethod || 'METER');
+                setTieredRates(globalData.tieredRates || []);
+              } else {
+                // Nếu không có dữ liệu, sử dụng giá trị mặc định
+                reset({
+                  electricityPrice: 3000,
+                  waterPrice: 15000,
+                  waterPricingMethod: 'METER',
+                  waterPricePerPerson: null,
+                  useTieredPricing: false,
+                });
+                setUseTieredPricing(false);
+                setWaterPricingMethod('METER');
+                setTieredRates([]);
+              }
             }
           }
         } else {

@@ -42,7 +42,7 @@ export default function DepositReturnForm({ tenant, debtInfo, onConfirm, onCance
     if (watchedMethod !== 'DEDUCT_FROM_LAST_BILL') {
       return { remainingDebt: debtInfo.totalDebt, excessDeposit: 0 };
     }
-    
+
     const depositAmount = watchedAmount || 0;
     if (depositAmount === 0) {
       return { remainingDebt: debtInfo.totalDebt, excessDeposit: 0 };
@@ -61,7 +61,7 @@ export default function DepositReturnForm({ tenant, debtInfo, onConfirm, onCance
     // Trừ tiền cọc vào các hóa đơn còn nợ theo thứ tự từ mới đến cũ
     for (const bill of unpaidBills) {
       if (remainingDeposit <= 0) break;
-      
+
       const billRemainingDebt = bill.remainingDebt || 0;
       if (billRemainingDebt > 0) {
         // Số tiền cọc được áp dụng vào hóa đơn này
@@ -70,10 +70,10 @@ export default function DepositReturnForm({ tenant, debtInfo, onConfirm, onCance
         remainingDeposit -= appliedAmount;
       }
     }
-    
+
     // Phần dư tiền cọc sau khi trừ vào nợ
     const excessDeposit = Math.max(0, remainingDeposit);
-    
+
     return { remainingDebt: newTotalDebt, excessDeposit };
   };
 
@@ -97,6 +97,17 @@ export default function DepositReturnForm({ tenant, debtInfo, onConfirm, onCance
 
   const depositAmount = tenant.deposit ? parseFloat(tenant.deposit) : 0;
 
+  const handleNoDepositConfirm = async () => {
+    try {
+      setLoading(true);
+      await onConfirm(null);
+    } catch (error) {
+      console.error('Error confirming no deposit return:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Debt Warning */}
@@ -114,7 +125,7 @@ export default function DepositReturnForm({ tenant, debtInfo, onConfirm, onCance
             <p className={canCheckout ? "text-green-700 dark:text-green-300" : "text-red-700 dark:text-red-300"}>
               {canCheckout ? (
                 <>
-                  Tổng nợ ban đầu: <strong>{formatCurrency(debtInfo.totalDebt)}</strong>. 
+                  Tổng nợ ban đầu: <strong>{formatCurrency(debtInfo.totalDebt)}</strong>.
                   Sau khi trừ tiền cọc vào các hóa đơn còn nợ, <strong>không còn nợ</strong>.
                   {excessDeposit > 0 && (
                     <> Phần dư tiền cọc <strong>{formatCurrency(excessDeposit)}</strong> sẽ được hoàn trả.</>
@@ -324,7 +335,7 @@ export default function DepositReturnForm({ tenant, debtInfo, onConfirm, onCance
                 Hủy
               </Button>
               <Button
-                onClick={() => onConfirm(null)}
+                onClick={handleNoDepositConfirm}
                 disabled={loading || (debtInfo && debtInfo.totalDebt > 0 && !canCheckout)}
                 className="w-full sm:flex-1"
                 variant="destructive"

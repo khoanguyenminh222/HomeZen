@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/app/api/auth/[...nextauth]/route';
 import prisma from '@/lib/prisma';
-import { 
-  globalUtilityRateSchema, 
+import {
+  globalUtilityRateSchema,
   updateGlobalUtilityRateSchema,
-  validateTieredRates 
+  validateTieredRates
 } from '@/lib/validations/utilityRate';
 import { isSuperAdmin } from '@/lib/middleware/authorization';
 
@@ -20,7 +20,7 @@ export async function GET(request) {
     if (isSuperAdmin(session)) {
       // Tìm đơn giá chung (isGlobal = true)
       const globalRate = await prisma.utilityRate.findFirst({
-        where: { isGlobal: true },
+        where: { isGlobal: true, userId: null },
         include: {
           tieredRates: {
             orderBy: { minUsage: 'asc' }
@@ -54,9 +54,10 @@ export async function GET(request) {
     // Property Owner: get property-specific utility rate (for their own property)
     // Find property-specific utility rate (not global, not room-specific)
     const propertyRate = await prisma.utilityRate.findFirst({
-      where: { 
+      where: {
         userId: session.user.id,
-        isGlobal: false,
+        userId: session.user.id,
+        isGlobal: true,
         roomId: null
       },
       include: {
@@ -76,46 +77,6 @@ export async function GET(request) {
   }
 }
 
-    // Tìm đơn giá chung (isGlobal = true)
-    const globalRate = await prisma.utilityRate.findFirst({
-      where: { isGlobal: true },
-      include: {
-        tieredRates: {
-          orderBy: { minUsage: 'asc' }
-        }
-      }
-    });
-
-    if (!globalRate) {
-      // Tạo đơn giá chung mặc định nếu chưa có
-      const defaultRate = await prisma.utilityRate.create({
-        data: {
-          electricityPrice: 3000, // 3000 VNĐ/kWh
-          waterPrice: 25000, // 25000 VNĐ/m³
-          waterPricingMethod: 'METER',
-          waterPricePerPerson: null,
-          useTieredPricing: false,
-          isGlobal: true,
-        },
-        include: {
-          tieredRates: {
-            orderBy: { minUsage: 'asc' }
-          }
-        }
-      });
-      return NextResponse.json(defaultRate);
-    }
-
-    return NextResponse.json(globalRate);
-  } catch (error) {
-    console.error('Error fetching global utility rates:', error);
-    return NextResponse.json(
-      { error: 'Lỗi khi lấy đơn giá chung' },
-      { status: 500 }
-    );
-  }
-}
-
 // PUT /api/settings/utility-rates - Cập nhật đơn giá chung (Super Admin) hoặc property utility rate (Property Owner)
 export async function PUT(request) {
   try {
@@ -125,7 +86,7 @@ export async function PUT(request) {
     }
 
     const body = await request.json();
-    
+
     // Validate input
     const validatedData = updateGlobalUtilityRateSchema.parse(body);
 
@@ -146,7 +107,7 @@ export async function PUT(request) {
 
       // Tìm đơn giá chung hiện tại
       let globalRate = await prisma.utilityRate.findFirst({
-        where: { isGlobal: true }
+        where: { isGlobal: true, userId: null }
       });
 
       if (!globalRate) {
@@ -219,9 +180,10 @@ export async function PUT(request) {
 
     // Tìm property utility rate hiện tại
     let propertyRate = await prisma.utilityRate.findFirst({
-      where: { 
+      where: {
         userId: session.user.id,
-        isGlobal: false,
+        userId: session.user.id,
+        isGlobal: true,
         roomId: null
       }
     });
@@ -265,6 +227,7 @@ export async function PUT(request) {
             waterPricingMethod: validatedData.waterPricingMethod,
             waterPricePerPerson: validatedData.waterPricePerPerson,
             useTieredPricing: validatedData.useTieredPricing,
+            isGlobal: true, // Force isGlobal=true for property default
           }
         });
 
@@ -293,7 +256,7 @@ export async function PUT(request) {
     return NextResponse.json(updatedRate);
   } catch (error) {
     console.error('Error updating global utility rates:', error);
-    
+
     if (error.name === 'ZodError') {
       return NextResponse.json(
         { error: 'Dữ liệu không hợp lệ', details: error.errors },

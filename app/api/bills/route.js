@@ -43,9 +43,8 @@ export async function GET(request) {
     } else {
       // If no roomId specified, filter by userId for Property Owners
       if (!isSuperAdmin(session)) {
-        where.room = {
-          userId: session.user.id
-        };
+        // Filter trực tiếp theo userId (tối ưu hơn filter qua room.userId)
+        where.userId = session.user.id;
       }
     }
     
@@ -253,6 +252,7 @@ export async function POST(request) {
     const bill = await prisma.bill.create({
       data: {
         roomId: validatedData.roomId,
+        userId: room.userId, // Lưu userId từ room để tối ưu query
         month: validatedData.month,
         year: validatedData.year,
         oldElectricReading: validatedData.oldElectricReading,
