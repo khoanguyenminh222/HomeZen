@@ -19,6 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 
 export default function OccupantForm({ tenantId, onSuccess, initialData = null, isEdit = false }) {
   const [loading, setLoading] = useState(false);
+  const [propertyAddress, setPropertyAddress] = useState('');
   const { toast } = useToast();
 
   // Helper function to normalize initial data
@@ -30,7 +31,17 @@ export default function OccupantForm({ tenantId, onSuccess, initialData = null, 
         dateOfBirth: '',
         hometown: '',
         relationship: '',
-        residenceType: 'TEMPORARY'
+        residenceType: 'TEMPORARY',
+        phone: '',
+        gender: '',
+        occupation: '',
+        ethnicity: '',
+        nationality: '',
+        permanentAddress: '',
+        temporaryAddress: '',
+        insuranceCardNumber: '',
+        issueDate: '',
+        placeOfIssue: ''
       };
     }
 
@@ -42,7 +53,19 @@ export default function OccupantForm({ tenantId, onSuccess, initialData = null, 
         : '',
       hometown: data.hometown ?? '',
       relationship: data.relationship ?? '',
-      residenceType: data.residenceType ?? 'TEMPORARY'
+      residenceType: data.residenceType ?? 'TEMPORARY',
+      phone: data.phone ?? '',
+      gender: data.gender ?? '',
+      occupation: data.occupation ?? '',
+      ethnicity: data.ethnicity ?? '',
+      nationality: data.nationality ?? '',
+      permanentAddress: data.permanentAddress ?? '',
+      temporaryAddress: data.temporaryAddress ?? '',
+      insuranceCardNumber: data.insuranceCardNumber ?? '',
+      issueDate: data.issueDate 
+        ? new Date(data.issueDate).toISOString().split('T')[0] 
+        : '',
+      placeOfIssue: data.placeOfIssue ?? ''
     };
   };
 
@@ -51,10 +74,36 @@ export default function OccupantForm({ tenantId, onSuccess, initialData = null, 
     defaultValues: normalizeInitialData(initialData)
   });
 
+  // Fetch property address
+  useEffect(() => {
+    const fetchPropertyAddress = async () => {
+      try {
+        const response = await fetch('/api/settings/property');
+        if (response.ok) {
+          const result = await response.json();
+          if (result.data?.address) {
+            setPropertyAddress(result.data.address);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching property address:', error);
+      }
+    };
+
+    fetchPropertyAddress();
+  }, []);
+
   // Reset form when initialData changes
   useEffect(() => {
     form.reset(normalizeInitialData(initialData));
   }, [initialData, form]);
+
+  // Hàm để điền địa chỉ nhà trọ vào địa chỉ tạm trú
+  const fillPropertyAddress = () => {
+    if (propertyAddress) {
+      form.setValue('temporaryAddress', propertyAddress);
+    }
+  };
 
   // Handle form submission
   const onSubmit = async (data) => {
@@ -67,7 +116,17 @@ export default function OccupantForm({ tenantId, onSuccess, initialData = null, 
         idCard: data.idCard || null,
         dateOfBirth: data.dateOfBirth || null,
         hometown: data.hometown || null,
-        relationship: data.relationship || null
+        relationship: data.relationship || null,
+        phone: data.phone || null,
+        gender: data.gender || null,
+        occupation: data.occupation || null,
+        ethnicity: data.ethnicity || null,
+        nationality: data.nationality || null,
+        permanentAddress: data.permanentAddress || null,
+        temporaryAddress: data.temporaryAddress || null,
+        insuranceCardNumber: data.insuranceCardNumber || null,
+        issueDate: data.issueDate || null,
+        placeOfIssue: data.placeOfIssue || null
       };
 
       const url = isEdit
@@ -227,6 +286,205 @@ export default function OccupantForm({ tenantId, onSuccess, initialData = null, 
               </FormItem>
             )}
           />
+
+          <FormField
+            control={form.control}
+            name="phone"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Số điện thoại</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="0901234567"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        {/* Thông tin bổ sung */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">Thông tin bổ sung</h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="gender"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Giới tính</FormLabel>
+                  <Select
+                    onValueChange={(value) => field.onChange(value === 'NONE' ? '' : value)}
+                    value={field.value || 'NONE'}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Chọn giới tính" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="NONE">-- Không chọn --</SelectItem>
+                      <SelectItem value="Nam">Nam</SelectItem>
+                      <SelectItem value="Nữ">Nữ</SelectItem>
+                      <SelectItem value="Khác">Khác</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="occupation"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Nghề nghiệp</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="Công nhân, Nhân viên văn phòng..."
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="ethnicity"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Dân tộc</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="Kinh, Tày, Nùng..."
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="nationality"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Quốc tịch</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="Việt Nam"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="permanentAddress"
+              render={({ field }) => (
+                <FormItem className="md:col-span-2">
+                  <FormLabel>Địa chỉ thường trú</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="temporaryAddress"
+              render={({ field }) => (
+                <FormItem className="md:col-span-2">
+                  <div className="flex items-center justify-between">
+                    <FormLabel>Địa chỉ tạm trú</FormLabel>
+                    {propertyAddress && (
+                      <button
+                        type="button"
+                        onClick={fillPropertyAddress}
+                        className="text-xs text-primary hover:text-primary/80 underline"
+                      >
+                        Điền địa chỉ nhà trọ
+                      </button>
+                    )}
+                  </div>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="Địa chỉ phòng trọ hiện tại"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="insuranceCardNumber"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Số thẻ bảo hiểm</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="Số thẻ BHYT/BHXH"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="issueDate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Ngày cấp CMND/CCCD</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="date"
+                      value={field.value || ''}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="placeOfIssue"
+              render={({ field }) => (
+                <FormItem className="md:col-span-2">
+                  <FormLabel>Nơi cấp CMND/CCCD</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="Công an quận/huyện..."
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
         </div>
 
         {/* Submit button */}

@@ -52,7 +52,18 @@ export async function POST(request, { params }) {
         hometown: validatedData.hometown || null,
         relationship: validatedData.relationship || null,
         residenceType: validatedData.residenceType,
-        tenantId: id
+        tenantId: id,
+        // Thông tin bổ sung
+        phone: validatedData.phone || null,
+        gender: validatedData.gender || null,
+        occupation: validatedData.occupation || null,
+        ethnicity: validatedData.ethnicity || null,
+        nationality: validatedData.nationality || null,
+        permanentAddress: validatedData.permanentAddress || null,
+        temporaryAddress: validatedData.temporaryAddress || null,
+        insuranceCardNumber: validatedData.insuranceCardNumber || null,
+        issueDate: validatedData.issueDate || null,
+        placeOfIssue: validatedData.placeOfIssue || null,
       }
     });
 

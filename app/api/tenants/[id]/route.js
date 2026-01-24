@@ -204,7 +204,17 @@ export async function PUT(request, { params }) {
           ...(validatedData.roomId && !existingTenant.roomId && { 
             roomId: validatedData.roomId,
             userId: newUserId // Cập nhật userId từ room
-          })
+          }),
+          // Thông tin bổ sung
+          ...(validatedData.gender !== undefined && { gender: validatedData.gender || null }),
+          ...(validatedData.occupation !== undefined && { occupation: validatedData.occupation || null }),
+          ...(validatedData.ethnicity !== undefined && { ethnicity: validatedData.ethnicity || null }),
+          ...(validatedData.nationality !== undefined && { nationality: validatedData.nationality || null }),
+          ...(validatedData.permanentAddress !== undefined && { permanentAddress: validatedData.permanentAddress || null }),
+          ...(validatedData.temporaryAddress !== undefined && { temporaryAddress: validatedData.temporaryAddress || null }),
+          ...(validatedData.insuranceCardNumber !== undefined && { insuranceCardNumber: validatedData.insuranceCardNumber || null }),
+          ...(validatedData.issueDate !== undefined && { issueDate: validatedData.issueDate }),
+          ...(validatedData.placeOfIssue !== undefined && { placeOfIssue: validatedData.placeOfIssue || null }),
         },
         include: {
           room: {

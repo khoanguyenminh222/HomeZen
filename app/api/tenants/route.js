@@ -246,7 +246,17 @@ export async function POST(request) {
           deposit: validatedData.deposit || null,
           contractFileUrl: validatedData.contractFileUrl || null,
           roomId: validatedData.roomId || null,
-          userId: tenantUserId
+          userId: tenantUserId,
+          // Thông tin bổ sung
+          gender: validatedData.gender || null,
+          occupation: validatedData.occupation || null,
+          ethnicity: validatedData.ethnicity || null,
+          nationality: validatedData.nationality || null,
+          permanentAddress: validatedData.permanentAddress || null,
+          temporaryAddress: validatedData.temporaryAddress || null,
+          insuranceCardNumber: validatedData.insuranceCardNumber || null,
+          issueDate: validatedData.issueDate || null,
+          placeOfIssue: validatedData.placeOfIssue || null,
         },
         include: {
           room: {
