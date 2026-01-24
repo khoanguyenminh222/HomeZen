@@ -25,6 +25,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loading } from '@/components/ui/loading';
 import BillForm from '@/components/bills/BillForm';
 import BillFeeList from '@/components/bills/BillFeeList';
+import BillHistory from '@/components/bills/BillHistory';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -613,6 +614,9 @@ export default function BillDetailPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Lịch sử thay đổi */}
+      <BillHistory billId={bill?.id} />
 
       {/* Form Dialog */}
       <BillForm

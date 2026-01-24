@@ -5,6 +5,7 @@ import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { NavLinks } from '@/components/ui/nav-links';
 import { LogoutButton } from '@/components/ui/LogoutButton';
 import { User, Shield } from 'lucide-react';
+import DashboardSessionProvider from '@/components/providers/DashboardSessionProvider';
 
 export default async function DashboardLayout({ children }) {
   const session = await auth();
@@ -20,8 +21,20 @@ export default async function DashboardLayout({ children }) {
 
   const isSuperAdmin = session.user?.role === 'SUPER_ADMIN';
 
+  // Transform session for client component
+  const clientSession = {
+    user: {
+      id: session.user.id,
+      username: session.user.username,
+      role: session.user.role,
+      isActive: session.user.isActive,
+    },
+    expires: session.expires,
+  };
+
   return (
-    <div className="min-h-screen bg-background">
+    <DashboardSessionProvider session={clientSession}>
+      <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 w-full border-b bg-card/95 backdrop-blur supports-backdrop-filter:bg-card/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
@@ -80,5 +93,6 @@ export default async function DashboardLayout({ children }) {
         {children}
       </main>
     </div>
+    </DashboardSessionProvider>
   );
 }

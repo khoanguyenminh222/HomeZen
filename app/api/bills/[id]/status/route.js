@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/app/api/auth/[...nextauth]/route';
 import prisma from '@/lib/prisma';
 import { updateBillStatusSchema } from '@/lib/validations/bill';
+import { BillHistoryService } from '@/lib/services/bill-history.service';
 
 // PATCH /api/bills/[id]/status - Cập nhật trạng thái thanh toán
 export async function PATCH(request, { params }) {
@@ -17,7 +18,17 @@ export async function PATCH(request, { params }) {
 
     // Kiểm tra hóa đơn có tồn tại không
     const bill = await prisma.bill.findUnique({
-      where: { id }
+      where: { id },
+      include: {
+        room: {
+          select: {
+            id: true,
+            code: true,
+            name: true,
+          }
+        },
+        billFees: true,
+      }
     });
 
     if (!bill) {
@@ -70,6 +81,25 @@ export async function PATCH(request, { params }) {
         },
         billFees: true,
       }
+    });
+
+    // Ghi lịch sử thay đổi trạng thái
+    const oldSnapshot = BillHistoryService.createBillSnapshot(bill);
+    const newSnapshot = BillHistoryService.createBillSnapshot(updatedBill);
+    const changes = BillHistoryService.compareSnapshots(oldSnapshot, newSnapshot);
+    
+    const statusText = validatedData.isPaid 
+      ? (paidAmount === totalCost ? 'đã thanh toán đầy đủ' : `đã thanh toán một phần (${paidAmount?.toLocaleString('vi-VN')} VNĐ)`)
+      : 'chưa thanh toán';
+    
+    await BillHistoryService.createHistory({
+      billId: updatedBill.id,
+      action: 'STATUS_CHANGE',
+      changedBy: session.user.id,
+      oldData: oldSnapshot,
+      newData: newSnapshot,
+      changes: changes,
+      description: `Thay đổi trạng thái thanh toán: ${statusText}`,
     });
 
     return NextResponse.json(updatedBill);

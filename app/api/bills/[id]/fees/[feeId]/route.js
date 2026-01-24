@@ -4,6 +4,7 @@ import prisma from '@/lib/prisma';
 import { updateBillFeeSchema } from '@/lib/validations/bill';
 import { calculateBill } from '@/lib/bills/calculateBill';
 import { getUtilityRateForRoom } from '@/lib/bills/getUtilityRateForRoom';
+import { BillHistoryService } from '@/lib/services/bill-history.service';
 
 // PUT /api/bills/[id]/fees/[feeId] - Cập nhật phí phát sinh
 export async function PUT(request, { params }) {
@@ -102,12 +103,35 @@ export async function PUT(request, { params }) {
     });
 
     // Cập nhật tổng tiền hóa đơn
-    await prisma.bill.update({
+    const updatedBill = await prisma.bill.update({
       where: { id: billId },
       data: {
         totalCost: calculation.totalCost,
         totalCostText: calculation.totalCostText,
+      },
+      include: {
+        room: {
+          select: {
+            id: true,
+            code: true,
+            name: true,
+          }
+        },
+        billFees: true,
       }
+    });
+
+    // Ghi lịch sử cập nhật phí
+    const oldSnapshot = BillHistoryService.createBillSnapshot(bill);
+    const newSnapshot = BillHistoryService.createBillSnapshot(updatedBill);
+    
+    await BillHistoryService.createHistory({
+      billId: billId,
+      action: 'FEE_UPDATE',
+      changedBy: session.user.id,
+      oldData: oldSnapshot,
+      newData: newSnapshot,
+      description: `Cập nhật phí phát sinh: ${updatedFee.name} - ${updatedFee.amount.toLocaleString('vi-VN')} VNĐ`,
     });
 
     return NextResponse.json(updatedFee);
@@ -150,7 +174,8 @@ export async function DELETE(request, { params }) {
               }
             }
           }
-        }
+        },
+        billFees: true,
       }
     });
 
@@ -219,12 +244,35 @@ export async function DELETE(request, { params }) {
     });
 
     // Cập nhật tổng tiền hóa đơn
-    await prisma.bill.update({
+    const updatedBill = await prisma.bill.update({
       where: { id: billId },
       data: {
         totalCost: calculation.totalCost,
         totalCostText: calculation.totalCostText,
+      },
+      include: {
+        room: {
+          select: {
+            id: true,
+            code: true,
+            name: true,
+          }
+        },
+        billFees: true,
       }
+    });
+
+    // Ghi lịch sử xóa phí
+    const oldSnapshot = BillHistoryService.createBillSnapshot(bill);
+    const newSnapshot = BillHistoryService.createBillSnapshot(updatedBill);
+    
+    await BillHistoryService.createHistory({
+      billId: billId,
+      action: 'FEE_REMOVE',
+      changedBy: session.user.id,
+      oldData: oldSnapshot,
+      newData: newSnapshot,
+      description: `Xóa phí phát sinh: ${billFee.name} - ${billFee.amount.toLocaleString('vi-VN')} VNĐ`,
     });
 
     return NextResponse.json({ message: 'Xóa phí phát sinh thành công' });

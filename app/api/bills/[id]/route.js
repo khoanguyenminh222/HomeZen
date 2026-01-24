@@ -5,6 +5,7 @@ import { updateBillSchema } from '@/lib/validations/bill';
 import { calculateBill } from '@/lib/bills/calculateBill';
 import { getUtilityRateForRoom } from '@/lib/bills/getUtilityRateForRoom';
 import { validateResourceOwnership, isSuperAdmin } from '@/lib/middleware/authorization';
+import { BillHistoryService } from '@/lib/services/bill-history.service';
 
 // GET /api/bills/[id] - Chi tiết hóa đơn
 export async function GET(request, { params }) {
@@ -83,7 +84,8 @@ export async function PUT(request, { params }) {
               }
             }
           }
-        }
+        },
+        billFees: true,
       }
     });
 
@@ -208,6 +210,21 @@ export async function PUT(request, { params }) {
       }
     });
 
+    // Ghi lịch sử cập nhật hóa đơn
+    const oldSnapshot = BillHistoryService.createBillSnapshot(existingBill);
+    const newSnapshot = BillHistoryService.createBillSnapshot(bill);
+    const changes = BillHistoryService.compareSnapshots(oldSnapshot, newSnapshot);
+    
+    await BillHistoryService.createHistory({
+      billId: bill.id,
+      action: 'UPDATE',
+      changedBy: session.user.id,
+      oldData: oldSnapshot,
+      newData: newSnapshot,
+      changes: changes,
+      description: BillHistoryService.generateDescription('UPDATE', changes),
+    });
+
     return NextResponse.json(bill);
   } catch (error) {
     console.error('Error updating bill:', error);
@@ -238,7 +255,17 @@ export async function DELETE(request, { params }) {
 
     // Kiểm tra hóa đơn có tồn tại không
     const bill = await prisma.bill.findUnique({
-      where: { id }
+      where: { id },
+      include: {
+        room: {
+          select: {
+            id: true,
+            code: true,
+            name: true,
+          }
+        },
+        billFees: true,
+      }
     });
 
     if (!bill) {
@@ -266,6 +293,16 @@ export async function DELETE(request, { params }) {
         { status: 400 }
       );
     }
+
+    // Ghi lịch sử xóa hóa đơn (trước khi xóa)
+    const billSnapshot = BillHistoryService.createBillSnapshot(bill);
+    await BillHistoryService.createHistory({
+      billId: bill.id,
+      action: 'DELETE',
+      changedBy: session.user.id,
+      oldData: billSnapshot,
+      description: `Xóa hóa đơn tháng ${bill.month}/${bill.year} cho phòng ${bill.room.code}`,
+    });
 
     // Xóa hóa đơn (BillFee sẽ tự động xóa do cascade)
     await prisma.bill.delete({

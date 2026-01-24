@@ -6,6 +6,7 @@ import { calculateBill } from '@/lib/bills/calculateBill';
 import { getUtilityRateForRoom } from '@/lib/bills/getUtilityRateForRoom';
 import { isSuperAdmin, validateResourceOwnership } from '@/lib/middleware/authorization';
 import { logUnauthorizedAccess, logAuthorizationViolation } from '@/lib/middleware/security-logging';
+import { BillHistoryService } from '@/lib/services/bill-history.service';
 
 // GET /api/bills - Danh sách hóa đơn (với filters)
 export async function GET(request) {
@@ -294,6 +295,16 @@ export async function POST(request) {
         },
         billFees: true,
       }
+    });
+
+    // Ghi lịch sử tạo hóa đơn
+    const billSnapshot = BillHistoryService.createBillSnapshot(bill);
+    await BillHistoryService.createHistory({
+      billId: bill.id,
+      action: 'CREATE',
+      changedBy: session.user.id,
+      newData: billSnapshot,
+      description: `Tạo mới hóa đơn tháng ${bill.month}/${bill.year} cho phòng ${bill.room.code}`,
     });
 
     return NextResponse.json(bill, { status: 201 });

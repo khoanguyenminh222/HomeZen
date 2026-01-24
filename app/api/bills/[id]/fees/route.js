@@ -4,6 +4,7 @@ import prisma from '@/lib/prisma';
 import { addBillFeeSchema } from '@/lib/validations/bill';
 import { calculateBill } from '@/lib/bills/calculateBill';
 import { getUtilityRateForRoom } from '@/lib/bills/getUtilityRateForRoom';
+import { BillHistoryService } from '@/lib/services/bill-history.service';
 
 // POST /api/bills/[id]/fees - Thêm phí phát sinh vào hóa đơn
 export async function POST(request, { params }) {
@@ -29,7 +30,8 @@ export async function POST(request, { params }) {
               }
             }
           }
-        }
+        },
+        billFees: true,
       }
     });
 
@@ -92,12 +94,35 @@ export async function POST(request, { params }) {
     });
 
     // Cập nhật tổng tiền hóa đơn
-    await prisma.bill.update({
+    const updatedBill = await prisma.bill.update({
       where: { id: billId },
       data: {
         totalCost: calculation.totalCost,
         totalCostText: calculation.totalCostText,
+      },
+      include: {
+        room: {
+          select: {
+            id: true,
+            code: true,
+            name: true,
+          }
+        },
+        billFees: true,
       }
+    });
+
+    // Ghi lịch sử thêm phí
+    const oldSnapshot = BillHistoryService.createBillSnapshot(bill);
+    const newSnapshot = BillHistoryService.createBillSnapshot(updatedBill);
+    
+    await BillHistoryService.createHistory({
+      billId: billId,
+      action: 'FEE_ADD',
+      changedBy: session.user.id,
+      oldData: oldSnapshot,
+      newData: newSnapshot,
+      description: `Thêm phí phát sinh: ${validatedData.name} - ${validatedData.amount.toLocaleString('vi-VN')} VNĐ`,
     });
 
     return NextResponse.json(billFee, { status: 201 });

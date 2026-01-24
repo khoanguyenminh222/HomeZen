@@ -3,15 +3,15 @@
 import { SessionProvider as NextAuthSessionProvider } from 'next-auth/react';
 
 /**
- * Session Provider wrapper component
- * Wraps the app with NextAuth SessionProvider
+ * Dashboard Session Provider
+ * Wraps dashboard with session from server
  */
-export default function SessionProvider({ children, session }) {
+export default function DashboardSessionProvider({ children, session }) {
   return (
     <NextAuthSessionProvider 
       session={session}
       refetchInterval={0}
-      refetchOnWindowFocus={true}
+      refetchOnWindowFocus={false}
     >
       {children}
     </NextAuthSessionProvider>

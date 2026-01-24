@@ -28,6 +28,7 @@ model User {
   utilityRates        UtilityRate[]
   tenants             Tenant[]
   bills               Bill[]
+  billHistories       BillHistory[]
   passwordResetTokens PasswordResetToken[]
   telegramConfiguration TelegramConfiguration?
   notificationLogs    NotificationLog[]
@@ -291,6 +292,7 @@ model Bill {
   room                  Room      @relation(fields: [roomId], references: [id])
   user                  User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
   billFees              BillFee[]
+  histories             BillHistory[]
   
   @@unique([roomId, month, year])
   @@index([roomId])
@@ -351,6 +353,42 @@ model BillFee {
   bill        Bill      @relation(fields: [billId], references: [id], onDelete: Cascade)
   
   @@index([billId])
+}
+
+// Model Lịch sử thay đổi hóa đơn
+model BillHistory {
+  id          String          @id @default(cuid())
+  billId      String?         // Nullable để giữ lại lịch sử khi bill bị xóa (có thể bị set null do foreign key)
+  originalBillId String?       // Lưu billId gốc để query sau khi bill bị xóa (không bị ảnh hưởng bởi foreign key)
+  action      BillHistoryAction
+  changedBy   String?          // User ID người thực hiện thay đổi (nullable nếu system)
+  oldData     Json?            // Snapshot dữ liệu cũ (JSON)
+  newData     Json?            // Snapshot dữ liệu mới (JSON)
+  changes     Json?            // Mô tả chi tiết các thay đổi (JSON)
+  description String?          // Mô tả thay đổi bằng text
+  createdAt   DateTime         @default(now())
+  
+  // Quan hệ
+  // SetNull để giữ lại lịch sử ngay cả khi hóa đơn bị xóa
+  bill        Bill?            @relation(fields: [billId], references: [id], onDelete: SetNull)
+  user        User?            @relation(fields: [changedBy], references: [id], onDelete: SetNull)
+  
+  @@index([originalBillId])
+  
+  @@index([billId])
+  @@index([action])
+  @@index([changedBy])
+  @@index([createdAt])
+}
+
+enum BillHistoryAction {
+  CREATE        // Tạo mới hóa đơn
+  UPDATE        // Cập nhật hóa đơn
+  DELETE        // Xóa hóa đơn
+  STATUS_CHANGE // Thay đổi trạng thái thanh toán
+  FEE_ADD       // Thêm phí phát sinh
+  FEE_REMOVE    // Xóa phí phát sinh
+  FEE_UPDATE    // Cập nhật phí phát sinh
 }
 
 // Model Token đặt lại mật khẩu

@@ -30,7 +30,8 @@ import {
   Bell,
   Lock,
   User,
-  LogOut
+  LogOut,
+  History
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -135,6 +136,11 @@ const propertyOwnerNavItems = [
     icon: Receipt,
   },
   {
+    href: '/bills/history',
+    label: 'Lịch Sử Hóa Đơn',
+    icon: History,
+  },
+  {
     href: '/meter-history',
     label: 'Lịch Sử Chỉ Số',
     icon: Calendar,
@@ -232,11 +238,17 @@ function DesktopNavItem({ item, pathname }) {
   );
   // Nếu menu có children, chỉ active khi có child active
   // Nếu menu không có children, active dựa vào href
+  // Đặc biệt: /bills/history không active /bills
   const isActive = hasChildren 
     ? isChildActive 
     : (item.href && (
         pathname === item.href ||
-        (item.href !== '/' && item.href !== '/admin' && pathname?.startsWith(item.href))
+        (item.href !== '/' && item.href !== '/admin' && 
+         // Nếu href là /bills, chỉ active khi pathname bắt đầu bằng /bills nhưng không phải /bills/history
+         (item.href === '/bills' 
+           ? (pathname?.startsWith('/bills') && pathname !== '/bills/history')
+           : pathname?.startsWith(item.href))
+        )
       ));
 
   if (hasChildren) {
@@ -315,11 +327,17 @@ function MobileNavItem({ item, pathname, onClose }) {
   );
   // Nếu menu có children, chỉ active khi có child active
   // Nếu menu không có children, active dựa vào href
+  // Đặc biệt: /bills/history không active /bills
   const isActive = hasChildren 
     ? isChildActive 
     : (item.href && (
         pathname === item.href ||
-        (item.href !== '/' && item.href !== '/admin' && pathname?.startsWith(item.href))
+        (item.href !== '/' && item.href !== '/admin' && 
+         // Nếu href là /bills, chỉ active khi pathname bắt đầu bằng /bills nhưng không phải /bills/history
+         (item.href === '/bills' 
+           ? (pathname?.startsWith('/bills') && pathname !== '/bills/history')
+           : pathname?.startsWith(item.href))
+        )
       ));
 
   if (hasChildren) {
@@ -432,11 +450,28 @@ export function NavLinks() {
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
+  // Check if we're in a protected route (dashboard area)
+  // Dashboard layout already checks auth, so if we're here, we have a session
+  const isInDashboard = pathname && 
+    pathname !== '/login' && 
+    pathname !== '/forgot-password' && 
+    pathname !== '/reset-password' &&
+    !pathname.startsWith('/api');
+
   // Get role-based menu items
   // Default to property owner items if session is not loaded yet
   // Only check role when session is authenticated
   const isSuperAdmin = status === 'authenticated' && session?.user?.role === 'SUPER_ADMIN';
   const navItems = isSuperAdmin ? superAdminNavItems : propertyOwnerNavItems;
+  
+  // Determine if we should show logout button
+  // Show if: authenticated, or if we're in dashboard (which requires auth via layout)
+  const shouldShowLogout = status === 'authenticated' || 
+    (isInDashboard && status !== 'unauthenticated');
+  
+  // Determine if we should show user info
+  const shouldShowUserInfo = status === 'authenticated' || 
+    (isInDashboard && status !== 'unauthenticated');
 
   useEffect(() => {
     // Use a timeout to avoid synchronous setState in effect
@@ -541,50 +576,69 @@ export function NavLinks() {
                 </div>
 
                 {/* User Info Section */}
-                {status === 'authenticated' && session?.user?.username ? (
-                  <div className="pr-12">
-                    <div className="flex items-center gap-3">
-                      <div className={cn(
-                        "flex items-center justify-center w-12 h-12 rounded-xl shrink-0",
-                        session.user.role === 'SUPER_ADMIN' 
-                          ? "bg-primary/20 text-primary" 
-                          : "bg-muted text-muted-foreground"
-                      )}>
-                        {session.user.role === 'SUPER_ADMIN' ? (
-                          <Shield className="h-6 w-6" />
-                        ) : (
-                          <User className="h-6 w-6" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-base font-semibold text-foreground truncate">
-                          {session.user.username}
-                        </h3>
-                        <div className="flex items-center gap-2 mt-0.5">
+                {shouldShowUserInfo ? (
+                  status === 'authenticated' && session?.user?.username ? (
+                    <div className="pr-12">
+                      <div className="flex items-center gap-3">
+                        <div className={cn(
+                          "flex items-center justify-center w-12 h-12 rounded-xl shrink-0",
+                          session.user.role === 'SUPER_ADMIN' 
+                            ? "bg-primary/20 text-primary" 
+                            : "bg-muted text-muted-foreground"
+                        )}>
                           {session.user.role === 'SUPER_ADMIN' ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-primary/10 text-primary rounded-md text-[10px] font-medium">
-                              <Shield className="h-2.5 w-2.5" />
-                              Super Admin
-                            </span>
+                            <Shield className="h-6 w-6" />
                           ) : (
-                            <span className="text-xs text-muted-foreground">
-                              Chủ trọ
-                            </span>
+                            <User className="h-6 w-6" />
                           )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-base font-semibold text-foreground truncate">
+                            {session.user.username}
+                          </h3>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            {session.user.role === 'SUPER_ADMIN' ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-primary/10 text-primary rounded-md text-[10px] font-medium">
+                                <Shield className="h-2.5 w-2.5" />
+                                Super Admin
+                              </span>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">
+                                Chủ trọ
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ) : status === 'loading' ? (
-                  <div className="pr-12">
-                    <div className="flex items-center gap-3">
-                      <div className="h-12 w-12 rounded-xl bg-muted animate-pulse shrink-0" />
-                      <div className="flex-1 space-y-2">
-                        <div className="h-4 w-24 bg-muted rounded animate-pulse" />
-                        <div className="h-3 w-16 bg-muted rounded animate-pulse" />
+                  ) : status === 'loading' ? (
+                    <div className="pr-12">
+                      <div className="flex items-center gap-3">
+                        <div className="h-12 w-12 rounded-xl bg-muted animate-pulse shrink-0" />
+                        <div className="flex-1 space-y-2">
+                          <div className="h-4 w-24 bg-muted rounded animate-pulse" />
+                          <div className="h-3 w-16 bg-muted rounded animate-pulse" />
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  ) : isInDashboard ? (
+                    // Fallback: Show placeholder if we're in dashboard but session not loaded yet
+                    <div className="pr-12">
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-center w-12 h-12 rounded-xl shrink-0 bg-muted text-muted-foreground">
+                          <User className="h-6 w-6" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-base font-semibold text-foreground truncate">
+                            Đang tải...
+                          </h3>
+                          <span className="text-xs text-muted-foreground">
+                            Chủ trọ
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ) : null
                 ) : null}
               </div>
 
@@ -601,11 +655,11 @@ export function NavLinks() {
               </nav>
 
               {/* Logout Button */}
-              {status === 'authenticated' && session && (
+              {shouldShowLogout && (
                 <div className="px-4 py-4 border-t border-border/50 bg-card shrink-0">
                   <Button
                     variant="outline"
-                    className="w-full justify-start gap-2 h-11 text-destructive"
+                    className="w-full justify-start gap-2 h-11 text-destructive hover:bg-destructive hover:text-destructive-foreground"
                     onClick={async () => {
                       try {
                         await signOut({
@@ -614,6 +668,8 @@ export function NavLinks() {
                         });
                       } catch (error) {
                         console.error('Logout error:', error);
+                        // Fallback: redirect manually if signOut fails
+                        window.location.href = '/login';
                       }
                     }}
                   >
