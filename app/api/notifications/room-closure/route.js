@@ -20,8 +20,12 @@ export async function POST(request) {
     const body = await request.json();
     const { daysBefore = 1 } = body;
 
+    // Super Admin có thể test cho tất cả, Property Owner chỉ test cho phòng của mình
+    const userId = session.user.role === 'SUPER_ADMIN' ? null : session.user.id;
+
     const result = await RoomClosureNotificationService.checkAndNotifyRoomClosures(
-      parseInt(daysBefore)
+      parseInt(daysBefore),
+      userId
     );
 
     return NextResponse.json(

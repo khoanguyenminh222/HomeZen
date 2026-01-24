@@ -159,6 +159,11 @@ const propertyOwnerNavItems = [
         label: 'Cấu hình Telegram',
         icon: Send,
       },
+      {
+        href: '/settings/test-notifications',
+        label: 'Test thông báo chốt sổ',
+        icon: Bell,
+      },
     ],
   },
   {
@@ -199,6 +204,11 @@ const superAdminNavItems = [
         href: '/admin/telegram-bot-config',
         label: 'Cấu hình Telegram Bot',
         icon: Send,
+      },
+      {
+        href: '/admin/test-room-closure',
+        label: 'Test thông báo chốt sổ',
+        icon: Bell,
       },
     ],
   },

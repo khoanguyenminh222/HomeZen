@@ -30,6 +30,12 @@ const settingsNavItems = [
     icon: Send,
     description: 'Cấu hình Chat ID để nhận thông báo'
   },
+  {
+    href: '/settings/test-notifications',
+    label: 'Test Thông Báo',
+    icon: Bell,
+    description: 'Test gửi thông báo chốt sổ'
+  },
 ];
 
 export default function SettingsLayout({ children }) {
