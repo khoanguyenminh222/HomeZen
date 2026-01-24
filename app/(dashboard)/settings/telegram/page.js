@@ -6,7 +6,7 @@ import TelegramConfigForm from '@/components/settings/TelegramConfigForm';
  */
 export default function TelegramConfigPage() {
   return (
-    <div className="container mx-auto p-4 sm:p-6">
+    <div className="w-full max-w-7xl mx-auto">
       <TelegramConfigForm />
     </div>
   );

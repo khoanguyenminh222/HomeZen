@@ -179,22 +179,22 @@ export default function TelegramBotConfigForm() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-4 sm:pb-6">
           <CardTitle className="text-xl sm:text-2xl flex items-center gap-2">
-            <Send className="h-5 w-5" />
-            Cấu Hình Telegram Bot Token
+            <Send className="h-5 w-5 sm:h-6 sm:w-6" />
+            <span className="wrap-break-word">Cấu Hình Telegram Bot Token</span>
           </CardTitle>
-          <CardDescription className="text-sm sm:text-base">
+          <CardDescription className="text-sm sm:text-base mt-2">
             Cấu hình bot token global cho tất cả property owners. Bot token này sẽ được dùng chung cho tất cả người dùng.
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <CardContent className="pt-0">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 sm:space-y-6">
             {/* Bot Token */}
             <div className="space-y-2">
-              <Label htmlFor="botToken" className="text-sm sm:text-base">
+              <Label htmlFor="botToken" className="text-sm sm:text-base font-semibold">
                 Bot Token <span className="text-red-500">*</span>
               </Label>
               <div className="relative">
@@ -203,27 +203,28 @@ export default function TelegramBotConfigForm() {
                   type={showBotToken ? 'text' : 'password'}
                   placeholder="VD: 123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
                   {...register('botToken')}
-                  className="pr-10"
+                  className="h-11 sm:h-10 pr-11 sm:pr-10 text-sm sm:text-base"
                 />
                 <button
                   type="button"
                   onClick={() => setShowBotToken(!showBotToken)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1"
+                  aria-label={showBotToken ? 'Ẩn token' : 'Hiện token'}
                 >
-                  {showBotToken ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showBotToken ? <EyeOff className="h-5 w-5 sm:h-4 sm:w-4" /> : <Eye className="h-5 w-5 sm:h-4 sm:w-4" />}
                 </button>
               </div>
               {errors.botToken && (
-                <p className="text-sm text-red-500">{errors.botToken.message}</p>
+                <p className="text-xs sm:text-sm text-red-500">{errors.botToken.message}</p>
               )}
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs sm:text-sm text-muted-foreground">
                 Lấy Bot Token từ @BotFather trên Telegram. Format: số:chuỗi
               </p>
             </div>
 
             {/* Bot Username */}
             <div className="space-y-2">
-              <Label htmlFor="botUsername" className="text-sm sm:text-base">
+              <Label htmlFor="botUsername" className="text-sm sm:text-base font-semibold">
                 Bot Username (Tùy chọn)
               </Label>
               <Input
@@ -231,11 +232,12 @@ export default function TelegramBotConfigForm() {
                 type="text"
                 placeholder="VD: @BotHomeZen_bot"
                 {...register('botUsername')}
+                className="h-11 sm:h-10 text-sm sm:text-base"
               />
               {errors.botUsername && (
-                <p className="text-sm text-red-500">{errors.botUsername.message}</p>
+                <p className="text-xs sm:text-sm text-red-500">{errors.botUsername.message}</p>
               )}
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs sm:text-sm text-muted-foreground">
                 Username của bot để gợi ý cho người dùng. Sẽ tự động lấy từ Telegram API khi test bot token.
               </p>
             </div>
@@ -247,34 +249,40 @@ export default function TelegramBotConfigForm() {
                 variant="outline"
                 onClick={onTestConnection}
                 disabled={isTesting || isLoading || !botToken}
-                className="flex-1"
+                className="flex-1 h-11 sm:h-10 text-sm sm:text-base"
               >
                 {isTesting ? (
                   <>
                     <div className="h-4 w-4 border-2 border-current border-t-transparent animate-spin rounded-full mr-2" />
-                    Đang test...
+                    <span className="hidden sm:inline">Đang test...</span>
+                    <span className="sm:hidden">Đang test...</span>
                   </>
                 ) : (
                   <>
                     <Send className="h-4 w-4 mr-2" />
-                    Test Bot Token
+                    <span className="hidden sm:inline">Test Bot Token</span>
+                    <span className="sm:hidden">Test</span>
                   </>
                 )}
               </Button>
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-3 pt-4 border-t">
-              <Button type="submit" disabled={isLoading || isTesting} className="flex-1">
+            <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
+              <Button 
+                type="submit" 
+                disabled={isLoading || isTesting} 
+                className="flex-1 h-11 sm:h-10 text-sm sm:text-base"
+              >
                 {isLoading ? (
                   <>
                     <div className="h-4 w-4 border-2 border-primary-foreground border-t-transparent animate-spin rounded-full mr-2" />
-                    Đang lưu...
+                    <span>Đang lưu...</span>
                   </>
                 ) : (
                   <>
                     <CheckCircle2 className="h-4 w-4 mr-2" />
-                    {configId ? 'Cập Nhật' : 'Lưu'} Bot Token
+                    <span>{configId ? 'Cập Nhật' : 'Lưu'} Bot Token</span>
                   </>
                 )}
               </Button>

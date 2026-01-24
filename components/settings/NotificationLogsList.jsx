@@ -5,7 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Loading } from '@/components/ui/loading';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Mail, Send, CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Mail, Send, CheckCircle2, XCircle, Clock, ChevronDown, ChevronUp } from 'lucide-react';
 
 // Helper function to format date
 function formatDate(dateString) {
@@ -17,6 +18,99 @@ function formatDate(dateString) {
   const hours = String(date.getHours()).padStart(2, '0');
   const minutes = String(date.getMinutes()).padStart(2, '0');
   return `${day}/${month}/${year} ${hours}:${minutes}`;
+}
+
+// Notification Log Item Component
+function NotificationLogItem({ log, getStatusBadge, getTypeIcon }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const TypeIcon = getTypeIcon(log.type);
+  const messageLines = log.message?.split('\n') || [];
+  const shouldTruncate = messageLines.length > 3 || log.message?.length > 200;
+  const displayMessage = shouldTruncate && !isExpanded 
+    ? messageLines.slice(0, 3).join('\n') + (messageLines.length > 3 ? '...' : '')
+    : log.message;
+
+  return (
+    <div className="border rounded-lg p-4 sm:p-5 hover:bg-muted/50 transition-colors">
+      <div className="space-y-3 sm:space-y-3">
+        {/* Header: Type, Status, Retry */}
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-2">
+            <TypeIcon className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground shrink-0" />
+            <span className="font-medium text-sm sm:text-base">
+              {log.type === 'EMAIL' ? 'Email' : 'Telegram'}
+            </span>
+          </div>
+          {getStatusBadge(log.status)}
+          {log.retryCount > 0 && (
+            <Badge variant="outline" className="text-xs">
+              Thử lại: {log.retryCount}
+            </Badge>
+          )}
+        </div>
+
+        {/* Subject */}
+        {log.subject && (
+          <p className="font-semibold text-sm sm:text-base wrap-break-word line-clamp-2">
+            {log.subject}
+          </p>
+        )}
+
+        {/* Message */}
+        <div className="space-y-2">
+          <p className="text-sm sm:text-base text-muted-foreground wrap-break-word whitespace-pre-wrap">
+            {displayMessage}
+          </p>
+          {shouldTruncate && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="h-8 text-xs text-primary hover:text-primary/80 -ml-2"
+            >
+              {isExpanded ? (
+                <>
+                  <ChevronUp className="h-3 w-3 mr-1" />
+                  Thu gọn
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="h-3 w-3 mr-1" />
+                  Xem thêm
+                </>
+              )}
+            </Button>
+          )}
+        </div>
+
+        {/* Metadata */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground pt-2 border-t border-border/50">
+          <div className="flex items-center gap-1 sm:gap-2">
+            <span className="font-medium">Đến:</span>
+            <span className="break-all">{log.recipient}</span>
+          </div>
+          {log.sentAt && (
+            <div className="flex items-center gap-1 sm:gap-2">
+              <span className="font-medium">Gửi lúc:</span>
+              <span className="whitespace-nowrap">{formatDate(log.sentAt)}</span>
+            </div>
+          )}
+          <div className="flex items-center gap-1 sm:gap-2">
+            <span className="font-medium">Tạo lúc:</span>
+            <span className="whitespace-nowrap">{formatDate(log.createdAt)}</span>
+          </div>
+        </div>
+
+        {/* Error Message */}
+        {log.errorMessage && (
+          <div className="text-xs sm:text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 p-3 rounded-lg border border-red-200 dark:border-red-800 wrap-break-word">
+            <span className="font-semibold">Lỗi: </span>
+            <span>{log.errorMessage}</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 /**
@@ -86,21 +180,21 @@ export default function NotificationLogsList() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-4 sm:pb-6">
           <CardTitle className="text-xl sm:text-2xl">Lịch Sử Thông Báo</CardTitle>
-          <CardDescription className="text-sm sm:text-base">
+          <CardDescription className="text-sm sm:text-base mt-1 sm:mt-2">
             Xem lịch sử các thông báo đã được gửi qua email và telegram
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-0">
           {/* Filters */}
-          <div className="flex gap-4 mb-6">
-            <div className="flex-1">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-4 sm:mb-6">
+            <div className="flex-1 w-full">
               <label className="text-sm font-medium mb-2 block">Loại thông báo</label>
               <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger>
+                <SelectTrigger className="h-11 sm:h-10">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -110,10 +204,10 @@ export default function NotificationLogsList() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex-1">
+            <div className="flex-1 w-full">
               <label className="text-sm font-medium mb-2 block">Trạng thái</label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger>
+                <SelectTrigger className="h-11 sm:h-10">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -129,59 +223,19 @@ export default function NotificationLogsList() {
 
           {/* Logs List */}
           {logs.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <p>Chưa có lịch sử thông báo</p>
+            <div className="text-center py-8 sm:py-12 text-muted-foreground">
+              <p className="text-sm sm:text-base">Chưa có lịch sử thông báo</p>
             </div>
           ) : (
-            <div className="space-y-4">
-              {logs.map((log) => {
-                const TypeIcon = getTypeIcon(log.type);
-                return (
-                  <div
-                    key={log.id}
-                    className="border rounded-lg p-4 hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 space-y-2">
-                        <div className="flex items-center gap-2">
-                          <TypeIcon className="h-4 w-4 text-muted-foreground" />
-                          <span className="font-medium">
-                            {log.type === 'EMAIL' ? 'Email' : 'Telegram'}
-                          </span>
-                          {getStatusBadge(log.status)}
-                          {log.retryCount > 0 && (
-                            <Badge variant="outline" className="text-xs">
-                              Thử lại: {log.retryCount}
-                            </Badge>
-                          )}
-                        </div>
-                        {log.subject && (
-                          <p className="font-semibold text-sm">{log.subject}</p>
-                        )}
-                        <p className="text-sm text-muted-foreground line-clamp-2">
-                          {log.message}
-                        </p>
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                          <span>Đến: {log.recipient}</span>
-                          {log.sentAt && (
-                            <span>
-                              Gửi lúc: {formatDate(log.sentAt)}
-                            </span>
-                          )}
-                          <span>
-                            Tạo lúc: {formatDate(log.createdAt)}
-                          </span>
-                        </div>
-                        {log.errorMessage && (
-                          <p className="text-xs text-red-500 bg-red-50 dark:bg-red-900/20 p-2 rounded">
-                            Lỗi: {log.errorMessage}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+            <div className="space-y-3 sm:space-y-4">
+              {logs.map((log) => (
+                <NotificationLogItem
+                  key={log.id}
+                  log={log}
+                  getStatusBadge={getStatusBadge}
+                  getTypeIcon={getTypeIcon}
+                />
+              ))}
             </div>
           )}
         </CardContent>

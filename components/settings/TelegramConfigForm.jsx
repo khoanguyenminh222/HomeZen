@@ -218,27 +218,27 @@ export default function TelegramConfigForm() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-4 sm:pb-6">
           <CardTitle className="text-xl sm:text-2xl flex items-center gap-2">
-            <Send className="h-5 w-5" />
-            Cấu Hình Telegram Bot
+            <Send className="h-5 w-5 sm:h-6 sm:w-6" />
+            <span className="wrap-break-word">Cấu Hình Telegram Bot</span>
           </CardTitle>
-          <CardDescription className="text-sm sm:text-base">
+          <CardDescription className="text-sm sm:text-base mt-2">
             Cấu hình Chat ID để nhận thông báo tự động qua Telegram. Bot token đã được quản trị viên cấu hình.
             {botUsername && (
-              <span className="block mt-2 font-semibold text-primary">
+              <span className="block mt-2 sm:mt-3 font-semibold text-primary text-xs sm:text-sm">
                 💡 Bot hiện tại: {botUsername} - Bạn có thể nhắn trực tiếp bot hoặc thêm bot vào nhóm để nhận thông báo
               </span>
             )}
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <CardContent className="pt-0">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 sm:space-y-6">
             {/* Chat ID */}
             <div className="space-y-2">
-              <Label htmlFor="chatId" className="text-sm sm:text-base">
+              <Label htmlFor="chatId" className="text-sm sm:text-base font-semibold">
                 Chat ID <span className="text-red-500">*</span>
               </Label>
               <div className="relative">
@@ -247,25 +247,26 @@ export default function TelegramConfigForm() {
                   type={showChatId ? 'text' : 'password'}
                   placeholder="VD: -1001234567890"
                   {...register('chatId')}
-                  className="pr-10"
+                  className="h-11 sm:h-10 pr-11 sm:pr-10 text-sm sm:text-base"
                 />
                 <button
                   type="button"
                   onClick={() => setShowChatId(!showChatId)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1"
+                  aria-label={showChatId ? 'Ẩn Chat ID' : 'Hiện Chat ID'}
                 >
-                  {showChatId ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showChatId ? <EyeOff className="h-5 w-5 sm:h-4 sm:w-4" /> : <Eye className="h-5 w-5 sm:h-4 sm:w-4" />}
                 </button>
               </div>
               {errors.chatId && (
-                <p className="text-sm text-red-500">{errors.chatId.message}</p>
+                <p className="text-xs sm:text-sm text-red-500">{errors.chatId.message}</p>
               )}
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
                 Chat ID phải là số (có thể có dấu - ở đầu). 
-                <span className="block mt-1">
+                <span className="block mt-1.5 sm:mt-2">
                   💡 <strong>Nhắn trực tiếp bot:</strong> Bạn không thấy Chat ID trong URL, cần nhắn cho @userinfobot để lấy Chat ID của bạn.
                 </span>
-                <span className="block mt-1">
+                <span className="block mt-1.5 sm:mt-2">
                   💡 <strong>Nhóm:</strong> Thêm bot vào nhóm, sau đó nhắn cho @userinfobot trong nhóm để lấy Chat ID của nhóm.
                 </span>
               </p>
@@ -278,34 +279,39 @@ export default function TelegramConfigForm() {
                 variant="outline"
                 onClick={onTestConnection}
                 disabled={isTesting || isLoading || !chatId}
-                className="flex-1"
+                className="flex-1 h-11 sm:h-10 text-sm sm:text-base"
               >
                 {isTesting ? (
                   <>
                     <div className="h-4 w-4 border-2 border-current border-t-transparent animate-spin rounded-full mr-2" />
-                    Đang test...
+                    <span>Đang test...</span>
                   </>
                 ) : (
                   <>
                     <Send className="h-4 w-4 mr-2" />
-                    Test Kết Nối
+                    <span className="hidden sm:inline">Test Kết Nối</span>
+                    <span className="sm:hidden">Test</span>
                   </>
                 )}
               </Button>
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-3 pt-4 border-t">
-              <Button type="submit" disabled={isLoading || isTesting} className="flex-1">
+            <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
+              <Button 
+                type="submit" 
+                disabled={isLoading || isTesting} 
+                className="flex-1 h-11 sm:h-10 text-sm sm:text-base"
+              >
                 {isLoading ? (
                   <>
                     <div className="h-4 w-4 border-2 border-primary-foreground border-t-transparent animate-spin rounded-full mr-2" />
-                    Đang lưu...
+                    <span>Đang lưu...</span>
                   </>
                 ) : (
                   <>
                     <CheckCircle2 className="h-4 w-4 mr-2" />
-                    Lưu Cấu Hình
+                    <span>Lưu Cấu Hình</span>
                   </>
                 )}
               </Button>
@@ -314,9 +320,11 @@ export default function TelegramConfigForm() {
                 variant="destructive"
                 onClick={onDelete}
                 disabled={isLoading || isTesting}
+                className="h-11 sm:h-10 text-sm sm:text-base"
               >
                 <XCircle className="h-4 w-4 mr-2" />
-                Xóa
+                <span className="hidden sm:inline">Xóa</span>
+                <span className="sm:hidden">Xóa</span>
               </Button>
             </div>
           </form>
