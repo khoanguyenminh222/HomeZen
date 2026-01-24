@@ -309,7 +309,7 @@ export default function LoginPage() {
 
           <div className="pt-6 relative">
             <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-px bg-border/50" />
-            <span className="relative z-10 bg-background px-4 mx-auto text-[10px] uppercase font-bold text-muted-foreground/60 tracking-widest block w-fit">
+            <span className="relative z-10 px-4 mx-auto text-[10px] uppercase font-bold text-muted-foreground/60 tracking-widest block w-fit">
               Liên hệ hỗ trợ
             </span>
           </div>

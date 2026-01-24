@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { useSession } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 import * as React from 'react';
 import { createPortal } from 'react-dom';
 import * as NavigationMenuPrimitive from '@radix-ui/react-navigation-menu';
@@ -26,7 +27,10 @@ import {
   BarChart3,
   Mail,
   Send,
-  Bell
+  Bell,
+  Lock,
+  User,
+  LogOut
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -164,6 +168,11 @@ const propertyOwnerNavItems = [
         label: 'Test thông báo chốt sổ',
         icon: Bell,
       },
+      {
+        href: '/settings/change-password',
+        label: 'Đổi mật khẩu',
+        icon: Lock,
+      }
     ],
   },
   {
@@ -425,7 +434,8 @@ export function NavLinks() {
 
   // Get role-based menu items
   // Default to property owner items if session is not loaded yet
-  const isSuperAdmin = session?.user?.role === 'SUPER_ADMIN';
+  // Only check role when session is authenticated
+  const isSuperAdmin = status === 'authenticated' && session?.user?.role === 'SUPER_ADMIN';
   const navItems = isSuperAdmin ? superAdminNavItems : propertyOwnerNavItems;
 
   useEffect(() => {
@@ -501,23 +511,81 @@ export function NavLinks() {
             )}
           >
             <div className="flex flex-col h-full min-h-full bg-card shadow-none border-none">
-              {/* Header với gradient */}
-              <div className="relative flex items-center justify-between px-6 py-5 border-b border-border/50 bg-card shrink-0">
-                <div className="relative z-10">
-                  <h2 className="text-xl font-bold text-foreground">Menu</h2>
-                  <p className="text-xs text-muted-foreground mt-0.5">Điều hướng</p>
+              {/* Header với user info */}
+              <div className="relative px-6 py-4 border-b border-border/50 bg-card shrink-0">
+                {/* Close Button */}
+                <div className="absolute top-4 right-4 z-10">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={closeMenu}
+                    className="h-9 w-9 rounded-lg hover:bg-accent/60 active:scale-95 transition-all"
+                    aria-label="Close menu"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={closeMenu}
-                  className="h-10 w-10 rounded-xl hover:bg-accent/60 active:scale-95 transition-all relative z-10"
-                  aria-label="Close menu"
-                >
-                  <X className="h-5 w-5" />
-                </Button>
-                {/* Gradient background decoration */}
-                <div className="absolute inset-0 bg-linear-to-r from-primary/5 to-transparent pointer-events-none" />
+
+                {/* Logo và Tên Web */}
+                <div className="flex items-center gap-2 mb-4 pr-12">
+                  <div className="flex items-center justify-center shrink-0">
+                    <Image
+                      src="/images/home-zen-logo.png"
+                      alt="HomeZen Logo"
+                      width={32}
+                      height={32}
+                      className="rounded-lg"
+                    />
+                  </div>
+                  <h2 className="text-lg font-bold text-foreground">HomeZen</h2>
+                </div>
+
+                {/* User Info Section */}
+                {status === 'authenticated' && session?.user?.username ? (
+                  <div className="pr-12">
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "flex items-center justify-center w-12 h-12 rounded-xl shrink-0",
+                        session.user.role === 'SUPER_ADMIN' 
+                          ? "bg-primary/20 text-primary" 
+                          : "bg-muted text-muted-foreground"
+                      )}>
+                        {session.user.role === 'SUPER_ADMIN' ? (
+                          <Shield className="h-6 w-6" />
+                        ) : (
+                          <User className="h-6 w-6" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-base font-semibold text-foreground truncate">
+                          {session.user.username}
+                        </h3>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          {session.user.role === 'SUPER_ADMIN' ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-primary/10 text-primary rounded-md text-[10px] font-medium">
+                              <Shield className="h-2.5 w-2.5" />
+                              Super Admin
+                            </span>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">
+                              Chủ trọ
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : status === 'loading' ? (
+                  <div className="pr-12">
+                    <div className="flex items-center gap-3">
+                      <div className="h-12 w-12 rounded-xl bg-muted animate-pulse shrink-0" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 w-24 bg-muted rounded animate-pulse" />
+                        <div className="h-3 w-16 bg-muted rounded animate-pulse" />
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
               </div>
 
               {/* Navigation Items với scroll smooth */}
@@ -532,8 +600,31 @@ export function NavLinks() {
                 ))}
               </nav>
 
+              {/* Logout Button */}
+              {status === 'authenticated' && session && (
+                <div className="px-4 py-4 border-t border-border/50 bg-card shrink-0">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start gap-2 h-11 text-destructive"
+                    onClick={async () => {
+                      try {
+                        await signOut({
+                          callbackUrl: '/login',
+                          redirect: true
+                        });
+                      } catch (error) {
+                        console.error('Logout error:', error);
+                      }
+                    }}
+                  >
+                    <LogOut className="h-4 w-4 shrink-0" />
+                    <span>Đăng Xuất</span>
+                  </Button>
+                </div>
+              )}
+
               {/* Bottom padding instead of gradient fade to ensure no transparency */}
-              <div className="h-10 bg-card shrink-0" />
+              <div className="h-4 bg-card shrink-0" />
             </div>
           </div>
         </div>,

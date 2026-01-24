@@ -3,7 +3,7 @@
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
-import { Building2, Zap, Settings, DollarSign, Send, Bell } from 'lucide-react';
+import { Building2, Zap, Settings, DollarSign, Send, Bell, Lock } from 'lucide-react';
 
 const settingsNavItems = [
   {
@@ -35,6 +35,12 @@ const settingsNavItems = [
     label: 'Test Thông Báo',
     icon: Bell,
     description: 'Test gửi thông báo chốt sổ'
+  },
+  {
+    href: '/settings/change-password',
+    label: 'Đổi Mật Khẩu',
+    icon: Lock,
+    description: 'Thay đổi mật khẩu đăng nhập'
   },
 ];
 

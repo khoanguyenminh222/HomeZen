@@ -47,7 +47,7 @@ export default async function DashboardLayout({ children }) {
 
             <div className="flex items-center gap-2 sm:gap-3">
               <ThemeToggle />
-              <div className="flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-lg bg-muted/50">
+              <div className="flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-lg">
                 {isSuperAdmin && <Shield className="h-4 w-4 text-primary" />}
                 <User className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm font-medium text-foreground hidden sm:inline">

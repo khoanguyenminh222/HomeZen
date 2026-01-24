@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Users, Shield, ShieldOff, Edit, Trash2 } from 'lucide-react';
+import { Plus, Users, Shield, ShieldOff, Edit, Trash2, Lock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Loading } from '@/components/ui/loading';
 import { Badge } from '@/components/ui/badge';
@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/dialog';
 
 import PropertyOwnerForm from '@/components/admin/forms/PropertyOwnerForm';
+import ResetPasswordDialog from '@/components/admin/ResetPasswordDialog';
 
 /**
  * Property Owners Management Page
@@ -31,6 +32,8 @@ export default function PropertyOwnersPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedOwner, setSelectedOwner] = useState(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [resetPasswordOwner, setResetPasswordOwner] = useState(null);
+  const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchPropertyOwners();
@@ -223,7 +226,7 @@ export default function PropertyOwnersPage() {
                   <span>{owner._count?.feeTypes || 0}</span>
                 </div>
               </div>
-              <div className="flex gap-2 mt-4">
+              <div className="flex gap-2 mt-4 flex-wrap">
                 <Button
                   variant="outline"
                   size="sm"
@@ -251,6 +254,17 @@ export default function PropertyOwnersPage() {
                 >
                   <Edit className="mr-2 h-4 w-4" />
                   Sửa
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setResetPasswordOwner(owner);
+                    setIsResetPasswordDialogOpen(true);
+                  }}
+                >
+                  <Lock className="mr-2 h-4 w-4" />
+                  Reset Mật Khẩu
                 </Button>
               </div>
             </CardContent>
@@ -289,6 +303,24 @@ export default function PropertyOwnersPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Reset Password Dialog */}
+      {resetPasswordOwner && (
+        <ResetPasswordDialog
+          userId={resetPasswordOwner.id}
+          username={resetPasswordOwner.username}
+          open={isResetPasswordDialogOpen}
+          onOpenChange={(open) => {
+            setIsResetPasswordDialogOpen(open);
+            if (!open) {
+              setResetPasswordOwner(null);
+            }
+          }}
+          onSuccess={() => {
+            fetchPropertyOwners();
+          }}
+        />
+      )}
     </div>
   );
 }
