@@ -56,7 +56,7 @@ const NavigationMenuList = React.forwardRef(({ className, ...props }, ref) => (
   <NavigationMenuPrimitive.List
     ref={ref}
     className={cn(
-      'group flex flex-1 list-none items-center justify-center space-x-1',
+      'group flex flex-1 list-none items-center justify-center gap-0.5',
       className
     )}
     {...props}
@@ -136,14 +136,25 @@ const propertyOwnerNavItems = [
     icon: Receipt,
   },
   {
-    href: '/bills/history',
-    label: 'Lịch Sử Hóa Đơn',
-    icon: History,
-  },
-  {
-    href: '/meter-history',
-    label: 'Lịch Sử Chỉ Số',
+    label: 'Lịch Sử',
     icon: Calendar,
+    children: [
+      {
+        href: '/bills/history',
+        label: 'Lịch sử hóa đơn',
+        icon: History,
+      },
+      {
+        href: '/meter-history',
+        label: 'Lịch sử chỉ số',
+        icon: Calendar,
+      },
+      {
+        href: '/notifications',
+        label: 'Lịch sử thông báo',
+        icon: Bell,
+      },
+    ],
   },
   {
     label: 'Cài Đặt',
@@ -180,11 +191,6 @@ const propertyOwnerNavItems = [
         icon: Lock,
       }
     ],
-  },
-  {
-    href: '/notifications',
-    label: 'Lịch Sử Thông Báo',
-    icon: Bell,
   },
 ];
 
@@ -256,7 +262,7 @@ function DesktopNavItem({ item, pathname }) {
       <NavigationMenuItem>
         <NavigationMenuTrigger
           className={cn(
-            'h-10 gap-2.5 px-4 text-sm font-medium',
+            'h-9 gap-2 px-3 text-sm font-medium',
             isActive && 'text-primary bg-primary/10'
           )}
         >
@@ -304,7 +310,7 @@ function DesktopNavItem({ item, pathname }) {
         <Link
           href={item.href}
           className={cn(
-            'group inline-flex h-10 w-max items-center justify-center gap-2.5 rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors',
+            'group inline-flex h-9 w-max items-center justify-center gap-2 rounded-md bg-background px-3 py-2 text-sm font-medium transition-colors',
             'hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none',
             isActive && 'text-primary bg-primary/10 font-semibold'
           )}

@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { formatDateTime } from '@/lib/format';
+import { formatDateTime, formatDate } from '@/lib/format';
 import {
   History,
   Plus,
@@ -277,12 +277,14 @@ export default function BillHistoryPage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+      <div className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-6">
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <History className="h-5 w-5" />
-              Lịch Sử Thay Đổi Hóa Đơn
+          <CardHeader className="pb-3 sm:pb-4">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg md:text-xl">
+              <div className="p-1.5 sm:p-2 bg-primary/10 rounded-lg shrink-0">
+                <History className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+              </div>
+              <span className="wrap-break-word">Lịch Sử Thay Đổi Hóa Đơn</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -295,17 +297,19 @@ export default function BillHistoryPage() {
 
   if (error) {
     return (
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+      <div className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-6">
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <History className="h-5 w-5" />
-              Lịch Sử Thay Đổi Hóa Đơn
+          <CardHeader className="pb-3 sm:pb-4">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg md:text-xl">
+              <div className="p-1.5 sm:p-2 bg-primary/10 rounded-lg shrink-0">
+                <History className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+              </div>
+              <span className="wrap-break-word">Lịch Sử Thay Đổi Hóa Đơn</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-center py-8 text-red-500">
-              <p>{error}</p>
+            <div className="text-center py-6 sm:py-8">
+              <p className="text-sm sm:text-base text-destructive">{error}</p>
             </div>
           </CardContent>
         </Card>
@@ -314,29 +318,29 @@ export default function BillHistoryPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+    <div className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-6">
       <Card>
-        <CardHeader className="pb-4 sm:pb-6">
-          <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
-            <div className="p-2 bg-primary/10 rounded-lg">
+        <CardHeader className="pb-3 sm:pb-4 md:pb-6">
+          <CardTitle className="flex flex-wrap items-center gap-2 text-base sm:text-lg md:text-xl">
+            <div className="p-1.5 sm:p-2 bg-primary/10 rounded-lg shrink-0">
               <History className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
             </div>
-            <span className="wrap-break-word">Lịch Sử Thay Đổi Hóa Đơn</span>
-            <Badge variant="secondary" className="ml-auto text-xs sm:text-sm">
+            <span className="wrap-break-word flex-1 min-w-0">Lịch Sử Thay Đổi Hóa Đơn</span>
+            <Badge variant="secondary" className="text-xs sm:text-sm shrink-0">
               {total}
             </Badge>
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
           {/* Filters and Controls */}
-          <div className="mb-6 space-y-3 sm:space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="mb-4 sm:mb-6 space-y-3 sm:space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 md:gap-4">
               <Select
                 value={filters.action}
                 onValueChange={(value) => setFilters({ ...filters, action: value })}
               >
-                <SelectTrigger className="h-10 sm:h-11">
-                  <Filter className="h-4 w-4 mr-2" />
+                <SelectTrigger className="h-11 sm:h-11 text-sm sm:text-base touch-manipulation">
+                  <Filter className="h-4 w-4 mr-2 shrink-0" />
                   <SelectValue placeholder="Lọc theo hành động" />
                 </SelectTrigger>
                 <SelectContent>
@@ -355,8 +359,8 @@ export default function BillHistoryPage() {
                 value={filters.roomId}
                 onValueChange={(value) => setFilters({ ...filters, roomId: value })}
               >
-                <SelectTrigger className="h-10 sm:h-11">
-                  <Home className="h-4 w-4 mr-2" />
+                <SelectTrigger className="h-11 sm:h-11 text-sm sm:text-base touch-manipulation">
+                  <Home className="h-4 w-4 mr-2 shrink-0" />
                   <SelectValue placeholder="Lọc theo phòng" />
                 </SelectTrigger>
                 <SelectContent>
@@ -373,8 +377,8 @@ export default function BillHistoryPage() {
                 value={filters.month}
                 onValueChange={(value) => setFilters({ ...filters, month: value })}
               >
-                <SelectTrigger className="h-10 sm:h-11">
-                  <Calendar className="h-4 w-4 mr-2" />
+                <SelectTrigger className="h-11 sm:h-11 text-sm sm:text-base touch-manipulation">
+                  <Calendar className="h-4 w-4 mr-2 shrink-0" />
                   <SelectValue placeholder="Lọc theo tháng" />
                 </SelectTrigger>
                 <SelectContent>
@@ -393,7 +397,7 @@ export default function BillHistoryPage() {
                   placeholder="Năm (VD: 2024)"
                   value={filters.year}
                   onChange={(e) => setFilters({ ...filters, year: e.target.value })}
-                  className="h-10 sm:h-11"
+                  className="h-11 sm:h-11 text-sm sm:text-base touch-manipulation"
                   min="2000"
                   max="2100"
                 />
@@ -402,7 +406,8 @@ export default function BillHistoryPage() {
                     variant="ghost"
                     size="sm"
                     onClick={() => setFilters({ ...filters, year: '' })}
-                    className="h-10 sm:h-11 px-2"
+                    className="h-11 sm:h-11 px-3 min-w-touch touch-manipulation"
+                    aria-label="Xóa năm"
                   >
                     ×
                   </Button>
@@ -410,7 +415,7 @@ export default function BillHistoryPage() {
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 sm:gap-3 md:gap-4">
               {groupedArray.length > 0 && (
                 <div className="text-xs sm:text-sm text-muted-foreground">
                   Hiển thị {expandedGroups.size}/{groupedArray.length} hóa đơn
@@ -424,17 +429,17 @@ export default function BillHistoryPage() {
                     variant="outline"
                     size="sm"
                     onClick={isAllExpanded ? collapseAll : expandAll}
-                    className="h-10 sm:h-11 shrink-0 ml-auto"
+                    className="h-11 sm:h-11 text-sm sm:text-base shrink-0 w-full sm:w-auto sm:ml-auto touch-manipulation"
                   >
                     {isAllExpanded ? (
                       <>
-                        <ChevronsUpDown className="h-4 w-4 mr-2" />
-                        Thu gọn tất cả
+                        <ChevronsUpDown className="h-4 w-4 mr-2 shrink-0" />
+                        <span>Thu gọn tất cả</span>
                       </>
                     ) : (
                       <>
-                        <ChevronsDownUp className="h-4 w-4 mr-2" />
-                        Mở rộng tất cả
+                        <ChevronsDownUp className="h-4 w-4 mr-2 shrink-0" />
+                        <span>Mở rộng tất cả</span>
                       </>
                     )}
                   </Button>
@@ -445,12 +450,12 @@ export default function BillHistoryPage() {
 
           {/* History List */}
           {histories.length === 0 ? (
-            <div className="text-center py-12">
-              <History className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-              <p className="text-muted-foreground">Chưa có lịch sử thay đổi nào</p>
+            <div className="text-center py-8 sm:py-12">
+              <History className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-3 sm:mb-4 text-muted-foreground opacity-50" />
+              <p className="text-sm sm:text-base text-muted-foreground">Chưa có lịch sử thay đổi nào</p>
             </div>
           ) : (
-            <div className="space-y-4 sm:space-y-6">
+            <div className="space-y-3 sm:space-y-4 md:space-y-6">
               {groupedArray.map((group, groupIndex) => {
                 const { billInfo, histories: groupHistories } = group;
                 const groupKey = allKeys[groupIndex];
@@ -461,59 +466,63 @@ export default function BillHistoryPage() {
                     {/* Bill Header - Clickable to expand/collapse */}
                     <button
                       onClick={() => toggleGroup(groupKey)}
-                      className="w-full bg-muted/50 hover:bg-muted/70 transition-colors p-4 sm:p-5"
+                      className="w-full bg-muted/50 hover:bg-muted/70 active:bg-muted/80 transition-colors p-3.5 sm:p-4 md:p-5 touch-manipulation"
                     >
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                        <div className="flex flex-wrap items-center gap-3 sm:gap-4 flex-1">
-                          <div className="flex items-center gap-2">
-                            {isExpanded ? (
-                              <ChevronUp className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground shrink-0" />
-                            ) : (
-                              <ChevronDown className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground shrink-0" />
-                            )}
-                            <Home className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-                            <span className="font-semibold text-base sm:text-lg text-foreground">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 sm:gap-3">
+                        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+                          {isExpanded ? (
+                            <ChevronUp className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground shrink-0" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground shrink-0" />
+                          )}
+                          <div className="flex items-center gap-1.5 sm:gap-2">
+                            <Home className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0" />
+                            <span className="font-semibold text-sm sm:text-base md:text-lg text-foreground wrap-break-word">
                               Phòng {billInfo.roomCode}
                             </span>
                             {billInfo.roomName && billInfo.roomName !== 'Đã xóa' && (
-                              <span className="text-sm text-muted-foreground">
+                              <span className="text-xs sm:text-sm text-muted-foreground wrap-break-word hidden sm:inline">
                                 ({billInfo.roomName})
                               </span>
                             )}
                           </div>
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-                            <span className="font-medium text-sm sm:text-base text-foreground">
+                          <div className="flex items-center gap-1.5 sm:gap-2">
+                            <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0" />
+                            <span className="font-medium text-xs sm:text-sm md:text-base text-foreground whitespace-nowrap">
                               Tháng {billInfo.month}/{billInfo.year}
                             </span>
                           </div>
-                          {!billInfo.exists && (
-                            <Badge variant="destructive" className="text-xs">
-                              Hóa đơn đã xóa
+                          {/* Badges - cùng hàng khi đủ width */}
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {!billInfo.exists && (
+                              <Badge variant="destructive" className="text-[10px] sm:text-xs shrink-0">
+                                Hóa đơn đã xóa
+                              </Badge>
+                            )}
+                            <Badge variant="secondary" className="text-[10px] sm:text-xs shrink-0">
+                              {groupHistories.length} thay đổi
                             </Badge>
-                          )}
-                          <Badge variant="secondary" className="text-xs">
-                            {groupHistories.length} thay đổi
-                          </Badge>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          {billInfo.exists && group.billId && (
+                        {billInfo.exists && group.billId && (
+                          <div className="flex items-center justify-start sm:justify-end">
                             <Link
                               href={`/bills/${group.billId}`}
                               onClick={(e) => e.stopPropagation()}
-                              className="text-sm text-primary hover:underline font-medium"
+                              className="text-xs sm:text-sm text-primary hover:underline font-medium inline-flex items-center gap-1 touch-manipulation"
                             >
-                              Xem hóa đơn →
+                              Xem hóa đơn
+                              <span className="hidden sm:inline">→</span>
                             </Link>
-                          )}
-                        </div>
+                          </div>
+                        )}
                       </div>
                     </button>
 
                     {/* Histories for this bill - Collapsible */}
                     {isExpanded && (
-                      <div className="p-4 sm:p-6 pt-0 sm:pt-0">
-                        <div className="pl-4 sm:pl-6 border-l-2 border-border/30 space-y-4 sm:space-y-6">
+                      <div className="p-3 sm:p-4 md:p-6">
+                        <div className="space-y-4 sm:space-y-6">
                           {groupHistories.map((history, index) => {
                             const config = actionConfig[history.action] || {
                               label: history.action,
@@ -527,10 +536,10 @@ export default function BillHistoryPage() {
                               <div
                                 key={history.id}
                                 className={cn(
-                                  'relative pl-6 sm:pl-8 pb-4 sm:pb-6',
+                                  'relative pl-6 sm:pl-8 pb-6 sm:pb-8',
                                   'border-l-2 transition-colors',
-                                  index !== groupHistories.length - 1
-                                    ? 'border-border/30'
+                                  index !== groupHistories.length - 1 
+                                    ? 'border-border/50' 
                                     : 'border-transparent'
                                 )}
                               >
@@ -546,8 +555,8 @@ export default function BillHistoryPage() {
                                     config.color.includes('emerald') && 'bg-emerald-500 border-emerald-600 dark:bg-emerald-600 dark:border-emerald-500',
                                     config.color.includes('orange') && 'bg-orange-500 border-orange-600 dark:bg-orange-600 dark:border-orange-500',
                                     config.color.includes('cyan') && 'bg-cyan-500 border-cyan-600 dark:bg-cyan-600 dark:border-cyan-500',
-                                    !config.color.includes('green') && !config.color.includes('blue') && !config.color.includes('red') &&
-                                    !config.color.includes('purple') && !config.color.includes('emerald') && !config.color.includes('orange') &&
+                                    !config.color.includes('green') && !config.color.includes('blue') && !config.color.includes('red') && 
+                                    !config.color.includes('purple') && !config.color.includes('emerald') && !config.color.includes('orange') && 
                                     !config.color.includes('cyan') && 'bg-gray-500 border-gray-600 dark:bg-gray-600 dark:border-gray-500'
                                   )}>
                                     <Icon className="h-2 w-2 sm:h-2.5 sm:w-2.5 text-white" />
@@ -557,38 +566,72 @@ export default function BillHistoryPage() {
                                 {/* Content */}
                                 <div className="space-y-3 sm:space-y-4">
                                   {/* Header */}
-                                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4">
-                                    <div className="flex items-start sm:items-center gap-2 sm:gap-3 flex-1 min-w-0">
-                                      <Badge
-                                        variant="outline"
-                                        className={cn(
-                                          'text-xs sm:text-sm font-medium px-2 sm:px-3 py-1',
-                                          'border-2 shrink-0',
-                                          config.color
-                                        )}
-                                      >
-                                        <Icon className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1.5" />
-                                        {config.label}
-                                      </Badge>
-                                      {history.description && (
-                                        <span className="text-xs sm:text-sm text-muted-foreground truncate flex-1">
-                                          {history.description}
-                                        </span>
-                                      )}
+                                  <div className="flex flex-col gap-2 sm:gap-3">
+                                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-3">
+                                      <div className="flex items-start gap-2 sm:gap-3 flex-wrap">
+                                        <Badge 
+                                          variant="outline" 
+                                          className={cn(
+                                            'text-xs sm:text-sm font-medium px-2 sm:px-3 py-1',
+                                            'border-2 shrink-0',
+                                            config.color
+                                          )}
+                                        >
+                                          <Icon className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1.5" />
+                                          {config.label}
+                                        </Badge>
+                                        <div className="flex items-center gap-1.5 sm:gap-2 text-xs text-muted-foreground shrink-0 bg-muted/50 px-2 sm:px-3 py-1 rounded-md">
+                                          <Clock className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                                          <span className="whitespace-nowrap">{formatDateTime(history.createdAt)}</span>
+                                        </div>
+                                      </div>
                                     </div>
-                                    <div className="flex items-center gap-1.5 sm:gap-2 text-xs text-muted-foreground shrink-0 bg-muted/50 px-2 sm:px-3 py-1 rounded-md">
-                                      <Clock className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                                      <span className="whitespace-nowrap">{formatDateTime(history.createdAt)}</span>
-                                    </div>
+                                    {history.description && (
+                                      <div className="text-xs sm:text-sm text-muted-foreground wrap-break-word leading-relaxed">
+                                        {history.description}
+                                      </div>
+                                    )}
                                   </div>
-
 
                                   {/* User info */}
                                   {history.user && (
-                                    <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground bg-muted/30 px-2 sm:px-3 py-1.5 rounded-md w-fit">
+                                    <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground bg-muted/30 px-2 sm:px-3 py-1.5 rounded-md w-fit max-w-full">
                                       <User className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0" />
-                                      <span className="font-medium">Bởi:</span>
-                                      <span className="text-foreground">{history.user.username}</span>
+                                      <span className="font-medium shrink-0">Bởi:</span>
+                                      <span className="text-foreground wrap-break-word">{history.user.username}</span>
+                                    </div>
+                                  )}
+
+                                  {/* Changes detail */}
+                                  {history.changes && history.changes.fields && (
+                                    <div className="mt-3 sm:mt-4 p-3 sm:p-4 bg-muted/30 dark:bg-muted/20 rounded-lg sm:rounded-xl border border-border/50 space-y-2 sm:space-y-3">
+                                      <div className="text-xs sm:text-sm font-semibold text-foreground mb-2 sm:mb-3">
+                                        Chi tiết thay đổi:
+                                      </div>
+                                      {Object.entries(history.changes.fields).map(([field, change]) => (
+                                        <div 
+                                          key={field} 
+                                          className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-3 p-2 sm:p-3 bg-background/50 rounded-md hover:bg-background/80 transition-colors"
+                                        >
+                                          <span className="font-semibold text-xs sm:text-sm text-foreground min-w-[120px] sm:min-w-[140px] shrink-0">
+                                            {getFieldLabel(field)}:
+                                          </span>
+                                          <div className="flex-1 space-y-1.5 sm:space-y-2 min-w-0">
+                                            {change.old !== undefined && change.old !== null && (
+                                              <div className="flex items-start gap-2 text-xs sm:text-sm">
+                                                <span className="font-medium text-red-600 dark:text-red-400 shrink-0">Cũ:</span>
+                                                <span className="text-red-600 dark:text-red-400 wrap-break-word">{formatFieldValue(field, change.old)}</span>
+                                              </div>
+                                            )}
+                                            {change.new !== undefined && change.new !== null && (
+                                              <div className="flex items-start gap-2 text-xs sm:text-sm">
+                                                <span className="font-medium text-green-600 dark:text-green-400 shrink-0">Mới:</span>
+                                                <span className="text-green-600 dark:text-green-400 wrap-break-word">{formatFieldValue(field, change.new)}</span>
+                                              </div>
+                                            )}
+                                          </div>
+                                        </div>
+                                      ))}
                                     </div>
                                   )}
                                 </div>
@@ -607,4 +650,61 @@ export default function BillHistoryPage() {
       </Card>
     </div>
   );
+}
+
+/**
+ * Lấy label cho field
+ */
+function getFieldLabel(field) {
+  const labels = {
+    month: 'Tháng',
+    year: 'Năm',
+    oldElectricReading: 'Chỉ số điện cũ',
+    newElectricReading: 'Chỉ số điện mới',
+    electricityUsage: 'Lượng điện tiêu thụ',
+    oldWaterReading: 'Chỉ số nước cũ',
+    newWaterReading: 'Chỉ số nước mới',
+    waterUsage: 'Lượng nước tiêu thụ',
+    roomPrice: 'Giá phòng',
+    electricityCost: 'Tiền điện',
+    waterCost: 'Tiền nước',
+    totalCost: 'Tổng tiền',
+    isPaid: 'Trạng thái thanh toán',
+    paidAmount: 'Số tiền đã thanh toán',
+    paidDate: 'Ngày thanh toán',
+    notes: 'Ghi chú',
+    billFees: 'Phí phát sinh',
+  };
+  return labels[field] || field;
+}
+
+/**
+ * Format giá trị field để hiển thị
+ */
+function formatFieldValue(field, value) {
+  if (value === null || value === undefined) return 'N/A';
+  
+  if (Array.isArray(value)) {
+    return value.length > 0 
+      ? value.map(v => `${v.name || v.id}: ${v.amount ? Number(v.amount).toLocaleString('vi-VN') + ' VNĐ' : ''}`).join(', ')
+      : 'Không có';
+  }
+
+  if (typeof value === 'boolean') {
+    return value ? 'Có' : 'Không';
+  }
+
+  if (field.includes('Cost') || field.includes('Price') || field.includes('Amount')) {
+    return Number(value).toLocaleString('vi-VN') + ' VNĐ';
+  }
+
+  if (field === 'isPaid') {
+    return value ? 'Đã thanh toán' : 'Chưa thanh toán';
+  }
+
+  if (field === 'paidDate' || (typeof value === 'string' && value.match(/^\d{4}-\d{2}-\d{2}/))) {
+    return formatDate(value);
+  }
+
+  return String(value);
 }
