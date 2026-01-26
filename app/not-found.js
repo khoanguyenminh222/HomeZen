@@ -1,11 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
+import { OptimizedImage } from '@/components/ui/OptimizedImage';
 import { Home, ArrowLeft, Settings, LayoutGrid } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useWebsiteConfig } from '@/contexts/WebsiteConfigContext';
 
 export default function NotFound() {
+  const { config } = useWebsiteConfig();
   return (
     <div className="relative min-h-dvh bg-background flex flex-col items-center justify-center px-6 py-4 overflow-hidden">
       {/* Background Decor - Visual Ambient */}
@@ -18,9 +20,9 @@ export default function NotFound() {
           <div className="relative w-40 h-40 sm:w-56 sm:h-56 md:w-72 md:h-72 mx-auto">
             {/* Soft Glow behind image */}
             <div className="absolute inset-0 bg-primary/20 rounded-full blur-2xl scale-75 animate-pulse" />
-            <Image
-              src="/images/home-zen-master-removebg-preview.png"
-              alt="HomeZen Master Visual"
+            <OptimizedImage
+              src={config?.heroImageUrl || '/images/home-zen-master-removebg-preview.png'}
+              alt={`${config?.brandName || 'HomeZen'} Master Visual`}
               fill
               className="object-contain drop-shadow-2xl"
               priority
@@ -85,7 +87,7 @@ export default function NotFound() {
 
           <div className="mt-4 sm:mt-8 opacity-40 px-6">
             <p className="text-[10px] font-medium text-muted-foreground leading-relaxed">
-              HomeZen — Quản lý nhà trọ thảnh thơi.
+              {config?.footerText || 'HomeZen — Quản lý nhà trọ thảnh thơi.'}
             </p>
           </div>
         </div>

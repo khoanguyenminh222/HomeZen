@@ -5,13 +5,14 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import Image from 'next/image';
+import { OptimizedImage } from '@/components/ui/OptimizedImage';
 import Link from 'next/link';
 import { Lock, Eye, EyeOff, ArrowRight, ArrowLeft, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { useWebsiteConfig } from '@/contexts/WebsiteConfigContext';
 
 // Validation schema
 const resetPasswordSchema = z
@@ -30,6 +31,7 @@ const resetPasswordSchema = z
 export default function ResetPasswordPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { config } = useWebsiteConfig();
   const token = searchParams.get('token');
 
   const [error, setError] = useState('');
@@ -269,14 +271,14 @@ export default function ResetPasswordPage() {
         <div className="w-full max-w-md space-y-8 animate-in fade-in slide-in-from-right-8 duration-700">
           <div className="lg:hidden text-center space-y-2 mb-10">
             <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-primary/20 overflow-hidden relative">
-              <Image
-                src="/images/home-zen-logo.png"
-                alt="HomeZen Logo"
+              <OptimizedImage
+                src={config?.logoUrl || '/images/home-zen-logo.png'}
+                alt={`${config?.brandName || 'HomeZen'} Logo`}
                 fill
                 className="object-contain p-3"
               />
             </div>
-            <h2 className="text-3xl font-black text-foreground tracing-tight">HomeZen</h2>
+            <h2 className="text-3xl font-black text-foreground tracing-tight">{config?.brandName || 'HomeZen'}</h2>
             <p className="text-muted-foreground">Đặt lại mật khẩu</p>
           </div>
 
@@ -403,7 +405,7 @@ export default function ResetPasswordPage() {
           </div>
 
           <p className="text-[10px] text-center text-muted-foreground/50 pt-8 uppercase tracking-tighter">
-            HomeZen — Boarding House Management v1.0
+            {config?.footerText || 'HomeZen — Boarding House Management v1.0'}
           </p>
         </div>
       </div>

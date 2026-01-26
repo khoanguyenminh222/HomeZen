@@ -2,12 +2,14 @@
 
 import { useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
+import { OptimizedImage } from '@/components/ui/OptimizedImage';
 import { Home, RefreshCw, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
+import { useWebsiteConfig } from '@/contexts/WebsiteConfigContext';
 
 export default function Error({ error, reset }) {
+  const { config } = useWebsiteConfig();
   const [showDetails, setShowDetails] = useState(false);
 
   useEffect(() => {
@@ -29,9 +31,9 @@ export default function Error({ error, reset }) {
           <div className="relative w-48 h-48 sm:w-64 sm:h-64 mx-auto">
             {/* Soft Glow behind image */}
             <div className="absolute inset-0 bg-primary/20 rounded-full blur-2xl scale-75 animate-pulse" />
-            <Image
-              src="/images/home-zen-error.png"
-              alt="HomeZen System Maintenance"
+            <OptimizedImage
+              src={config?.errorImageUrl || '/images/home-zen-error.png'}
+              alt={`${config?.brandName || 'HomeZen'} System Error`}
               fill
               className="object-contain drop-shadow-2xl"
               priority
@@ -116,7 +118,7 @@ export default function Error({ error, reset }) {
 
         {/* Footer */}
         <p className="text-[10px] text-muted-foreground/40 uppercase tracking-tighter">
-          HomeZen Reliability System — Error Handler 1.0
+          {config?.footerText || 'HomeZen Reliability System — Error Handler 1.0'}
         </p>
       </div>
     </div>

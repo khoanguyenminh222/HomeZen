@@ -66,6 +66,61 @@ async function main() {
     console.log('   Password: owner123');
     console.log('   Property:', propertyOwner.propertyInfo.name);
   }
+
+  // Create default Website Configuration
+  // First, deactivate any existing active configurations
+  await prisma.websiteConfiguration.updateMany({
+    where: { isActive: true },
+    data: { isActive: false }
+  });
+
+  // Check if default config already exists
+  const existingConfig = await prisma.websiteConfiguration.findFirst({
+    where: {
+      websiteTitle: 'HomeZen - Ứng dụng quản lý nhà trọ',
+      brandName: 'HomeZen'
+    }
+  });
+
+  if (!existingConfig) {
+    const websiteConfig = await prisma.websiteConfiguration.create({
+      data: {
+        logoUrl: '/images/home-zen-logo.png',
+        faviconUrl: '/images/favicon.ico',
+        heroImageUrl: '/images/home-zen-master-removebg-preview.png',
+        errorImageUrl: '/images/home-zen-error.png',
+        websiteTitle: 'HomeZen - Ứng dụng quản lý nhà trọ',
+        websiteDescription: 'Quản lý phòng trọ, người thuê, hóa đơn điện nước dễ dàng và hiện đại',
+        brandName: 'HomeZen',
+        heroTitle: 'Chào Mừng Đến Với HomeZen',
+        heroSubtitle: 'Quản lý nhà trọ thảnh thơi',
+        footerText: 'HomeZen — Boarding House Management v1.0',
+        stat1Value: '1k+',
+        stat1Label: 'Tin cậy',
+        stat2Value: '99%',
+        stat2Label: 'Hài lòng',
+        contactEmail: '',
+        contactPhone: '',
+        isActive: true,
+        createdBy: adminUser.id,
+        updatedBy: adminUser.id
+      }
+    });
+
+    console.log('✅ Created default Website Configuration');
+    console.log('   Brand Name:', websiteConfig.brandName);
+    console.log('   Website Title:', websiteConfig.websiteTitle);
+  } else {
+    // Reactivate existing default config
+    await prisma.websiteConfiguration.update({
+      where: { id: existingConfig.id },
+      data: {
+        isActive: true,
+        updatedBy: adminUser.id
+      }
+    });
+    console.log('✅ Reactivated existing Website Configuration');
+  }
 }
 
 main()

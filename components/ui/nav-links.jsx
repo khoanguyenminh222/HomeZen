@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
+import { OptimizedImage } from '@/components/ui/OptimizedImage';
 import { usePathname } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import * as React from 'react';
@@ -35,6 +35,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { useWebsiteConfig } from '@/contexts/WebsiteConfigContext';
 
 // Navigation Menu Components (inline để không cần file riêng)
 const NavigationMenu = React.forwardRef(({ className, children, ...props }, ref) => (
@@ -225,6 +226,11 @@ const superAdminNavItems = [
         href: '/admin/telegram-bot-config',
         label: 'Cấu hình Telegram Bot',
         icon: Send,
+      },
+      {
+        href: '/admin/website-config',
+        label: 'Cấu hình Website',
+        icon: Settings,
       },
       {
         href: '/admin/test-room-closure',
@@ -453,6 +459,7 @@ function MobileNavItem({ item, pathname, onClose }) {
 export function NavLinks() {
   const pathname = usePathname();
   const { data: session, status } = useSession();
+  const { config } = useWebsiteConfig();
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -570,15 +577,15 @@ export function NavLinks() {
                 {/* Logo và Tên Web */}
                 <div className="flex items-center gap-2 mb-4 pr-12">
                   <div className="flex items-center justify-center shrink-0">
-                    <Image
-                      src="/images/home-zen-logo.png"
-                      alt="HomeZen Logo"
+                    <OptimizedImage
+                      src={config?.logoUrl || '/images/home-zen-logo.png'}
+                      alt={`${config?.brandName || 'HomeZen'} Logo`}
                       width={32}
                       height={32}
                       className="rounded-lg"
                     />
                   </div>
-                  <h2 className="text-lg font-bold text-foreground">HomeZen</h2>
+                  <h2 className="text-lg font-bold text-foreground">{config?.brandName || 'HomeZen'}</h2>
                 </div>
 
                 {/* User Info Section */}

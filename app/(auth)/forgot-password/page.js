@@ -5,13 +5,14 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import Image from 'next/image';
+import { OptimizedImage } from '@/components/ui/OptimizedImage';
 import Link from 'next/link';
 import { User, ArrowRight, ArrowLeft, Mail, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { useWebsiteConfig } from '@/contexts/WebsiteConfigContext';
 
 // Validation schema
 const forgotPasswordSchema = z.object({
@@ -20,6 +21,7 @@ const forgotPasswordSchema = z.object({
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
+  const { config } = useWebsiteConfig();
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
@@ -126,14 +128,14 @@ export default function ForgotPasswordPage() {
         <div className="w-full max-w-md space-y-8 animate-in fade-in slide-in-from-right-8 duration-700">
           <div className="lg:hidden text-center space-y-2 mb-10">
             <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-primary/20 overflow-hidden relative">
-              <Image
-                src="/images/home-zen-logo.png"
-                alt="HomeZen Logo"
+              <OptimizedImage
+                src={config?.logoUrl || '/images/home-zen-logo.png'}
+                alt={`${config?.brandName || 'HomeZen'} Logo`}
                 fill
                 className="object-contain p-3"
               />
             </div>
-            <h2 className="text-3xl font-black text-foreground tracing-tight">HomeZen</h2>
+            <h2 className="text-3xl font-black text-foreground tracing-tight">{config?.brandName || 'HomeZen'}</h2>
             <p className="text-muted-foreground">Khôi phục mật khẩu</p>
           </div>
 
@@ -156,7 +158,29 @@ export default function ForgotPasswordPage() {
                   <div className="space-y-2">
                     <p className="font-bold">Yêu cầu đã được gửi thành công!</p>
                     <p className="text-muted-foreground">
-                      {successMessage || 'Nếu tên đăng nhập tồn tại trong hệ thống, bạn sẽ nhận được hướng dẫn đặt lại mật khẩu. Vui lòng kiểm tra email hoặc liên hệ quản trị viên để được hỗ trợ.'}
+                      {successMessage || (
+                        <>
+                          Nếu tên đăng nhập tồn tại trong hệ thống, bạn sẽ nhận được hướng dẫn đặt lại mật khẩu. 
+                          {config?.contactEmail || config?.contactPhone ? (
+                            <> Vui lòng kiểm tra email hoặc liên hệ{' '}
+                              {config.contactEmail && (
+                                <a href={`mailto:${config.contactEmail}`} className="text-primary hover:underline font-medium">
+                                  {config.contactEmail}
+                                </a>
+                              )}
+                              {config.contactEmail && config.contactPhone && ' / '}
+                              {config.contactPhone && (
+                                <a href={`tel:${config.contactPhone}`} className="text-primary hover:underline font-medium">
+                                  {config.contactPhone}
+                                </a>
+                              )}
+                              {' '}để được hỗ trợ.
+                            </>
+                          ) : (
+                            ' Vui lòng kiểm tra email hoặc liên hệ quản trị viên để được hỗ trợ.'
+                          )}
+                        </>
+                      )}
                     </p>
                   </div>
                 </div>
@@ -237,7 +261,7 @@ export default function ForgotPasswordPage() {
           </div>
 
           <p className="text-[10px] text-center text-muted-foreground/50 pt-8 uppercase tracking-tighter">
-            HomeZen — Boarding House Management v1.0
+            {config?.footerText || 'HomeZen — Boarding House Management v1.0'}
           </p>
         </div>
       </div>

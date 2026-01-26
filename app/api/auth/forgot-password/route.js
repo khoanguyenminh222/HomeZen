@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { randomBytes } from 'crypto';
 import { EmailNotificationService } from '@/lib/services/email-notification.service.js';
+import { getWebsiteConfigurationService } from '@/lib/services/website-configuration.service';
 
 /**
  * Hàm mask email để ẩn phần đầu (ví dụ: abc@gmail.com -> ***abc@gmail.com)
@@ -107,8 +108,13 @@ export async function POST(request) {
     // Gửi email chứa link reset password
     const resetLink = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/reset-password?token=${token}`;
     
+    // Lấy brand name từ website config
+    const websiteConfigService = getWebsiteConfigurationService();
+    const websiteConfig = await websiteConfigService.getCurrentConfiguration();
+    const brandName = websiteConfig.brandName || 'HomeZen';
+    
     // Tạo email template
-    const subject = 'Đặt lại mật khẩu - HomeZen';
+    const subject = `Đặt lại mật khẩu - ${brandName}`;
     const htmlContent = `
       <!DOCTYPE html>
       <html lang="vi">
@@ -291,7 +297,7 @@ export async function POST(request) {
           <!-- Header -->
           <div class="email-header">
             <h1>Đặt lại mật khẩu</h1>
-            <div class="brand">HomeZen</div>
+            <div class="brand">${brandName}</div>
           </div>
 
           <!-- Content -->
@@ -327,7 +333,7 @@ export async function POST(request) {
 
           <!-- Footer -->
           <div class="email-footer">
-            <p>© ${new Date().getFullYear()} HomeZen. Tất cả quyền được bảo lưu.</p>
+            <p>© ${new Date().getFullYear()} ${brandName}. Tất cả quyền được bảo lưu.</p>
             <p style="margin-top: 8px;">
               Email này được gửi tự động, vui lòng không trả lời email này.
             </p>
@@ -337,7 +343,7 @@ export async function POST(request) {
       </html>
     `;
     const textContent = `
-Đặt lại mật khẩu - HomeZen
+Đặt lại mật khẩu - ${brandName}
 
 Xin chào,
 
@@ -350,7 +356,7 @@ Lưu ý: Liên kết này sẽ hết hạn sau 1 giờ.
 
 Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này.
 
-© ${new Date().getFullYear()} HomeZen. Tất cả quyền được bảo lưu.
+© ${new Date().getFullYear()} ${brandName}. Tất cả quyền được bảo lưu.
     `;
 
     // Gửi email

@@ -2,7 +2,10 @@ import { Be_Vietnam_Pro, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import SessionProvider from "@/components/providers/SessionProvider";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { WebsiteConfigProvider } from "@/contexts/WebsiteConfigContext";
+import { DynamicMetadata } from "@/components/ui/DynamicMetadata";
 import { Toaster } from "@/components/ui/toaster";
+import { getWebsiteConfigurationService } from "@/lib/services/website-configuration.service";
 
 const beVietnamPro = Be_Vietnam_Pro({
   variable: "--font-be-vietnam-pro",
@@ -15,10 +18,42 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata = {
-  title: "HomeZen - Ứng dụng quản lý nhà trọ",
-  description: "Quản lý phòng trọ, người thuê, hóa đơn điện nước dễ dàng và hiện đại",
-};
+/**
+ * Generate metadata dynamically from website configuration
+ * This ensures the title is set correctly from the start
+ */
+export async function generateMetadata() {
+  try {
+    const websiteConfigService = getWebsiteConfigurationService();
+    const config = await websiteConfigService.getCurrentConfiguration();
+    
+    return {
+      title: config.websiteTitle || "HomeZen - Ứng dụng quản lý nhà trọ",
+      description: config.websiteDescription || "Quản lý phòng trọ, người thuê, hóa đơn điện nước dễ dàng và hiện đại",
+      icons: {
+        icon: [
+          { url: config.faviconUrl || '/images/favicon.ico', type: 'image/x-icon' },
+        ],
+        shortcut: config.faviconUrl || '/images/favicon.ico',
+        apple: config.faviconUrl || '/images/favicon.ico',
+      },
+    };
+  } catch (error) {
+    console.error('Error generating metadata:', error);
+    // Fallback to default metadata
+    return {
+      title: "HomeZen - Ứng dụng quản lý nhà trọ",
+      description: "Quản lý phòng trọ, người thuê, hóa đơn điện nước dễ dàng và hiện đại",
+      icons: {
+        icon: [
+          { url: '/images/favicon.ico', type: 'image/x-icon' },
+        ],
+        shortcut: '/images/favicon.ico',
+        apple: '/images/favicon.ico',
+      },
+    };
+  }
+}
 
 export default function RootLayout({ children }) {
   return (
@@ -28,8 +63,11 @@ export default function RootLayout({ children }) {
       >
         <ThemeProvider>
           <SessionProvider session={null}>
-            {children}
-            <Toaster />
+            <WebsiteConfigProvider>
+              <DynamicMetadata />
+              {children}
+              <Toaster />
+            </WebsiteConfigProvider>
           </SessionProvider>
         </ThemeProvider>
       </body>

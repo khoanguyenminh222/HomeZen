@@ -491,3 +491,42 @@ enum NotificationStatus {
   FAILED
   RETRY
 }
+
+// Model Cấu hình Website (Super Admin only)
+model WebsiteConfiguration {
+  id                String   @id @default(cuid())
+  
+  // Hình ảnh (Cloudinary URLs)
+  logoUrl           String?  // Logo chính
+  faviconUrl        String?  // Favicon
+  heroImageUrl      String?  // Hình ảnh hero
+  errorImageUrl     String?  // Hình ảnh error page
+  
+  // Nội dung văn bản
+  websiteTitle      String   @default("HomeZen - Ứng dụng quản lý nhà trọ")
+  websiteDescription String  @default("Quản lý phòng trọ, người thuê, hóa đơn điện nước dễ dàng và hiện đại")
+  brandName         String   @default("HomeZen")
+  heroTitle         String   @default("Chào Mừng Đến Với HomeZen")
+  heroSubtitle      String   @default("Quản lý nhà trọ thảnh thơi")
+  footerText        String   @default("HomeZen — Boarding House Management v1.0")
+  
+  // Thống kê (Statistics)
+  stat1Value        String   @default("1k+")
+  stat1Label        String   @default("Tin cậy")
+  stat2Value        String   @default("99%")
+  stat2Label        String   @default("Hài lòng")
+  
+  // Thông tin liên hệ
+  contactEmail      String?  // Email liên hệ hỗ trợ
+  contactPhone      String?  // Số điện thoại liên hệ hỗ trợ
+  
+  // Metadata
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  createdBy         String   // Super Admin ID
+  updatedBy         String?  // Last updated by
+  
+  @@map("website_configurations")
+  @@index([isActive])
+}

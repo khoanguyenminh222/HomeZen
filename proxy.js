@@ -53,37 +53,53 @@ export async function proxy(request) {
 
   const { pathname } = request.nextUrl;
 
-  // Public routes that don't need authentication
-  const publicRoutes = ['/login', '/forgot-password', '/reset-password', '/api/auth'];
-  if (publicRoutes.some(route => pathname.startsWith(route))) {
-    // If user is authenticated and tries to access login/forgot-password/reset-password page, redirect to appropriate dashboard
-    if (token && (pathname.startsWith('/login') || pathname.startsWith('/forgot-password') || pathname.startsWith('/reset-password'))) {
-      // Validate user still exists before redirecting
+  // 1. Exclude all static assets and Next.js internals early
+  const isStaticFile =
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/images/favicon.ico') ||
+    pathname.startsWith('/images/') ||
+    pathname.startsWith('/public/') ||
+    pathname.match(/\.(?:ico|png|svg|jpg|jpeg|gif|webp|css|js|woff2?|map|json)$/i);
+
+  if (isStaticFile) {
+    return NextResponse.next();
+  }
+
+  // 2. Define Public Routes (accessible without login)
+  // Include root '/' if it should be public
+  const publicRoutes = ['/', '/login', '/forgot-password', '/reset-password', '/api/auth'];
+
+  const isPublicRoute = publicRoutes.some(route =>
+    pathname === route || (route !== '/' && pathname.startsWith(route))
+  );
+
+  if (isPublicRoute) {
+    // If user is already authenticated and tries to access auth pages, redirect to dashboard
+    const authPages = ['/login', '/forgot-password', '/reset-password'];
+    if (token && authPages.some(page => pathname.startsWith(page))) {
       const validation = await validateUserInDatabase(token.id);
-      if (!validation.isValid) {
-        // User doesn't exist, allow access to auth pages
-        return NextResponse.next();
+      if (validation.isValid) {
+        const dashboardUrl = new URL(validation.user.role === 'SUPER_ADMIN' ? '/admin' : '/', request.url);
+        // Important: Use '/' as dashboard for Property Owners
+        return NextResponse.redirect(dashboardUrl);
       }
-      
-      const dashboardUrl = new URL(validation.user.role === 'SUPER_ADMIN' ? '/admin' : '/', request.url);
-      return NextResponse.redirect(dashboardUrl);
     }
     return NextResponse.next();
   }
 
-  // API routes are protected by their own auth checks in route handlers
+  // 3. API routes are protected by their own auth checks in route handlers
   if (pathname.startsWith('/api')) {
     return NextResponse.next();
   }
 
-  // Redirect to login if no token
+  // 4. Redirect to login if no session token for protected routes
   if (!token) {
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('callbackUrl', pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  // Validate user still exists and is active in database
+  // 5. Validate authenticated user still exists and is active
   const validation = await validateUserInDatabase(token.id);
   if (!validation.isValid) {
     console.log(`User validation failed: ${validation.reason} for user ${token.id}`);
@@ -92,7 +108,7 @@ export async function proxy(request) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // Check token expiry (3 days)
+  // 6. Check token expiry
   if (token.exp) {
     const now = Math.floor(Date.now() / 1000);
     if (now > token.exp) {
@@ -102,24 +118,20 @@ export async function proxy(request) {
     }
   }
 
-  // Use current user role from database (not from token)
   const userRole = validation.user.role;
 
-  // Protect Super Admin routes
+  // 7. Role-based Authorization
+  // Protect Super Admin dashboard
   if (pathname.startsWith('/admin')) {
     if (userRole !== 'SUPER_ADMIN') {
-      // Redirect Property Owners to their dashboard
       return NextResponse.redirect(new URL('/', request.url));
     }
   }
 
-  // Redirect Super Admin from Property Owner routes to admin dashboard
-  if (userRole === 'SUPER_ADMIN') {
-    // Allow access to admin routes and root
-    if (pathname !== '/' && pathname !== '/admin' && !pathname.startsWith('/admin')) {
-      // Redirect to admin dashboard
-      return NextResponse.redirect(new URL('/admin', request.url));
-    }
+  // Custom logic: Force Super Admin to Admin dashboard if they try to access property owner routes
+  // But allow them to see the landing page '/'
+  if (userRole === 'SUPER_ADMIN' && pathname !== '/' && !pathname.startsWith('/admin')) {
+    return NextResponse.redirect(new URL('/admin', request.url));
   }
 
   return NextResponse.next();
@@ -127,23 +139,13 @@ export async function proxy(request) {
 
 /**
  * Matcher configuration
- * Protect all routes except:
- * - /login (auth page)
- * - /api/auth/* (NextAuth.js routes)
- * - /_next/* (Next.js internals)
- * - /favicon.ico, /public files
  */
 export const config = {
   matcher: [
     /*
-     * Match all request paths except:
-     * - /login
-     * - /api/auth/*
-     * - /_next/static
-     * - /_next/image
-     * - /favicon.ico
-     * - /public files
+     * Match all request paths except for the ones omitted in the proxy function 
+     * but we keep it broad for the proxy function to handle accurately.
      */
-    '/((?!login|forgot-password|reset-password|api/auth|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!api/auth|_next/static|_next/image|favicon.ico|images/).*)',
   ],
 };

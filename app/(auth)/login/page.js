@@ -6,13 +6,14 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import Image from 'next/image';
+import { OptimizedImage } from '@/components/ui/OptimizedImage';
 import Link from 'next/link';
-import { Eye, EyeOff, User, Lock, ArrowRight, Home, ShieldCheck } from 'lucide-react';
+import { Eye, EyeOff, User, Lock, ArrowRight, Home, ShieldCheck, Mail, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { useWebsiteConfig } from '@/contexts/WebsiteConfigContext';
 
 // Validation schema
 const loginSchema = z.object({
@@ -23,6 +24,7 @@ const loginSchema = z.object({
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { config } = useWebsiteConfig();
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -160,19 +162,19 @@ export default function LoginPage() {
               Secure Login System
             </div>
             <h1 className="text-5xl font-black tracking-tighter leading-tight text-foreground">
-              Chào Mừng Đến Với <br />
-              <span className="text-primary italic text-2xl">HomeZen</span>
+              {config?.heroTitle || 'Chào Mừng Đến Với'} <br />
+              <span className="text-primary italic text-2xl">{config?.brandName || 'HomeZen'}</span>
             </h1>
             <p className="text-muted-foreground text-lg leading-relaxed">
-              Giải pháp quản lý nhà trọ thảnh thơi và hiệu quả nhất. Đăng nhập để bắt đầu hành trình của bạn.
+              {config?.heroSubtitle || 'Giải pháp quản lý nhà trọ thảnh thơi và hiệu quả nhất. Đăng nhập để bắt đầu hành trình của bạn.'}
             </p>
           </div>
 
           <div className="relative w-full aspect-square max-w-sm mx-auto">
             <div className="absolute inset-0 bg-primary/20 rounded-full blur-3xl scale-75 animate-pulse" />
-            <Image
-              src="/images/home-zen-master-removebg-preview.png"
-              alt="HomeZen Master Visual"
+            <OptimizedImage
+              src={config?.heroImageUrl || '/images/home-zen-master-removebg-preview.png'}
+              alt={`${config?.brandName || 'HomeZen'} Master Visual`}
               fill
               className="object-contain drop-shadow-2xl"
               priority
@@ -181,13 +183,13 @@ export default function LoginPage() {
 
           <div className="pt-8 flex justify-center gap-8">
             <div className="text-center">
-              <p className="text-2xl font-bold">1k+</p>
-              <p className="text-xs text-muted-foreground uppercase tracking-widest">Tin cậy</p>
+              <p className="text-2xl font-bold">{config?.stat1Value || '1k+'}</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-widest">{config?.stat1Label || 'Tin cậy'}</p>
             </div>
             <div className="h-10 w-px bg-border" />
             <div className="text-center">
-              <p className="text-2xl font-bold">99%</p>
-              <p className="text-xs text-muted-foreground uppercase tracking-widest">Hài lòng</p>
+              <p className="text-2xl font-bold">{config?.stat2Value || '99%'}</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-widest">{config?.stat2Label || 'Hài lòng'}</p>
             </div>
           </div>
         </div>
@@ -198,14 +200,14 @@ export default function LoginPage() {
         <div className="w-full max-w-md space-y-8 animate-in fade-in slide-in-from-right-8 duration-700">
           <div className="lg:hidden text-center space-y-2 mb-10">
             <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-primary/20 overflow-hidden relative">
-              <Image
-                src="/images/home-zen-logo.png"
-                alt="HomeZen Logo"
+              <OptimizedImage
+                src={config?.logoUrl || '/images/home-zen-logo.png'}
+                alt={`${config?.brandName || 'HomeZen'} Logo`}
                 fill
                 className="object-contain p-3"
               />
             </div>
-            <h2 className="text-3xl font-black text-foreground tracing-tight">HomeZen</h2>
+            <h2 className="text-3xl font-black text-foreground tracing-tight">{config?.brandName || 'HomeZen'}</h2>
             <p className="text-muted-foreground">Đăng nhập vào hệ thống quản lý</p>
           </div>
 
@@ -307,22 +309,45 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <div className="pt-6 relative">
-            <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-px bg-border/50" />
-            <span className="relative z-10 px-4 mx-auto text-[10px] uppercase font-bold text-muted-foreground/60 tracking-widest block w-fit">
-              Liên hệ hỗ trợ
-            </span>
-          </div>
+          {(config?.contactEmail || config?.contactPhone) && (
+            <>
+              <div className="pt-6 relative">
+                <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-px bg-border/50" />
+                <span className="relative z-10 px-4 mx-auto text-[10px] uppercase font-bold text-muted-foreground/60 tracking-widest block w-fit bg-background">
+                  Liên hệ hỗ trợ
+                </span>
+              </div>
 
-          <div className="text-center">
-            <p className="text-sm text-muted-foreground">
-              Chưa có tài khoản?{' '}
-              <Link href="#" className="font-bold text-primary hover:underline">Liên hệ Admin</Link>
-            </p>
-          </div>
+              <div className="space-y-3 pt-4">
+                <p className="text-sm text-muted-foreground text-center">
+                  Chưa có tài khoản? Liên hệ với chúng tôi:
+                </p>
+                <div className="flex flex-col gap-2">
+                  {config.contactEmail && (
+                    <a
+                      href={`mailto:${config.contactEmail}`}
+                      className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-primary bg-primary/5 hover:bg-primary/10 border border-primary/20 rounded-xl transition-all group"
+                    >
+                      <Mail className="h-4 w-4 group-hover:scale-110 transition-transform" />
+                      <span className="truncate">{config.contactEmail}</span>
+                    </a>
+                  )}
+                  {config.contactPhone && (
+                    <a
+                      href={`tel:${config.contactPhone}`}
+                      className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-primary bg-primary/5 hover:bg-primary/10 border border-primary/20 rounded-xl transition-all group"
+                    >
+                      <Phone className="h-4 w-4 group-hover:scale-110 transition-transform" />
+                      <span>{config.contactPhone}</span>
+                    </a>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
 
           <p className="text-[10px] text-center text-muted-foreground/50 pt-8 uppercase tracking-tighter">
-            HomeZen — Boarding House Management v1.0
+            {config?.footerText || 'HomeZen — Boarding House Management v1.0'}
           </p>
         </div>
       </div>
