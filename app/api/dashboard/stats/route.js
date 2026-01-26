@@ -8,7 +8,7 @@ import { isSuperAdmin } from '@/lib/middleware/authorization';
  * Lấy thống kê tổng quan cho Dashboard (scoped to property owner)
  * Requirements: 13.1-13.11, 5.4, 5.5
  */
-export async function GET() {
+export async function GET(request) {
     try {
         // Check authentication
         const session = await auth();
@@ -20,9 +20,16 @@ export async function GET() {
         }
 
         // For Property Owners, scope stats to their property
-        // For Super Admin, return all stats
-        const userId = isSuperAdmin(session) ? null : session.user.id;
-        const stats = await getDashboardStats(userId);
+        // For Super Admin, use userId from query param if provided
+        const { searchParams } = new URL(request.url);
+        const queryUserId = searchParams.get('userId');
+
+        let targetUserId = session.user.id;
+        if (isSuperAdmin(session)) {
+            targetUserId = queryUserId && queryUserId !== 'all' ? queryUserId : null;
+        }
+
+        const stats = await getDashboardStats(targetUserId);
 
         return NextResponse.json(stats);
     } catch (error) {

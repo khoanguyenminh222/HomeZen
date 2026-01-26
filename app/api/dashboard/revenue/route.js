@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { auth } from '@/app/api/auth/[...nextauth]/route';
+import { isSuperAdmin } from '@/lib/middleware/authorization';
 import prisma from '@/lib/prisma';
 
 /**
@@ -6,8 +8,21 @@ import prisma from '@/lib/prisma';
  * Lấy dữ liệu doanh thu 6 tháng gần nhất
  * Requirements: 13.11
  */
-export async function GET() {
+export async function GET(request) {
     try {
+        const session = await auth();
+        if (!session) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const { searchParams } = new URL(request.url);
+        const queryUserId = searchParams.get('userId');
+
+        let targetUserId = session.user.id;
+        if (isSuperAdmin(session)) {
+            targetUserId = queryUserId && queryUserId !== 'all' ? queryUserId : null;
+        }
+
         const currentDate = new Date();
         const revenueData = [];
 
@@ -19,12 +34,14 @@ export async function GET() {
             const month = date.getMonth() + 1; // 1-12
             const year = date.getFullYear();
 
+            const billWhere = { month, year };
+            if (targetUserId) {
+                billWhere.room = { userId: targetUserId };
+            }
+
             // Lấy tất cả hóa đơn của tháng này
             const bills = await prisma.bill.findMany({
-                where: {
-                    month: month,
-                    year: year,
-                },
+                where: billWhere,
                 select: {
                     totalCost: true,
                     isPaid: true,

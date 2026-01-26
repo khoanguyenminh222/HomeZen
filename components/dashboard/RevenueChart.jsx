@@ -28,14 +28,18 @@ ChartJS.register(
  * Biểu đồ đường thể hiện doanh thu 6 tháng gần nhất
  * Requirements: 13.11
  */
-export default function RevenueChart() {
+export default function RevenueChart({ userId }) {
     const [data, setData] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         async function fetchRevenue() {
+            setIsLoading(true);
             try {
-                const response = await fetch('/api/dashboard/revenue');
+                const url = userId
+                    ? `/api/dashboard/revenue?userId=${userId}`
+                    : '/api/dashboard/revenue';
+                const response = await fetch(url);
                 if (response.ok) {
                     const revenueData = await response.json();
                     setData(revenueData);
@@ -48,7 +52,7 @@ export default function RevenueChart() {
         }
 
         fetchRevenue();
-    }, []);
+    }, [userId]);
 
     if (isLoading || !data) {
         return (

@@ -92,7 +92,7 @@ export default function PropertyOwnerForm({
                                     <FormItem>
                                         <FormLabel>Username <span className="text-red-500">*</span></FormLabel>
                                         <FormControl>
-                                            <Input {...field} disabled={isEdit} />
+                                            <Input {...field} disabled={isEdit} placeholder="Username" />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -107,7 +107,7 @@ export default function PropertyOwnerForm({
                                         <FormItem>
                                             <FormLabel>Mật khẩu <span className="text-red-500">*</span></FormLabel>
                                             <FormControl>
-                                                <Input type="password" {...field} />
+                                                <Input type="password" {...field} placeholder="Mật khẩu" />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -125,7 +125,7 @@ export default function PropertyOwnerForm({
                             <FormItem>
                                 <FormLabel>Tên nhà trọ <span className="text-red-500">*</span></FormLabel>
                                 <FormControl>
-                                    <Input {...field} />
+                                    <Input {...field} placeholder="Tên nhà trọ" />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -139,7 +139,7 @@ export default function PropertyOwnerForm({
                             <FormItem>
                                 <FormLabel>Địa chỉ <span className="text-red-500">*</span></FormLabel>
                                 <FormControl>
-                                    <Input {...field} />
+                                    <Input {...field} placeholder="Địa chỉ" />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -153,7 +153,7 @@ export default function PropertyOwnerForm({
                             <FormItem>
                                 <FormLabel>Số điện thoại <span className="text-red-500">*</span></FormLabel>
                                 <FormControl>
-                                    <Input {...field} />
+                                    <Input {...field} placeholder="Số điện thoại" type="number" />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -167,7 +167,7 @@ export default function PropertyOwnerForm({
                             <FormItem>
                                 <FormLabel>Tên chủ nhà <span className="text-red-500">*</span></FormLabel>
                                 <FormControl>
-                                    <Input {...field} />
+                                    <Input {...field} placeholder="Tên chủ nhà" />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -181,7 +181,7 @@ export default function PropertyOwnerForm({
                             <FormItem>
                                 <FormLabel>Email</FormLabel>
                                 <FormControl>
-                                    <Input type="email" {...field} />
+                                    <Input type="email" {...field} placeholder="Email" />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>

@@ -199,7 +199,12 @@ const propertyOwnerNavItems = [
 const superAdminNavItems = [
   {
     href: '/admin',
-    label: 'Dashboard',
+    label: 'Tổng Quan Hệ Thống',
+    icon: BarChart3,
+  },
+  {
+    href: '/',
+    label: 'Dashboard Chủ Trọ',
     icon: LayoutDashboard,
   },
   {
@@ -213,8 +218,12 @@ const superAdminNavItems = [
     icon: Building2,
   },
   {
-    href: '/admin',
-    label: 'Cấu hình',
+    href: '/admin/security-logs',
+    label: 'Lịch sử hệ thống',
+    icon: Shield,
+  },
+  {
+    label: 'Cấu hình hệ thống',
     icon: Settings,
     children: [
       {
@@ -251,17 +260,17 @@ function DesktopNavItem({ item, pathname }) {
   // Nếu menu có children, chỉ active khi có child active
   // Nếu menu không có children, active dựa vào href
   // Đặc biệt: /bills/history không active /bills
-  const isActive = hasChildren 
-    ? isChildActive 
+  const isActive = hasChildren
+    ? isChildActive
     : (item.href && (
-        pathname === item.href ||
-        (item.href !== '/' && item.href !== '/admin' && 
-         // Nếu href là /bills, chỉ active khi pathname bắt đầu bằng /bills nhưng không phải /bills/history
-         (item.href === '/bills' 
-           ? (pathname?.startsWith('/bills') && pathname !== '/bills/history')
-           : pathname?.startsWith(item.href))
-        )
-      ));
+      pathname === item.href ||
+      (item.href !== '/' && item.href !== '/admin' &&
+        // Nếu href là /bills, chỉ active khi pathname bắt đầu bằng /bills nhưng không phải /bills/history
+        (item.href === '/bills'
+          ? (pathname?.startsWith('/bills') && pathname !== '/bills/history')
+          : pathname?.startsWith(item.href))
+      )
+    ));
 
   if (hasChildren) {
     return (
@@ -340,17 +349,17 @@ function MobileNavItem({ item, pathname, onClose }) {
   // Nếu menu có children, chỉ active khi có child active
   // Nếu menu không có children, active dựa vào href
   // Đặc biệt: /bills/history không active /bills
-  const isActive = hasChildren 
-    ? isChildActive 
+  const isActive = hasChildren
+    ? isChildActive
     : (item.href && (
-        pathname === item.href ||
-        (item.href !== '/' && item.href !== '/admin' && 
-         // Nếu href là /bills, chỉ active khi pathname bắt đầu bằng /bills nhưng không phải /bills/history
-         (item.href === '/bills' 
-           ? (pathname?.startsWith('/bills') && pathname !== '/bills/history')
-           : pathname?.startsWith(item.href))
-        )
-      ));
+      pathname === item.href ||
+      (item.href !== '/' && item.href !== '/admin' &&
+        // Nếu href là /bills, chỉ active khi pathname bắt đầu bằng /bills nhưng không phải /bills/history
+        (item.href === '/bills'
+          ? (pathname?.startsWith('/bills') && pathname !== '/bills/history')
+          : pathname?.startsWith(item.href))
+      )
+    ));
 
   if (hasChildren) {
     return (
@@ -465,9 +474,9 @@ export function NavLinks() {
 
   // Check if we're in a protected route (dashboard area)
   // Dashboard layout already checks auth, so if we're here, we have a session
-  const isInDashboard = pathname && 
-    pathname !== '/login' && 
-    pathname !== '/forgot-password' && 
+  const isInDashboard = pathname &&
+    pathname !== '/login' &&
+    pathname !== '/forgot-password' &&
     pathname !== '/reset-password' &&
     !pathname.startsWith('/api');
 
@@ -476,14 +485,14 @@ export function NavLinks() {
   // Only check role when session is authenticated
   const isSuperAdmin = status === 'authenticated' && session?.user?.role === 'SUPER_ADMIN';
   const navItems = isSuperAdmin ? superAdminNavItems : propertyOwnerNavItems;
-  
+
   // Determine if we should show logout button
   // Show if: authenticated, or if we're in dashboard (which requires auth via layout)
-  const shouldShowLogout = status === 'authenticated' || 
+  const shouldShowLogout = status === 'authenticated' ||
     (isInDashboard && status !== 'unauthenticated');
-  
+
   // Determine if we should show user info
-  const shouldShowUserInfo = status === 'authenticated' || 
+  const shouldShowUserInfo = status === 'authenticated' ||
     (isInDashboard && status !== 'unauthenticated');
 
   useEffect(() => {
@@ -595,8 +604,8 @@ export function NavLinks() {
                       <div className="flex items-center gap-3">
                         <div className={cn(
                           "flex items-center justify-center w-12 h-12 rounded-xl shrink-0",
-                          session.user.role === 'SUPER_ADMIN' 
-                            ? "bg-primary/20 text-primary" 
+                          session.user.role === 'SUPER_ADMIN'
+                            ? "bg-primary/20 text-primary"
                             : "bg-muted text-muted-foreground"
                         )}>
                           {session.user.role === 'SUPER_ADMIN' ? (

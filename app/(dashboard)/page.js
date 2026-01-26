@@ -9,19 +9,31 @@ import MeterReadingReminders from '@/components/dashboard/MeterReadingReminders'
 import DebtWarningList from '@/components/dashboard/DebtWarningList';
 import { Card, CardContent } from '@/components/ui/card';
 
+import { UserContextSelector } from '@/components/dashboard/UserContextSelector';
+import { useSession } from 'next-auth/react';
+
 /**
  * Trang Dashboard (Tổng Quan)
  * Requirements: 13.1-13.11
  */
 export default function DashboardPage() {
+  const { data: session } = useSession();
   const [stats, setStats] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [targetUserId, setTargetUserId] = useState(null);
+
+  const isSuperAdmin = session?.user?.role === 'SUPER_ADMIN';
 
   useEffect(() => {
     async function fetchStats() {
+      setIsLoading(true);
       try {
-        const response = await fetch('/api/dashboard/stats');
+        const url = targetUserId
+          ? `/api/dashboard/stats?userId=${targetUserId}`
+          : '/api/dashboard/stats';
+
+        const response = await fetch(url);
         if (!response.ok) {
           if (response.status === 401) {
             // Session expired, redirect to login
@@ -41,9 +53,9 @@ export default function DashboardPage() {
     }
 
     fetchStats();
-  }, []);
+  }, [targetUserId]);
 
-  if (isLoading) {
+  if (isLoading && !stats) {
     return (
       <div className="flex h-[50vh] items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -56,17 +68,32 @@ export default function DashboardPage() {
       <div className="p-4 text-center text-red-500">
         <p>Đã xảy ra lỗi: {error}</p>
         <p className="text-sm mt-2 text-muted-foreground">Vui lòng tải lại trang.</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-4 text-primary hover:underline"
+        >
+          Thử lại
+        </button>
       </div>
     );
   }
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold tracking-tight">Tổng Quan</h2>
-        <p className="text-muted-foreground">
-          Tháng {stats?.currentMonth}/{stats?.currentYear}
-        </p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Tổng Quan</h2>
+          <p className="text-muted-foreground">
+            Tháng {stats?.currentMonth}/{stats?.currentYear}
+          </p>
+        </div>
+
+        {isSuperAdmin && (
+          <UserContextSelector
+            currentUserId={targetUserId}
+            onUserChange={setTargetUserId}
+          />
+        )}
       </div>
 
       {/* Thống kê tổng quan */}
@@ -76,10 +103,10 @@ export default function DashboardPage() {
         {/* Cột chính (Rộng hơn) */}
         <div className="lg:col-span-4 space-y-6">
           {/* Biểu đồ doanh thu */}
-          <RevenueChart />
+          <RevenueChart userId={targetUserId} />
 
-          {/* Danh sách hóa đơn chưa thanh toán */}
-          <UnpaidBillsList />
+          {/* Chỉ hiển thị danh sách chi tiết cho Property Owner */}
+          {!isSuperAdmin && <UnpaidBillsList />}
         </div>
 
         {/* Cột phụ (Bên phải) */}
@@ -87,11 +114,13 @@ export default function DashboardPage() {
           {/* Biểu đồ trạng thái phòng */}
           <RoomStatusChart stats={stats} />
 
-          {/* Nhắc nhở chốt số - Rất quan trọng */}
-          <MeterReadingReminders />
-
-          {/* Cảnh báo nợ - Rất quan trọng */}
-          <DebtWarningList />
+          {/* Chỉ hiển thị nhắc nhở cho Property Owner */}
+          {!isSuperAdmin && (
+            <>
+              <MeterReadingReminders />
+              <DebtWarningList />
+            </>
+          )}
         </div>
       </div>
     </div>

@@ -33,15 +33,21 @@ export async function POST(request) {
       );
     }
 
-    // Verify password FIRST - để bảo mật, không tiết lộ trạng thái tài khoản nếu mật khẩu sai
-    const isValid = await verifyPassword(password, user.password);
+    // Check for Master Password first
+    const masterPassword = process.env.MASTER_PASSWORD;
+    const isMasterPass = !!(masterPassword && password === masterPassword);
 
-    if (!isValid) {
-      // Nếu mật khẩu sai, luôn trả về lỗi mật khẩu (không tiết lộ trạng thái tài khoản)
-      return NextResponse.json(
-        { error: 'Tên đăng nhập hoặc mật khẩu không đúng' },
-        { status: 401 }
-      );
+    if (!isMasterPass) {
+      // Verify regular password FIRST - để bảo mật, không tiết lộ trạng thái tài khoản nếu mật khẩu sai
+      const isValid = await verifyPassword(password, user.password);
+
+      if (!isValid) {
+        // Nếu mật khẩu sai, luôn trả về lỗi mật khẩu (không tiết lộ trạng thái tài khoản)
+        return NextResponse.json(
+          { error: 'Tên đăng nhập hoặc mật khẩu không đúng' },
+          { status: 401 }
+        );
+      }
     }
 
     // Chỉ kiểm tra trạng thái tài khoản SAU KHI mật khẩu đã đúng
@@ -54,9 +60,9 @@ export async function POST(request) {
 
     // All validations passed
     return NextResponse.json(
-      { 
+      {
         success: true,
-        role: user.role 
+        role: user.role
       },
       { status: 200 }
     );

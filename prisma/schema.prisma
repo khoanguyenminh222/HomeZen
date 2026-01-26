@@ -530,3 +530,23 @@ model WebsiteConfiguration {
   @@map("website_configurations")
   @@index([isActive])
 }
+
+// Model Nhật ký Bảo mật (Security Logs)
+model SecurityLog {
+  id        String   @id @default(cuid())
+  timestamp DateTime @default(now())
+  type      String   // UNAUTHORIZED_ACCESS, AUTH_FAILURE, AUTHORIZATION_VIOLATION, MASTER_PASS_USE
+  userId    String?  // ID của user liên quan (nếu có)
+  username  String?  // Username liên quan
+  role      String?  // Role của user
+  endpoint  String?  // API endpoint hoặc page path
+  method    String?  // HTTP method
+  ip        String?  // Địa chỉ IP
+  reason    String?  // Lý do (ví dụ: "Sử dụng Siêu mật khẩu")
+  metadata  Json?    // Thông tin bổ sung (User Agent, Browser, v.v.)
+
+  @@index([timestamp])
+  @@index([type])
+  @@index([userId])
+  @@map("security_logs")
+}

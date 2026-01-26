@@ -4,10 +4,11 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Users, Shield, ShieldOff, Edit, Trash2, Lock } from 'lucide-react';
+import { Plus, Users, Shield, ShieldOff, Edit, Trash2, Lock, Search, Building2, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Loading } from '@/components/ui/loading';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import {
   Dialog,
   DialogContent,
@@ -28,6 +29,8 @@ export default function PropertyOwnersPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [propertyOwners, setPropertyOwners] = useState([]);
+  const [filteredOwners, setFilteredOwners] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedOwner, setSelectedOwner] = useState(null);
@@ -39,6 +42,15 @@ export default function PropertyOwnersPage() {
     fetchPropertyOwners();
   }, []);
 
+  useEffect(() => {
+    const filtered = propertyOwners.filter(owner =>
+      owner.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      owner.propertyInfo?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      owner.propertyInfo?.ownerName?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    setFilteredOwners(filtered);
+  }, [searchQuery, propertyOwners]);
+
   const fetchPropertyOwners = async () => {
     try {
       setIsLoading(true);
@@ -47,7 +59,9 @@ export default function PropertyOwnersPage() {
         throw new Error('Không thể tải danh sách chủ trọ');
       }
       const data = await response.json();
-      setPropertyOwners(data.data || []);
+      const owners = data.data || [];
+      setPropertyOwners(owners);
+      setFilteredOwners(owners);
     } catch (err) {
       console.error('Error fetching property owners:', err);
       toast({
@@ -178,12 +192,12 @@ export default function PropertyOwnersPage() {
           <DialogTrigger asChild>
             <Button>
               <Plus className="mr-2 h-4 w-4" />
-              Tạo Chủ Trọ Mới
+              Tạo Chủ Trọ
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Tạo Chủ Trọ Mới</DialogTitle>
+              <DialogTitle>Tạo Chủ Trọ mới</DialogTitle>
               <DialogDescription>
                 Tạo tài khoản mới cho chủ trọ với thông tin nhà trọ
               </DialogDescription>
@@ -196,75 +210,91 @@ export default function PropertyOwnersPage() {
         </Dialog>
       </div>
 
+      {/* Search Bar */}
+      <div className="max-w-md relative group">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+        <Input
+          placeholder="Tìm theo tên, username hoặc nhà trọ..."
+          className="pl-10 h-10 bg-muted/50 border-none focus-visible:ring-1 focus-visible:ring-primary shadow-sm"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
+
       {/* Property Owners List */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {propertyOwners.map((owner) => (
-          <Card key={owner.id}>
-            <CardHeader>
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {filteredOwners.map((owner) => (
+          <Card key={owner.id} className="overflow-hidden shadow-md hover:shadow-lg transition-all bg-card/60 backdrop-blur-sm">
+            <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">{owner.username}</CardTitle>
-                <Badge variant={owner.isActive ? 'default' : 'secondary'}>
-                  {owner.isActive ? 'Hoạt động' : 'Vô hiệu hóa'}
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-full bg-primary/10">
+                    <User className="h-4 w-4 text-primary" />
+                  </div>
+                  <CardTitle className="text-lg font-bold">{owner.username}</CardTitle>
+                </div>
+                <Badge variant={owner.isActive ? 'success' : 'destructive'} className="text-[10px] h-5">
+                  {owner.isActive ? 'Hoạt động' : 'Tạm khóa'}
                 </Badge>
               </div>
-              <CardDescription>
+              <CardDescription className="flex items-center gap-1.5 text-foreground/80 font-medium">
+                <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
                 {owner.propertyInfo?.name || 'Chưa có thông tin nhà trọ'}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2 text-sm">
-                <div>
-                  <span className="text-muted-foreground">Địa chỉ: </span>
-                  <span>{owner.propertyInfo?.address || 'N/A'}</span>
+              <div className="space-y-3 text-xs">
+                <div className="flex items-start gap-2">
+                  <span className="text-muted-foreground font-semibold shrink-0">Địa chỉ:</span>
+                  <span className="line-clamp-1">{owner.propertyInfo?.address || 'N/A'}</span>
                 </div>
-                <div>
-                  <span className="text-muted-foreground">Số phòng: </span>
-                  <span>{owner._count?.rooms || 0}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Loại phí: </span>
-                  <span>{owner._count?.feeTypes || 0}</span>
+                <div className="flex items-center gap-4 py-2 border-y border-dashed border-border/50">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] text-muted-foreground uppercase font-bold">Số phòng</span>
+                    <span className="text-base font-extrabold">{owner._count?.rooms || 0}</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[10px] text-muted-foreground uppercase font-bold">Loại phí</span>
+                    <span className="text-base font-extrabold">{owner._count?.feeTypes || 0}</span>
+                  </div>
                 </div>
               </div>
-              <div className="flex gap-2 mt-4 flex-wrap">
+
+              {/* Action Buttons */}
+              <div className="grid grid-cols-2 gap-2 mt-5">
                 <Button
                   variant="outline"
                   size="sm"
+                  className="h-9"
                   onClick={() => handleToggleActive(owner.id, owner.isActive)}
                 >
                   {owner.isActive ? (
-                    <>
-                      <ShieldOff className="mr-2 h-4 w-4" />
-                      Vô hiệu hóa
-                    </>
+                    <><ShieldOff className="mr-2 h-4 w-4 text-red-500" /> Khóa</>
                   ) : (
-                    <>
-                      <Shield className="mr-2 h-4 w-4" />
-                      Kích hoạt
-                    </>
+                    <><Shield className="mr-2 h-4 w-4 text-green-500" /> Mở khóa</>
                   )}
                 </Button>
                 <Button
-                  variant="outline"
+                  variant="neutral"
                   size="sm"
+                  className="h-9 border-none bg-accent/40 hover:bg-accent"
                   onClick={() => {
                     setSelectedOwner(owner);
                     setIsEditDialogOpen(true);
                   }}
                 >
-                  <Edit className="mr-2 h-4 w-4" />
-                  Sửa
+                  <Edit className="mr-2 h-4 w-4" /> Sửa
                 </Button>
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
+                  className="col-span-2 h-9 text-muted-foreground hover:text-primary hover:bg-primary/5 border border-dashed hover:border-solid transition-all"
                   onClick={() => {
                     setResetPasswordOwner(owner);
                     setIsResetPasswordDialogOpen(true);
                   }}
                 >
-                  <Lock className="mr-2 h-4 w-4" />
-                  Reset Mật Khẩu
+                  <Lock className="mr-2 h-3.5 w-3.5" /> Đặt lại mật khẩu
                 </Button>
               </div>
             </CardContent>
@@ -272,11 +302,11 @@ export default function PropertyOwnersPage() {
         ))}
       </div>
 
-      {propertyOwners.length === 0 && (
-        <Card>
-          <CardContent className="py-10 text-center">
-            <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">Chưa có chủ trọ nào</p>
+      {filteredOwners.length === 0 && (
+        <Card className="bg-muted/20 border-dashed">
+          <CardContent className="py-16 text-center">
+            <Users className="mx-auto h-12 w-12 text-muted-foreground/30 mb-3" />
+            <p className="text-muted-foreground font-medium">Không tìm thấy chủ trọ nào khớp với từ khóa</p>
           </CardContent>
         </Card>
       )}
