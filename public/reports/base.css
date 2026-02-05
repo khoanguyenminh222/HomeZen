@@ -1,0 +1,111 @@
+/* Report Base styles - Optimized for PDF Printing */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+
+:root {
+    --primary-color: #1a365d;
+    --text-color: #2d3748;
+    --border-color: #cbd5e0;
+    --bg-light: #f7fafc;
+}
+
+@page {
+    size: A4;
+    margin: 15mm;
+}
+
+body {
+    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--text-color);
+    line-height: 1.5;
+    margin: 0;
+    padding: 0;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+}
+
+.report-header {
+    text-align: center;
+    margin-bottom: 30px;
+    border-bottom: 2px solid var(--primary-color);
+    padding-bottom: 10px;
+}
+
+.report-title {
+    font-size: 24pt;
+    font-weight: bold;
+    color: var(--primary-color);
+    margin: 0;
+    text-transform: uppercase;
+}
+
+.report-metadata {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10pt;
+    color: #718096;
+    margin-top: 5px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+th {
+    background-color: var(--bg-light);
+    color: var(--primary-color);
+    font-weight: bold;
+    text-align: left;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+}
+
+td {
+    padding: 8px 10px;
+    border: 1px solid var(--border-color);
+    vertical-align: top;
+}
+
+tr:nth-child(even) {
+    background-color: #fcfcfc;
+}
+
+/* Page Break handling */
+.page-break {
+    page-break-before: always;
+}
+
+.no-break {
+    page-break-inside: avoid;
+}
+
+thead {
+    display: table-header-group;
+}
+
+tfoot {
+    display: table-footer-group;
+}
+
+tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+}
+
+/* Footer signatures */
+.signature-section {
+    margin-top: 50px;
+    display: flex;
+    justify-content: space-around;
+    page-break-inside: avoid;
+}
+
+.signature-box {
+    text-align: center;
+    width: 200px;
+}
+
+.signature-space {
+    height: 80px;
+}

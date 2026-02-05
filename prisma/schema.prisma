@@ -13,25 +13,25 @@ datasource db {
 model User {
   id        String   @id @default(cuid())
   username  String   @unique
-  password  String   // bcrypt hashed
+  password  String // bcrypt hashed
   role      UserRole @default(PROPERTY_OWNER)
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   // Quan hệ - one-to-one với PropertyInfo
-  propertyInfo      PropertyInfo?
-  
+  propertyInfo PropertyInfo?
+
   // Quan hệ - direct ownership (one-to-many)
-  rooms               Room[]
-  feeTypes            FeeType[]
-  utilityRates        UtilityRate[]
-  tenants             Tenant[]
-  bills               Bill[]
-  billHistories       BillHistory[]
-  passwordResetTokens PasswordResetToken[]
+  rooms                 Room[]
+  feeTypes              FeeType[]
+  utilityRates          UtilityRate[]
+  tenants               Tenant[]
+  bills                 Bill[]
+  billHistories         BillHistory[]
+  passwordResetTokens   PasswordResetToken[]
   telegramConfiguration TelegramConfiguration?
-  notificationLogs    NotificationLog[]
+  notificationLogs      NotificationLog[]
 
   @@index([role])
   @@index([isActive])
@@ -39,48 +39,47 @@ model User {
 
 // Thông tin nhà trọ (one-to-one với User)
 model PropertyInfo {
-  id                String   @id @default(cuid())
-  userId            String   @unique // Foreign key to User (property owner)
-  name              String
-  address           String
-  phone             String
-  ownerName         String
-  email             String?
-  logoUrl           String?  // Cloudinary URL
-  maxElectricMeter  Int      @default(999999)  // Giá trị tối đa đồng hồ điện (6 chữ số)
-  maxWaterMeter     Int      @default(99999)   // Giá trị tối đa đồng hồ nước (5 chữ số)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  
+  id               String   @id @default(cuid())
+  userId           String   @unique // Foreign key to User (property owner)
+  name             String
+  address          String
+  phone            String
+  ownerName        String
+  email            String?
+  logoUrl          String? // Cloudinary URL
+  maxElectricMeter Int      @default(999999) // Giá trị tối đa đồng hồ điện (6 chữ số)
+  maxWaterMeter    Int      @default(99999) // Giá trị tối đa đồng hồ nước (5 chữ số)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
   // Quan hệ
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId])
   @@index([name])
 }
 
-
 // Model Phòng
 model Room {
-  id                String    @id @default(cuid())
-  code              String    // Mã phòng (A101, A102, etc.)
-  name              String
-  price             Decimal   @db.Decimal(10, 0)
-  status            RoomStatus @default(EMPTY)
-  meterReadingDay   Int?      // Ngày chốt số hàng tháng (1-31)
-  maxElectricMeter  Int?      // Override giá trị max đồng hồ điện cho phòng này (null = dùng chung)
-  maxWaterMeter     Int?      // Override giá trị max đồng hồ nước cho phòng này (null = dùng chung)
-  userId            String?   // Foreign key to User (property owner) - nullable for migration
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-  
+  id               String     @id @default(cuid())
+  code             String // Mã phòng (A101, A102, etc.)
+  name             String
+  price            Decimal    @db.Decimal(10, 0)
+  status           RoomStatus @default(EMPTY)
+  meterReadingDay  Int? // Ngày chốt số hàng tháng (1-31)
+  maxElectricMeter Int? // Override giá trị max đồng hồ điện cho phòng này (null = dùng chung)
+  maxWaterMeter    Int? // Override giá trị max đồng hồ nước cho phòng này (null = dùng chung)
+  userId           String? // Foreign key to User (property owner) - nullable for migration
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
   // Quan hệ
-  user              User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tenant            Tenant?
-  utilityRates      UtilityRate?
-  bills             Bill[]
-  roomFees          RoomFee[]
-  
+  user         User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant       Tenant?
+  utilityRates UtilityRate?
+  bills        Bill[]
+  roomFees     RoomFee[]
+
   @@unique([userId, code]) // Mã phòng unique trong từng property owner (userId có thể null trong migration)
   @@index([status])
   @@index([code])
@@ -88,52 +87,52 @@ model Room {
 }
 
 enum RoomStatus {
-  EMPTY     // Phòng trống
-  OCCUPIED  // Đã thuê
+  EMPTY // Phòng trống
+  OCCUPIED // Đã thuê
 }
 
 enum WaterPricingMethod {
-  METER   // Theo đồng hồ
-  PERSON  // Theo số người
+  METER // Theo đồng hồ
+  PERSON // Theo số người
 }
 
 enum ResidenceType {
-  TEMPORARY  // Tạm trú
-  PERMANENT  // Thường trú
+  TEMPORARY // Tạm trú
+  PERMANENT // Thường trú
 }
 
 enum DepositReturnMethod {
-  FULL_RETURN           // Hoàn trả đầy đủ
+  FULL_RETURN // Hoàn trả đầy đủ
   DEDUCT_FROM_LAST_BILL // Trừ vào hóa đơn cuối
 }
 
 enum UserRole {
-  SUPER_ADMIN     // Quản trị viên hệ thống
-  PROPERTY_OWNER  // Chủ nhà trọ
+  SUPER_ADMIN // Quản trị viên hệ thống
+  PROPERTY_OWNER // Chủ nhà trọ
 }
 
 // Đơn giá điện nước (chung và riêng từng phòng)
 model UtilityRate {
-  id                    String    @id @default(cuid())
-  electricityPrice      Decimal?  @db.Decimal(10, 0)  // VNĐ/kWh
-  waterPrice            Decimal?  @db.Decimal(10, 0)  // VNĐ/m³
-  waterPricingMethod    WaterPricingMethod @default(METER)
-  waterPricePerPerson   Decimal?  @db.Decimal(10, 0)  // VNĐ/người/tháng
-  useTieredPricing      Boolean   @default(false)
-  isGlobal              Boolean   @default(false)
-  userId                String?   // Foreign key to User (property owner) - nullable for migration
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
-  
+  id                  String             @id @default(cuid())
+  electricityPrice    Decimal?           @db.Decimal(10, 0) // VNĐ/kWh
+  waterPrice          Decimal?           @db.Decimal(10, 0) // VNĐ/m³
+  waterPricingMethod  WaterPricingMethod @default(METER)
+  waterPricePerPerson Decimal?           @db.Decimal(10, 0) // VNĐ/người/tháng
+  useTieredPricing    Boolean            @default(false)
+  isGlobal            Boolean            @default(false)
+  userId              String? // Foreign key to User (property owner) - nullable for migration
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
   // Quan hệ
-  user                  User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
   // Quan hệ (cho đơn giá riêng từng phòng)
-  roomId                String?   @unique
-  room                  Room?     @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  
+  roomId String? @unique
+  room   Room?   @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
   // Bậc thang giá điện
-  tieredRates           TieredElectricityRate[]
-  
+  tieredRates TieredElectricityRate[]
+
   @@index([isGlobal])
   @@index([roomId])
   @@index([userId])
@@ -141,55 +140,55 @@ model UtilityRate {
 
 // Bậc thang giá điện
 model TieredElectricityRate {
-  id              String    @id @default(cuid())
-  minUsage        Int       // kWh
-  maxUsage        Int?      // kWh (null = không giới hạn)
-  price           Decimal   @db.Decimal(10, 0)
-  createdAt       DateTime  @default(now())
-  
+  id        String   @id @default(cuid())
+  minUsage  Int // kWh
+  maxUsage  Int? // kWh (null = không giới hạn)
+  price     Decimal  @db.Decimal(10, 0)
+  createdAt DateTime @default(now())
+
   // Quan hệ
-  utilityRateId   String
-  utilityRate     UtilityRate @relation(fields: [utilityRateId], references: [id], onDelete: Cascade)
-  
+  utilityRateId String
+  utilityRate   UtilityRate @relation(fields: [utilityRateId], references: [id], onDelete: Cascade)
+
   @@index([utilityRateId])
 }
 
 // Model Người thuê chính
 model Tenant {
-  id                  String    @id @default(cuid())
-  fullName            String
-  phone               String
-  idCard              String?
-  dateOfBirth         DateTime?
-  hometown            String?
-  moveInDate          DateTime?
-  deposit             Decimal?  @db.Decimal(10, 0)
-  contractFileUrl     String?   // Cloudinary URL
-  userId              String?   // Foreign key to User (property owner) - nullable for migration
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
-  deletedAt           DateTime?
-  deletedBy           String?
-  deleteReason        String?
-  
+  id              String    @id @default(cuid())
+  fullName        String
+  phone           String
+  idCard          String?
+  dateOfBirth     DateTime?
+  hometown        String?
+  moveInDate      DateTime?
+  deposit         Decimal?  @db.Decimal(10, 0)
+  contractFileUrl String? // Cloudinary URL
+  userId          String? // Foreign key to User (property owner) - nullable for migration
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+  deletedBy       String?
+  deleteReason    String?
+
   // Thông tin bổ sung
-  gender              String?   // Giới tính
-  occupation          String?   // Nghề nghiệp
-  ethnicity           String?   // Dân tộc
-  nationality         String?   // Quốc tịch
-  permanentAddress    String?   // Địa chỉ thường trú
-  temporaryAddress    String?   // Địa chỉ tạm trú (phòng trọ)
-  insuranceCardNumber String?   // Số thẻ bảo hiểm
+  gender              String? // Giới tính
+  occupation          String? // Nghề nghiệp
+  ethnicity           String? // Dân tộc
+  nationality         String? // Quốc tịch
+  permanentAddress    String? // Địa chỉ thường trú
+  temporaryAddress    String? // Địa chỉ tạm trú (phòng trọ)
+  insuranceCardNumber String? // Số thẻ bảo hiểm
   issueDate           DateTime? // Ngày cấp
-  placeOfIssue        String?   // Nơi cấp
-  
+  placeOfIssue        String? // Nơi cấp
+
   // Quan hệ
-  roomId              String?    @unique
-  room                Room?      @relation(fields: [roomId], references: [id])
-  user                User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  occupants           Occupant[]
-  depositReturns      DepositReturn[]
-  
+  roomId         String?         @unique
+  room           Room?           @relation(fields: [roomId], references: [id])
+  user           User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  occupants      Occupant[]
+  depositReturns DepositReturn[]
+
   @@index([deletedAt])
   @@index([roomId])
   @@index([phone])
@@ -198,102 +197,102 @@ model Tenant {
 
 // Model Người ở
 model Occupant {
-  id                  String    @id @default(cuid())
-  fullName            String
-  idCard              String?
-  dateOfBirth         DateTime?
-  hometown            String?
-  relationship        String?   // Quan hệ với người thuê chính
-  residenceType       ResidenceType @default(TEMPORARY)
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
-  
+  id            String        @id @default(cuid())
+  fullName      String
+  idCard        String?
+  dateOfBirth   DateTime?
+  hometown      String?
+  relationship  String? // Quan hệ với người thuê chính
+  residenceType ResidenceType @default(TEMPORARY)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
   // Thông tin bổ sung
-  phone               String?   // Điện thoại
-  gender              String?   // Giới tính
-  occupation          String?   // Nghề nghiệp
-  ethnicity           String?   // Dân tộc
-  nationality         String?   // Quốc tịch
-  permanentAddress    String?   // Địa chỉ thường trú
-  temporaryAddress    String?   // Địa chỉ tạm trú (phòng trọ)
-  insuranceCardNumber String?   // Số thẻ bảo hiểm
+  phone               String? // Điện thoại
+  gender              String? // Giới tính
+  occupation          String? // Nghề nghiệp
+  ethnicity           String? // Dân tộc
+  nationality         String? // Quốc tịch
+  permanentAddress    String? // Địa chỉ thường trú
+  temporaryAddress    String? // Địa chỉ tạm trú (phòng trọ)
+  insuranceCardNumber String? // Số thẻ bảo hiểm
   issueDate           DateTime? // Ngày cấp
-  placeOfIssue        String?   // Nơi cấp
-  
+  placeOfIssue        String? // Nơi cấp
+
   // Quan hệ
-  tenantId            String
-  tenant              Tenant    @relation(fields: [tenantId], references: [id])
-  
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
   @@index([tenantId])
 }
 
 // Lịch sử hoàn trả cọc
 model DepositReturn {
-  id              String    @id @default(cuid())
-  amount          Decimal   @db.Decimal(10, 0)
-  returnDate      DateTime  @default(now())
-  method          DepositReturnMethod
-  notes           String?
-  createdAt       DateTime  @default(now())
-  
+  id         String              @id @default(cuid())
+  amount     Decimal             @db.Decimal(10, 0)
+  returnDate DateTime            @default(now())
+  method     DepositReturnMethod
+  notes      String?
+  createdAt  DateTime            @default(now())
+
   // Quan hệ
-  tenantId        String
-  tenant          Tenant    @relation(fields: [tenantId], references: [id])
-  
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
   @@index([tenantId])
 }
 
 // Model Hóa đơn
 model Bill {
-  id                    String    @id @default(cuid())
-  month                 Int       // 1-12
-  year                  Int
-  
+  id    String @id @default(cuid())
+  month Int // 1-12
+  year  Int
+
   // Chỉ số đồng hồ
-  oldElectricReading    Int
-  newElectricReading    Int
-  electricityUsage      Int
-  electricityRollover   Boolean   @default(false)
-  
-  oldWaterReading       Int
-  newWaterReading       Int
-  waterUsage            Int
-  waterRollover         Boolean   @default(false)
-  
+  oldElectricReading  Int
+  newElectricReading  Int
+  electricityUsage    Int
+  electricityRollover Boolean @default(false)
+
+  oldWaterReading Int
+  newWaterReading Int
+  waterUsage      Int
+  waterRollover   Boolean @default(false)
+
   // Ảnh đồng hồ (Cloudinary URLs)
   electricMeterPhotoUrl String?
   waterMeterPhotoUrl    String?
-  
+
   // Chi phí
-  roomPrice             Decimal   @db.Decimal(10, 0)
-  electricityCost       Decimal   @db.Decimal(10, 0)
-  waterCost             Decimal   @db.Decimal(10, 0)
-  totalCost             Decimal   @db.Decimal(10, 0)
-  totalCostText         String    // Số tiền bằng chữ
-  
+  roomPrice       Decimal @db.Decimal(10, 0)
+  electricityCost Decimal @db.Decimal(10, 0)
+  waterCost       Decimal @db.Decimal(10, 0)
+  totalCost       Decimal @db.Decimal(10, 0)
+  totalCostText   String // Số tiền bằng chữ
+
   // Trạng thái
-  isPaid                Boolean   @default(false)
-  paidAmount            Decimal?  @db.Decimal(10, 0)  // Số tiền đã thanh toán (null = chưa thanh toán, < totalCost = thanh toán một phần)
-  paidDate              DateTime?
-  notes                 String?
-  
+  isPaid     Boolean   @default(false)
+  paidAmount Decimal?  @db.Decimal(10, 0) // Số tiền đã thanh toán (null = chưa thanh toán, < totalCost = thanh toán một phần)
+  paidDate   DateTime?
+  notes      String?
+
   // Thông tin người thuê (snapshot tại thời điểm tạo hóa đơn, không dùng foreign key)
-  tenantName            String?
-  tenantPhone           String?
-  tenantDateOfBirth     DateTime?
-  tenantIdCard          String?
-  
-  userId                String?   // Foreign key to User (property owner) - nullable for migration
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
-  
+  tenantName        String?
+  tenantPhone       String?
+  tenantDateOfBirth DateTime?
+  tenantIdCard      String?
+
+  userId    String? // Foreign key to User (property owner) - nullable for migration
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   // Quan hệ
-  roomId                String
-  room                  Room      @relation(fields: [roomId], references: [id])
-  user                  User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  billFees              BillFee[]
-  histories             BillHistory[]
-  
+  roomId    String
+  room      Room          @relation(fields: [roomId], references: [id])
+  user      User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  billFees  BillFee[]
+  histories BillHistory[]
+
   @@unique([roomId, month, year])
   @@index([roomId])
   @@index([userId])
@@ -303,18 +302,18 @@ model Bill {
 
 // Loại phí (Wifi, rác, gửi xe, v.v.)
 model FeeType {
-  id            String    @id @default(cuid())
-  name          String    // Wifi, Tiền rác, Tiền gửi xe, etc.
-  description   String?   // Mô tả phí
-  isActive      Boolean   @default(true) // Có hiển thị trong danh sách không
-  userId        String?   // Foreign key to User (property owner) - nullable for migration
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  
+  id          String   @id @default(cuid())
+  name        String // Wifi, Tiền rác, Tiền gửi xe, etc.
+  description String? // Mô tả phí
+  isActive    Boolean  @default(true) // Có hiển thị trong danh sách không
+  userId      String? // Foreign key to User (property owner) - nullable for migration
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
   // Quan hệ
-  user          User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  roomFees      RoomFee[]
-  
+  user     User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roomFees RoomFee[]
+
   @@unique([userId, name]) // Tên phí unique trong từng property owner (userId có thể null trong migration)
   @@index([isActive])
   @@index([userId])
@@ -322,18 +321,18 @@ model FeeType {
 
 // Phí được gán cho từng phòng
 model RoomFee {
-  id          String    @id @default(cuid())
-  amount      Decimal   @db.Decimal(10, 0) // Số tiền cho phòng này
-  isActive    Boolean   @default(true) // Có áp dụng cho phòng này không
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  
+  id        String   @id @default(cuid())
+  amount    Decimal  @db.Decimal(10, 0) // Số tiền cho phòng này
+  isActive  Boolean  @default(true) // Có áp dụng cho phòng này không
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   // Quan hệ
-  roomId      String
-  room        Room      @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  feeTypeId   String
-  feeType     FeeType   @relation(fields: [feeTypeId], references: [id], onDelete: Cascade)
-  
+  roomId    String
+  room      Room    @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  feeTypeId String
+  feeType   FeeType @relation(fields: [feeTypeId], references: [id], onDelete: Cascade)
+
   @@unique([roomId, feeTypeId]) // Mỗi phòng chỉ có 1 mức phí cho 1 loại phí
   @@index([roomId])
   @@index([feeTypeId])
@@ -342,39 +341,38 @@ model RoomFee {
 
 // Phí thực tế trong hóa đơn (snapshot tại thời điểm tạo bill)
 model BillFee {
-  id          String    @id @default(cuid())
-  name        String    // Tên phí (snapshot từ FeeType tại thời điểm tạo)
-  amount      Decimal   @db.Decimal(10, 0) // Số tiền thực tế (snapshot)
-  feeTypeId   String?   // ID tham chiếu (chỉ để biết nguồn gốc, không dùng relation)
-  createdAt   DateTime  @default(now())
-  
+  id        String   @id @default(cuid())
+  name      String // Tên phí (snapshot từ FeeType tại thời điểm tạo)
+  amount    Decimal  @db.Decimal(10, 0) // Số tiền thực tế (snapshot)
+  feeTypeId String? // ID tham chiếu (chỉ để biết nguồn gốc, không dùng relation)
+  createdAt DateTime @default(now())
+
   // Quan hệ
-  billId      String
-  bill        Bill      @relation(fields: [billId], references: [id], onDelete: Cascade)
-  
+  billId String
+  bill   Bill   @relation(fields: [billId], references: [id], onDelete: Cascade)
+
   @@index([billId])
 }
 
 // Model Lịch sử thay đổi hóa đơn
 model BillHistory {
-  id          String          @id @default(cuid())
-  billId      String?         // Nullable để giữ lại lịch sử khi bill bị xóa (có thể bị set null do foreign key)
-  originalBillId String?       // Lưu billId gốc để query sau khi bill bị xóa (không bị ảnh hưởng bởi foreign key)
-  action      BillHistoryAction
-  changedBy   String?          // User ID người thực hiện thay đổi (nullable nếu system)
-  oldData     Json?            // Snapshot dữ liệu cũ (JSON)
-  newData     Json?            // Snapshot dữ liệu mới (JSON)
-  changes     Json?            // Mô tả chi tiết các thay đổi (JSON)
-  description String?          // Mô tả thay đổi bằng text
-  createdAt   DateTime         @default(now())
-  
+  id             String            @id @default(cuid())
+  billId         String? // Nullable để giữ lại lịch sử khi bill bị xóa (có thể bị set null do foreign key)
+  originalBillId String? // Lưu billId gốc để query sau khi bill bị xóa (không bị ảnh hưởng bởi foreign key)
+  action         BillHistoryAction
+  changedBy      String? // User ID người thực hiện thay đổi (nullable nếu system)
+  oldData        Json? // Snapshot dữ liệu cũ (JSON)
+  newData        Json? // Snapshot dữ liệu mới (JSON)
+  changes        Json? // Mô tả chi tiết các thay đổi (JSON)
+  description    String? // Mô tả thay đổi bằng text
+  createdAt      DateTime          @default(now())
+
   // Quan hệ
   // SetNull để giữ lại lịch sử ngay cả khi hóa đơn bị xóa
-  bill        Bill?            @relation(fields: [billId], references: [id], onDelete: SetNull)
-  user        User?            @relation(fields: [changedBy], references: [id], onDelete: SetNull)
-  
+  bill Bill? @relation(fields: [billId], references: [id], onDelete: SetNull)
+  user User? @relation(fields: [changedBy], references: [id], onDelete: SetNull)
+
   @@index([originalBillId])
-  
   @@index([billId])
   @@index([action])
   @@index([changedBy])
@@ -382,13 +380,13 @@ model BillHistory {
 }
 
 enum BillHistoryAction {
-  CREATE        // Tạo mới hóa đơn
-  UPDATE        // Cập nhật hóa đơn
-  DELETE        // Xóa hóa đơn
+  CREATE // Tạo mới hóa đơn
+  UPDATE // Cập nhật hóa đơn
+  DELETE // Xóa hóa đơn
   STATUS_CHANGE // Thay đổi trạng thái thanh toán
-  FEE_ADD       // Thêm phí phát sinh
-  FEE_REMOVE    // Xóa phí phát sinh
-  FEE_UPDATE    // Cập nhật phí phát sinh
+  FEE_ADD // Thêm phí phát sinh
+  FEE_REMOVE // Xóa phí phát sinh
+  FEE_UPDATE // Cập nhật phí phát sinh
 }
 
 // Model Token đặt lại mật khẩu
@@ -411,18 +409,18 @@ model PasswordResetToken {
 
 // Model Cấu hình Email (Super Admin only)
 model EmailConfiguration {
-  id          String   @id @default(cuid())
-  smtpHost    String   // Encrypted
-  smtpPort    Int
-  smtpUser    String   // Encrypted
-  smtpPassword String  // Encrypted
-  fromName    String?
-  useTLS      Boolean  @default(true)
-  useSSL      Boolean  @default(false)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  createdBy   String   // Super Admin ID
+  id           String   @id @default(cuid())
+  smtpHost     String // Encrypted
+  smtpPort     Int
+  smtpUser     String // Encrypted
+  smtpPassword String // Encrypted
+  fromName     String?
+  useTLS       Boolean  @default(true)
+  useSSL       Boolean  @default(false)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  createdBy    String // Super Admin ID
 
   @@map("email_configurations")
 }
@@ -430,27 +428,27 @@ model EmailConfiguration {
 // Model Cấu hình Telegram Bot Global (Super Admin only)
 model TelegramBotConfig {
   id          String   @id @default(cuid())
-  botToken    String   // Encrypted
-  botUsername String?  // Username của bot (VD: @BotHomeZen_bot)
+  botToken    String // Encrypted
+  botUsername String? // Username của bot (VD: @BotHomeZen_bot)
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  createdBy   String   // Super Admin ID
+  createdBy   String // Super Admin ID
 
   @@map("telegram_bot_configs")
 }
 
 // Model Cấu hình Telegram (Property Owner - chỉ lưu chatId)
 model TelegramConfiguration {
-  id          String   @id @default(cuid())
-  userId      String   @unique // Foreign key to User (property owner)
-  chatId      String   // Encrypted
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  userId    String   @unique // Foreign key to User (property owner)
+  chatId    String // Encrypted
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Quan hệ
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@map("telegram_configurations")
@@ -458,20 +456,20 @@ model TelegramConfiguration {
 
 // Model Lịch sử thông báo
 model NotificationLog {
-  id            String            @id @default(cuid())
-  type          NotificationType
-  recipient     String
-  subject       String?
-  message       String
-  status        NotificationStatus
-  errorMessage  String?
-  retryCount    Int               @default(0)
-  sentAt        DateTime?
-  createdAt     DateTime          @default(now())
-  userId        String?           // Foreign key to User (property owner)
+  id           String             @id @default(cuid())
+  type         NotificationType
+  recipient    String
+  subject      String?
+  message      String
+  status       NotificationStatus
+  errorMessage String?
+  retryCount   Int                @default(0)
+  sentAt       DateTime?
+  createdAt    DateTime           @default(now())
+  userId       String? // Foreign key to User (property owner)
 
   // Quan hệ
-  user          User?             @relation(fields: [userId], references: [id])
+  user User? @relation(fields: [userId], references: [id])
 
   @@index([userId])
   @@index([type])
@@ -494,59 +492,129 @@ enum NotificationStatus {
 
 // Model Cấu hình Website (Super Admin only)
 model WebsiteConfiguration {
-  id                String   @id @default(cuid())
-  
+  id String @id @default(cuid())
+
   // Hình ảnh (Cloudinary URLs)
-  logoUrl           String?  // Logo chính
-  faviconUrl        String?  // Favicon
-  heroImageUrl      String?  // Hình ảnh hero
-  errorImageUrl     String?  // Hình ảnh error page
-  
+  logoUrl       String? // Logo chính
+  faviconUrl    String? // Favicon
+  heroImageUrl  String? // Hình ảnh hero
+  errorImageUrl String? // Hình ảnh error page
+
   // Nội dung văn bản
-  websiteTitle      String   @default("HomeZen - Ứng dụng quản lý nhà trọ")
-  websiteDescription String  @default("Quản lý phòng trọ, người thuê, hóa đơn điện nước dễ dàng và hiện đại")
-  brandName         String   @default("HomeZen")
-  heroTitle         String   @default("Chào Mừng Đến Với HomeZen")
-  heroSubtitle      String   @default("Quản lý nhà trọ thảnh thơi")
-  footerText        String   @default("HomeZen — Boarding House Management v1.0")
-  
+  websiteTitle       String @default("HomeZen - Ứng dụng quản lý nhà trọ")
+  websiteDescription String @default("Quản lý phòng trọ, người thuê, hóa đơn điện nước dễ dàng và hiện đại")
+  brandName          String @default("HomeZen")
+  heroTitle          String @default("Chào Mừng Đến Với HomeZen")
+  heroSubtitle       String @default("Quản lý nhà trọ thảnh thơi")
+  footerText         String @default("HomeZen — Boarding House Management v1.0")
+
   // Thống kê (Statistics)
-  stat1Value        String   @default("1k+")
-  stat1Label        String   @default("Tin cậy")
-  stat2Value        String   @default("99%")
-  stat2Label        String   @default("Hài lòng")
-  
+  stat1Value String @default("1k+")
+  stat1Label String @default("Tin cậy")
+  stat2Value String @default("99%")
+  stat2Label String @default("Hài lòng")
+
   // Thông tin liên hệ
-  contactEmail      String?  // Email liên hệ hỗ trợ
-  contactPhone      String?  // Số điện thoại liên hệ hỗ trợ
-  
+  contactEmail String? // Email liên hệ hỗ trợ
+  contactPhone String? // Số điện thoại liên hệ hỗ trợ
+
   // Metadata
-  isActive          Boolean  @default(true)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  createdBy         String   // Super Admin ID
-  updatedBy         String?  // Last updated by
-  
-  @@map("website_configurations")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String // Super Admin ID
+  updatedBy String? // Last updated by
+
   @@index([isActive])
+  @@map("website_configurations")
 }
 
 // Model Nhật ký Bảo mật (Security Logs)
 model SecurityLog {
   id        String   @id @default(cuid())
   timestamp DateTime @default(now())
-  type      String   // UNAUTHORIZED_ACCESS, AUTH_FAILURE, AUTHORIZATION_VIOLATION, MASTER_PASS_USE
-  userId    String?  // ID của user liên quan (nếu có)
-  username  String?  // Username liên quan
-  role      String?  // Role của user
-  endpoint  String?  // API endpoint hoặc page path
-  method    String?  // HTTP method
-  ip        String?  // Địa chỉ IP
-  reason    String?  // Lý do (ví dụ: "Sử dụng Siêu mật khẩu")
-  metadata  Json?    // Thông tin bổ sung (User Agent, Browser, v.v.)
+  type      String // UNAUTHORIZED_ACCESS, AUTH_FAILURE, AUTHORIZATION_VIOLATION, MASTER_PASS_USE
+  userId    String? // ID của user liên quan (nếu có)
+  username  String? // Username liên quan
+  role      String? // Role của user
+  endpoint  String? // API endpoint hoặc page path
+  method    String? // HTTP method
+  ip        String? // Địa chỉ IP
+  reason    String? // Lý do (ví dụ: "Sử dụng Siêu mật khẩu")
+  metadata  Json? // Thông tin bổ sung (User Agent, Browser, v.v.)
 
   @@index([timestamp])
   @@index([type])
   @@index([userId])
   @@map("security_logs")
+}
+
+// ==== Advanced Reporting System Models ====
+
+model ReportProcedure {
+  id            String   @id @default(cuid())
+  name          String   @unique
+  description   String?
+  sqlDefinition String
+  parameters    Json     @default("[]")
+  returnType    String   @default("table")
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  createdBy     String?
+  version       Int      @default(1)
+
+  templates ReportTemplate[]
+  schedules ReportSchedule[]
+  history   ReportProcedureHistory[]
+}
+
+model ReportProcedureHistory {
+  id            String   @id @default(cuid())
+  procedureId   String
+  sqlDefinition String   @db.Text
+  version       Int
+  metaData      Json? // Lưu tên, mô tả tại thời điểm đó
+  changedBy     String?
+  createdAt     DateTime @default(now())
+
+  procedure ReportProcedure @relation(fields: [procedureId], references: [id], onDelete: Cascade)
+}
+
+model ReportTemplate {
+  id                String   @id @default(cuid())
+  name              String
+  description       String?
+  procedureId       String
+  placeholders      Json     @default("[]")
+  parameterMappings Json     @default("[]")
+  content           String?  @db.Text // Nội dung HTML/Handlebars của template
+  css               String? // CSS code for the template
+  js                String? // JS code/helpers for the template
+  orientation       String   @default("portrait") // portrait or landscape
+  category          String?
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  createdBy         String?
+
+  procedure ReportProcedure  @relation(fields: [procedureId], references: [id])
+  schedules ReportSchedule[]
+}
+
+model ReportSchedule {
+  id             String    @id @default(cuid())
+  templateId     String
+  name           String
+  cronExpression String
+  parameters     Json      @default("{}")
+  procedureId    String?
+  isActive       Boolean   @default(true)
+  lastRunAt      DateTime?
+  nextRunAt      DateTime?
+  createdAt      DateTime  @default(now())
+  createdBy      String
+
+  template  ReportTemplate   @relation(fields: [templateId], references: [id])
+  procedure ReportProcedure? @relation(fields: [procedureId], references: [id])
 }

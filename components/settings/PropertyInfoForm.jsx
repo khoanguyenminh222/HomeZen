@@ -1,13 +1,20 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { propertyInfoSchema } from '@/lib/validations/propertyInfo';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { propertyInfoSchema } from "@/lib/validations/propertyInfo";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Loading } from "../ui/loading";
 
 /**
  * Form cấu hình thông tin nhà trọ
@@ -16,7 +23,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 export default function PropertyInfoForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
-  const [message, setMessage] = useState({ type: '', text: '' });
+  const [message, setMessage] = useState({ type: "", text: "" });
 
   const {
     register,
@@ -26,12 +33,12 @@ export default function PropertyInfoForm() {
   } = useForm({
     resolver: zodResolver(propertyInfoSchema),
     defaultValues: {
-      name: '',
-      address: '',
-      phone: '',
-      ownerName: '',
-      email: '',
-      logoUrl: '',
+      name: "",
+      address: "",
+      phone: "",
+      ownerName: "",
+      email: "",
+      logoUrl: "",
       maxElectricMeter: 999999,
       maxWaterMeter: 99999,
     },
@@ -41,27 +48,27 @@ export default function PropertyInfoForm() {
   useEffect(() => {
     async function fetchPropertyInfo() {
       try {
-        const response = await fetch('/api/settings/property');
+        const response = await fetch("/api/settings/property");
         if (response.ok) {
           const result = await response.json();
           if (result.data) {
             reset({
-              name: result.data.name || '',
-              address: result.data.address || '',
-              phone: result.data.phone || '',
-              ownerName: result.data.ownerName || '',
-              email: result.data.email || '',
-              logoUrl: result.data.logoUrl || '',
+              name: result.data.name || "",
+              address: result.data.address || "",
+              phone: result.data.phone || "",
+              ownerName: result.data.ownerName || "",
+              email: result.data.email || "",
+              logoUrl: result.data.logoUrl || "",
               maxElectricMeter: result.data.maxElectricMeter || 999999,
               maxWaterMeter: result.data.maxWaterMeter || 99999,
             });
           }
         }
       } catch (error) {
-        console.error('Error fetching property info:', error);
+        console.error("Error fetching property info:", error);
         setMessage({
-          type: 'error',
-          text: 'Không thể tải thông tin nhà trọ',
+          type: "error",
+          text: "Không thể tải thông tin nhà trọ",
         });
       } finally {
         setIsFetching(false);
@@ -73,13 +80,13 @@ export default function PropertyInfoForm() {
 
   const onSubmit = async (data) => {
     setIsLoading(true);
-    setMessage({ type: '', text: '' });
+    setMessage({ type: "", text: "" });
 
     try {
-      const response = await fetch('/api/settings/property', {
-        method: 'POST',
+      const response = await fetch("/api/settings/property", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(data),
       });
@@ -88,20 +95,20 @@ export default function PropertyInfoForm() {
 
       if (response.ok) {
         setMessage({
-          type: 'success',
-          text: result.message || 'Lưu thông tin thành công!',
+          type: "success",
+          text: result.message || "Lưu thông tin thành công!",
         });
       } else {
         setMessage({
-          type: 'error',
-          text: result.error || 'Có lỗi xảy ra. Vui lòng thử lại.',
+          type: "error",
+          text: result.error || "Có lỗi xảy ra. Vui lòng thử lại.",
         });
       }
     } catch (error) {
-      console.error('Error saving property info:', error);
+      console.error("Error saving property info:", error);
       setMessage({
-        type: 'error',
-        text: 'Không thể lưu thông tin. Vui lòng thử lại.',
+        type: "error",
+        text: "Không thể lưu thông tin. Vui lòng thử lại.",
       });
     } finally {
       setIsLoading(false);
@@ -112,7 +119,7 @@ export default function PropertyInfoForm() {
     return (
       <Card>
         <CardContent className="pt-6">
-          <p className="text-center text-gray-500">Đang tải...</p>
+          <Loading text="Đang tải..." />
         </CardContent>
       </Card>
     );
@@ -135,7 +142,7 @@ export default function PropertyInfoForm() {
             </Label>
             <Input
               id="name"
-              {...register('name')}
+              {...register("name")}
               placeholder="VD: Nhà trọ Hòa Bình"
               className="text-base h-12"
             />
@@ -151,7 +158,7 @@ export default function PropertyInfoForm() {
             </Label>
             <Input
               id="address"
-              {...register('address')}
+              {...register("address")}
               placeholder="VD: 123 Đường ABC, Phường XYZ, Quận 1, TP.HCM"
               className="text-base h-12"
             />
@@ -167,7 +174,7 @@ export default function PropertyInfoForm() {
             </Label>
             <Input
               id="phone"
-              {...register('phone')}
+              {...register("phone")}
               placeholder="VD: 0901234567"
               className="text-base h-12"
             />
@@ -179,11 +186,12 @@ export default function PropertyInfoForm() {
           {/* Tên chủ nhà */}
           <div className="space-y-2">
             <Label htmlFor="ownerName" className="text-sm sm:text-base">
-              Tên chủ nhà / Người quản lý <span className="text-red-500">*</span>
+              Tên chủ nhà / Người quản lý{" "}
+              <span className="text-red-500">*</span>
             </Label>
             <Input
               id="ownerName"
-              {...register('ownerName')}
+              {...register("ownerName")}
               placeholder="VD: Nguyễn Văn A"
               className="text-base h-12"
             />
@@ -200,7 +208,7 @@ export default function PropertyInfoForm() {
             <Input
               id="email"
               type="email"
-              {...register('email')}
+              {...register("email")}
               placeholder="VD: contact@example.com"
               className="text-base h-12"
             />
@@ -216,7 +224,7 @@ export default function PropertyInfoForm() {
             </Label>
             <Input
               id="logoUrl"
-              {...register('logoUrl')}
+              {...register("logoUrl")}
               placeholder="Sẽ hỗ trợ upload logo ở phiên bản sau"
               className="text-base h-12"
               disabled
@@ -229,23 +237,29 @@ export default function PropertyInfoForm() {
           {/* Max chỉ số đồng hồ */}
           <div className="space-y-4 border-t pt-4">
             <h3 className="text-lg font-semibold">Cấu hình chỉ số đồng hồ</h3>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="maxElectricMeter" className="text-sm sm:text-base">
-                  Max chỉ số đồng hồ điện <span className="text-red-500">*</span>
+                <Label
+                  htmlFor="maxElectricMeter"
+                  className="text-sm sm:text-base"
+                >
+                  Max chỉ số đồng hồ điện{" "}
+                  <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="maxElectricMeter"
                   type="number"
-                  {...register('maxElectricMeter', { valueAsNumber: true })}
+                  {...register("maxElectricMeter", { valueAsNumber: true })}
                   placeholder="VD: 999999"
                   className="text-base h-12"
                   min="9999"
                   max="9999999"
                 />
                 {errors.maxElectricMeter && (
-                  <p className="text-sm text-red-500">{errors.maxElectricMeter.message}</p>
+                  <p className="text-sm text-red-500">
+                    {errors.maxElectricMeter.message}
+                  </p>
                 )}
                 <p className="text-sm text-gray-500">
                   Giá trị tối đa cho đồng hồ điện (mặc định: 999999 - 6 chữ số)
@@ -254,19 +268,22 @@ export default function PropertyInfoForm() {
 
               <div className="space-y-2">
                 <Label htmlFor="maxWaterMeter" className="text-sm sm:text-base">
-                  Max chỉ số đồng hồ nước <span className="text-red-500">*</span>
+                  Max chỉ số đồng hồ nước{" "}
+                  <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="maxWaterMeter"
                   type="number"
-                  {...register('maxWaterMeter', { valueAsNumber: true })}
+                  {...register("maxWaterMeter", { valueAsNumber: true })}
                   placeholder="VD: 99999"
                   className="text-base h-12"
                   min="9999"
                   max="9999999"
                 />
                 {errors.maxWaterMeter && (
-                  <p className="text-sm text-red-500">{errors.maxWaterMeter.message}</p>
+                  <p className="text-sm text-red-500">
+                    {errors.maxWaterMeter.message}
+                  </p>
                 )}
                 <p className="text-sm text-gray-500">
                   Giá trị tối đa cho đồng hồ nước (mặc định: 99999 - 5 chữ số)
@@ -279,9 +296,9 @@ export default function PropertyInfoForm() {
           {message.text && (
             <div
               className={`p-4 rounded-lg text-base ${
-                message.type === 'success'
-                  ? 'bg-green-50 text-green-800 border border-green-200'
-                  : 'bg-red-50 text-red-800 border border-red-200'
+                message.type === "success"
+                  ? "bg-green-50 text-green-800 border border-green-200"
+                  : "bg-red-50 text-red-800 border border-red-200"
               }`}
             >
               {message.text}
@@ -294,7 +311,7 @@ export default function PropertyInfoForm() {
             disabled={isLoading}
             className="w-full h-12 text-base font-medium"
           >
-            {isLoading ? 'Đang lưu...' : 'Lưu Thông Tin'}
+            {isLoading ? "Đang lưu..." : "Lưu Thông Tin"}
           </Button>
         </form>
       </CardContent>

@@ -223,6 +223,11 @@ const superAdminNavItems = [
     icon: Shield,
   },
   {
+    href: '/admin/reporting',
+    label: 'Quản lý báo cáo',
+    icon: BarChart3,
+  },
+  {
     label: 'Cấu hình hệ thống',
     icon: Settings,
     children: [

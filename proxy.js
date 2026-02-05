@@ -56,10 +56,11 @@ export async function proxy(request) {
   // 1. Exclude all static assets and Next.js internals early
   const isStaticFile =
     pathname.startsWith('/_next') ||
-    pathname.startsWith('/images/favicon.ico') ||
+    pathname.startsWith('/favicon.ico') ||
     pathname.startsWith('/images/') ||
-    pathname.startsWith('/public/') ||
-    pathname.match(/\.(?:ico|png|svg|jpg|jpeg|gif|webp|css|js|woff2?|map|json)$/i);
+    pathname.startsWith('/uploads/') ||
+    pathname.startsWith('/reports/') ||
+    pathname.match(/\.(?:ico|png|svg|jpg|jpeg|gif|webp|css|js|woff2?|map|json|xlsx)$/i);
 
   if (isStaticFile) {
     return NextResponse.next();

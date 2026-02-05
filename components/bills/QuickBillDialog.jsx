@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import {
   Dialog,
   DialogContent,
@@ -11,7 +11,7 @@ import {
   DialogTitle,
   DialogFooter,
   DialogDescription,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -19,20 +19,21 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Loader2, Receipt, Zap, Droplets } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { formatCurrency } from '@/lib/format';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Loader2, Receipt, Zap, Droplets } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { formatCurrency } from "@/lib/format";
+import { Loading } from "../ui/loading";
 
 /**
  * QuickBillDialog - Dialog tạo hóa đơn nhanh với chỉ 2 trường: số điện mới, số nước mới
  * Requirements: 12.11, 12.12, 14.5
  */
 const quickBillSchema = z.object({
-  newElectricReading: z.number().int().min(0, 'Chỉ số điện mới không được âm'),
-  newWaterReading: z.number().int().min(0, 'Chỉ số nước mới không được âm'),
+  newElectricReading: z.number().int().min(0, "Chỉ số điện mới không được âm"),
+  newWaterReading: z.number().int().min(0, "Chỉ số nước mới không được âm"),
 });
 
 export default function QuickBillDialog({ open, onClose, room, onSuccess }) {
@@ -63,7 +64,7 @@ export default function QuickBillDialog({ open, onClose, room, onSuccess }) {
 
   const fetchLastBill = async () => {
     if (!room?.id) return;
-    
+
     setIsLoadingLastBill(true);
     try {
       const now = new Date();
@@ -78,23 +79,25 @@ export default function QuickBillDialog({ open, onClose, room, onSuccess }) {
         year = year - 1;
       }
 
-      const response = await fetch(`/api/bills?roomId=${room.id}&month=${month}&year=${year}`);
-      if (!response.ok) throw new Error('Failed to fetch last bill');
+      const response = await fetch(
+        `/api/bills?roomId=${room.id}&month=${month}&year=${year}`,
+      );
+      if (!response.ok) throw new Error("Failed to fetch last bill");
       const data = await response.json();
-      
+
       if (data.length > 0) {
         const last = data[0];
         setLastBill(last);
         // Auto-fill số cũ từ hóa đơn trước
-        form.setValue('newElectricReading', last.newElectricReading);
-        form.setValue('newWaterReading', last.newWaterReading);
+        form.setValue("newElectricReading", last.newElectricReading);
+        form.setValue("newWaterReading", last.newWaterReading);
       } else {
         setLastBill(null);
-        form.setValue('newElectricReading', 0);
-        form.setValue('newWaterReading', 0);
+        form.setValue("newElectricReading", 0);
+        form.setValue("newWaterReading", 0);
       }
     } catch (error) {
-      console.error('Error fetching last bill:', error);
+      console.error("Error fetching last bill:", error);
       setLastBill(null);
     } finally {
       setIsLoadingLastBill(false);
@@ -115,13 +118,15 @@ export default function QuickBillDialog({ open, onClose, room, onSuccess }) {
 
       // Gọi API để tính toán (sử dụng endpoint tạm thời hoặc tính toán client-side)
       // Tạm thời chỉ hiển thị usage
-      const electricUsage = newElectric >= oldElectric 
-        ? newElectric - oldElectric 
-        : (999999 - oldElectric + newElectric); // Giả định max meter = 999999
-      
-      const waterUsage = newWater >= oldWater 
-        ? newWater - oldWater 
-        : (999999 - oldWater + newWater);
+      const electricUsage =
+        newElectric >= oldElectric
+          ? newElectric - oldElectric
+          : 999999 - oldElectric + newElectric; // Giả định max meter = 999999
+
+      const waterUsage =
+        newWater >= oldWater
+          ? newWater - oldWater
+          : 999999 - oldWater + newWater;
 
       setPreview({
         oldElectricReading: oldElectric,
@@ -132,14 +137,14 @@ export default function QuickBillDialog({ open, onClose, room, onSuccess }) {
         waterUsage: waterUsage,
       });
     } catch (error) {
-      console.error('Error calculating preview:', error);
+      console.error("Error calculating preview:", error);
       setPreview(null);
     }
   };
 
   // Watch form values để tính preview
-  const newElectric = form.watch('newElectricReading');
-  const newWater = form.watch('newWaterReading');
+  const newElectric = form.watch("newElectricReading");
+  const newWater = form.watch("newWaterReading");
 
   useEffect(() => {
     if (newElectric && newWater) {
@@ -150,9 +155,9 @@ export default function QuickBillDialog({ open, onClose, room, onSuccess }) {
   const onSubmit = async (data) => {
     if (!room?.id) {
       toast({
-        variant: 'destructive',
-        title: 'Lỗi',
-        description: 'Không tìm thấy thông tin phòng',
+        variant: "destructive",
+        title: "Lỗi",
+        description: "Không tìm thấy thông tin phòng",
       });
       return;
     }
@@ -168,9 +173,9 @@ export default function QuickBillDialog({ open, onClose, room, onSuccess }) {
       const oldWaterReading = lastBill?.newWaterReading || 0;
 
       // Tạo hóa đơn
-      const response = await fetch('/api/bills', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/bills", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           roomId: room.id,
           month,
@@ -184,26 +189,26 @@ export default function QuickBillDialog({ open, onClose, room, onSuccess }) {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Có lỗi xảy ra khi tạo hóa đơn');
+        throw new Error(error.error || "Có lỗi xảy ra khi tạo hóa đơn");
       }
 
       const bill = await response.json();
 
       toast({
-        variant: 'success',
-        title: 'Thành công',
-        description: 'Tạo hóa đơn thành công',
+        variant: "success",
+        title: "Thành công",
+        description: "Tạo hóa đơn thành công",
       });
 
       onSuccess?.(bill);
       onClose();
       form.reset();
     } catch (error) {
-      console.error('Error creating bill:', error);
+      console.error("Error creating bill:", error);
       toast({
-        variant: 'destructive',
-        title: 'Lỗi',
-        description: error.message || 'Có lỗi xảy ra khi tạo hóa đơn',
+        variant: "destructive",
+        title: "Lỗi",
+        description: error.message || "Có lỗi xảy ra khi tạo hóa đơn",
       });
     } finally {
       setIsSubmitting(false);
@@ -221,7 +226,8 @@ export default function QuickBillDialog({ open, onClose, room, onSuccess }) {
             Tạo Hóa Đơn Nhanh
           </DialogTitle>
           <DialogDescription className="text-base">
-            Phòng: <span className="font-semibold">{room?.code}</span> - {room?.name}
+            Phòng: <span className="font-semibold">{room?.code}</span> -{" "}
+            {room?.name}
           </DialogDescription>
         </DialogHeader>
 
@@ -230,25 +236,27 @@ export default function QuickBillDialog({ open, onClose, room, onSuccess }) {
             {/* Chỉ số cũ (read-only) */}
             <div className="grid grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg">
               <div>
-                <p className="text-sm text-muted-foreground mb-1">Chỉ số điện cũ</p>
+                <p className="text-sm text-muted-foreground mb-1">
+                  Chỉ số điện cũ
+                </p>
                 {isLoadingLastBill ? (
-                  <div className="flex items-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span className="text-sm">Đang tải...</span>
-                  </div>
+                  <Loading text="Đang tải..." />
                 ) : (
-                  <p className="text-base font-semibold">{oldElectricReading.toLocaleString()}</p>
+                  <p className="text-base font-semibold">
+                    {oldElectricReading.toLocaleString()}
+                  </p>
                 )}
               </div>
               <div>
-                <p className="text-sm text-muted-foreground mb-1">Chỉ số nước cũ</p>
+                <p className="text-sm text-muted-foreground mb-1">
+                  Chỉ số nước cũ
+                </p>
                 {isLoadingLastBill ? (
-                  <div className="flex items-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span className="text-sm">Đang tải...</span>
-                  </div>
+                  <Loading text="Đang tải..." />
                 ) : (
-                  <p className="text-base font-semibold">{oldWaterReading.toLocaleString()}</p>
+                  <p className="text-base font-semibold">
+                    {oldWaterReading.toLocaleString()}
+                  </p>
                 )}
               </div>
             </div>
@@ -311,15 +319,21 @@ export default function QuickBillDialog({ open, onClose, room, onSuccess }) {
             {/* Preview */}
             {preview && (
               <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg space-y-2">
-                <p className="text-sm font-semibold text-primary mb-2">Xác nhận:</p>
+                <p className="text-sm font-semibold text-primary mb-2">
+                  Xác nhận:
+                </p>
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
                     <p className="text-muted-foreground">Tiêu thụ điện:</p>
-                    <p className="font-semibold">{preview.electricityUsage.toLocaleString()} kWh</p>
+                    <p className="font-semibold">
+                      {preview.electricityUsage.toLocaleString()} kWh
+                    </p>
                   </div>
                   <div>
                     <p className="text-muted-foreground">Tiêu thụ nước:</p>
-                    <p className="font-semibold">{preview.waterUsage.toLocaleString()} m³</p>
+                    <p className="font-semibold">
+                      {preview.waterUsage.toLocaleString()} m³
+                    </p>
                   </div>
                 </div>
               </div>
