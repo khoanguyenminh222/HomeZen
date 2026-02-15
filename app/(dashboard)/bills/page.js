@@ -27,10 +27,10 @@ export default function BillsPage() {
   const currentYear = new Date().getFullYear();
   const currentMonth = new Date().getMonth() + 1;
   const [filters, setFilters] = useState({
-    roomId: 'all',
-    month: currentMonth.toString(),
-    year: currentYear.toString(),
-    isPaid: 'all',
+    phong_id: 'all',
+    thang: currentMonth.toString(),
+    nam: currentYear.toString(),
+    da_thanh_toan: 'all',
   });
   const { toast } = useToast();
 
@@ -39,10 +39,10 @@ export default function BillsPage() {
     try {
       setLoading(true);
       const params = new URLSearchParams();
-      if (filters.roomId && filters.roomId !== 'all') params.append('roomId', filters.roomId);
-      if (filters.month && filters.month !== 'all') params.append('month', filters.month);
-      if (filters.year && filters.year !== 'all') params.append('year', filters.year);
-      if (filters.isPaid && filters.isPaid !== 'all') params.append('isPaid', filters.isPaid);
+      if (filters.phong_id && filters.phong_id !== 'all') params.append('phong_id', filters.phong_id);
+      if (filters.thang && filters.thang !== 'all') params.append('thang', filters.thang);
+      if (filters.nam && filters.nam !== 'all') params.append('nam', filters.nam);
+      if (filters.da_thanh_toan && filters.da_thanh_toan !== 'all') params.append('da_thanh_toan', filters.da_thanh_toan);
 
       const response = await fetch(`/api/bills?${params}`);
       if (!response.ok) throw new Error('Failed to fetch bills');
@@ -96,28 +96,28 @@ export default function BillsPage() {
   };
 
   // Tính tổng tiền chưa thanh toán
-  const unpaidBills = bills.filter(bill => !bill.isPaid);
-  const unpaidTotal = unpaidBills.reduce((sum, bill) => sum + Number(bill.totalCost || 0), 0);
+  const unpaidBills = bills.filter(bill => !bill.da_thanh_toan);
+  const unpaidTotal = unpaidBills.reduce((sum, bill) => sum + Number(bill.tong_tien || 0), 0);
 
   // Tính tổng tiền thanh toán một phần
   const partialBills = bills.filter(bill => {
-    const totalCost = Number(bill.totalCost || 0);
-    const paidAmount = bill.paidAmount ? Number(bill.paidAmount) : 0;
-    return bill.isPaid && paidAmount > 0 && paidAmount < totalCost;
+    const totalCost = Number(bill.tong_tien || 0);
+    const paidAmount = bill.so_tien_da_tra ? Number(bill.so_tien_da_tra) : 0;
+    return bill.da_thanh_toan && paidAmount > 0 && paidAmount < totalCost;
   });
   const partialTotal = partialBills.reduce((sum, bill) => {
-    const totalCost = Number(bill.totalCost || 0);
-    const paidAmount = bill.paidAmount ? Number(bill.paidAmount) : 0;
+    const totalCost = Number(bill.tong_tien || 0);
+    const paidAmount = bill.so_tien_da_tra ? Number(bill.so_tien_da_tra) : 0;
     return sum + (totalCost - paidAmount); // Số tiền còn thiếu
   }, 0);
 
   // Tính tổng tiền đã thanh toán đầy đủ
   const fullyPaidBills = bills.filter(bill => {
-    const totalCost = Number(bill.totalCost || 0);
-    const paidAmount = bill.paidAmount ? Number(bill.paidAmount) : 0;
-    return bill.isPaid && (paidAmount >= totalCost || (!paidAmount && bill.isPaid));
+    const totalCost = Number(bill.tong_tien || 0);
+    const paidAmount = bill.so_tien_da_tra ? Number(bill.so_tien_da_tra) : 0;
+    return bill.da_thanh_toan && (paidAmount >= totalCost || (!paidAmount && bill.da_thanh_toan));
   });
-  const paidTotal = fullyPaidBills.reduce((sum, bill) => sum + Number(bill.totalCost || 0), 0);
+  const paidTotal = fullyPaidBills.reduce((sum, bill) => sum + Number(bill.tong_tien || 0), 0);
 
   const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
 
@@ -209,8 +209,8 @@ export default function BillsPage() {
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
             <Select
-              value={filters.roomId}
-              onValueChange={(value) => setFilters({ ...filters, roomId: value })}
+              value={filters.phong_id}
+              onValueChange={(value) => setFilters({ ...filters, phong_id: value })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Tất cả phòng" />
@@ -219,15 +219,15 @@ export default function BillsPage() {
                 <SelectItem value="all">Tất cả phòng</SelectItem>
                 {rooms.map((room) => (
                   <SelectItem key={room.id} value={room.id}>
-                    {room.code} - {room.name}
+                    {room.ma_phong} - {room.ten_phong}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
 
             <Select
-              value={filters.month}
-              onValueChange={(value) => setFilters({ ...filters, month: value })}
+              value={filters.thang}
+              onValueChange={(value) => setFilters({ ...filters, thang: value })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Tất cả tháng" />
@@ -243,8 +243,8 @@ export default function BillsPage() {
             </Select>
 
             <Select
-              value={filters.year}
-              onValueChange={(value) => setFilters({ ...filters, year: value })}
+              value={filters.nam}
+              onValueChange={(value) => setFilters({ ...filters, nam: value })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Tất cả năm" />
@@ -260,8 +260,8 @@ export default function BillsPage() {
             </Select>
 
             <Select
-              value={filters.isPaid}
-              onValueChange={(value) => setFilters({ ...filters, isPaid: value })}
+              value={filters.da_thanh_toan}
+              onValueChange={(value) => setFilters({ ...filters, da_thanh_toan: value })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Tất cả trạng thái" />

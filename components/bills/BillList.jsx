@@ -1,9 +1,17 @@
-'use client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { formatCurrency, formatDate } from '@/lib/format';
-import { FileText, Calendar, Home, CheckCircle2, XCircle, AlertTriangle, Clock } from 'lucide-react';
-import Link from 'next/link';
+"use client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { formatCurrency, formatDate } from "@/lib/format";
+import {
+  FileText,
+  Calendar,
+  Home,
+  CheckCircle2,
+  XCircle,
+  AlertTriangle,
+  Clock,
+} from "lucide-react";
+import Link from "next/link";
 
 /**
  * BillList - Danh sách hóa đơn
@@ -26,14 +34,17 @@ export default function BillList({ bills, onBillClick }) {
   return (
     <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
       {bills.map((bill) => {
-        const totalCost = Number(bill.totalCost || 0);
-        const paidAmount = bill.paidAmount ? Number(bill.paidAmount) : 0;
-        const isPartiallyPaid = bill.isPaid && paidAmount > 0 && paidAmount < totalCost;
-        const hasRollover = bill.electricityRollover || bill.waterRollover;
-        
+        const totalCost = Number(bill.tong_tien || 0);
+        const paidAmount = bill.so_tien_da_tra
+          ? Number(bill.so_tien_da_tra)
+          : 0;
+        const isPartiallyPaid =
+          bill.da_thanh_toan && paidAmount > 0 && paidAmount < totalCost;
+        const hasRollover = bill.dien_vuot_nguong || bill.nuoc_vuot_nguong;
+
         return (
-          <Card 
-            key={bill.id} 
+          <Card
+            key={bill.id}
             className="hover:shadow-md transition-shadow cursor-pointer flex flex-col h-full"
             onClick={() => onBillClick?.(bill)}
           >
@@ -42,18 +53,18 @@ export default function BillList({ bills, onBillClick }) {
                 <div className="flex-1">
                   <CardTitle className="text-lg flex items-center gap-2">
                     <FileText className="h-5 w-5" />
-                    {bill.room?.code || 'N/A'}
+                    {bill.phong?.ma_phong || "N/A"}
                   </CardTitle>
                   <div className="flex items-center gap-2 mt-1">
                     <Badge variant="outline" className="text-xs">
-                      {bill.month}/{bill.year}
+                      {bill.thang}/{bill.nam}
                     </Badge>
                     {isPartiallyPaid ? (
                       <Badge className="text-xs bg-yellow-100 text-yellow-700 hover:bg-yellow-100 border-none">
                         <Clock className="h-3 w-3 mr-1" />
                         Thanh toán một phần
                       </Badge>
-                    ) : bill.isPaid ? (
+                    ) : bill.da_thanh_toan ? (
                       <Badge className="text-xs bg-green-100 text-green-700 hover:bg-green-100 border-none">
                         <CheckCircle2 className="h-3 w-3 mr-1" />
                         Đã thanh toán
@@ -72,13 +83,15 @@ export default function BillList({ bills, onBillClick }) {
             <CardContent className="space-y-3 flex-1 flex flex-col">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Phòng:</span>
-                <span className="font-medium">{bill.room?.name || 'N/A'}</span>
+                <span className="font-medium">
+                  {bill.phong?.ten_phong || "N/A"}
+                </span>
               </div>
 
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Tổng tiền:</span>
                 <span className="font-bold text-lg text-primary">
-                  {formatCurrency(bill.totalCost)}
+                  {formatCurrency(bill.tong_tien)}
                 </span>
               </div>
 
@@ -111,8 +124,10 @@ export default function BillList({ bills, onBillClick }) {
               <div className="flex items-center justify-between text-sm mt-auto">
                 <span className="text-muted-foreground">Phí phát sinh:</span>
                 <span className="font-medium">
-                  {bill.billFees && bill.billFees.length > 0 ? (
-                    <span className="text-primary">{bill.billFees.length} phí</span>
+                  {bill.phi_hoa_don && bill.phi_hoa_don.length > 0 ? (
+                    <span className="text-primary">
+                      {bill.phi_hoa_don.length} phí
+                    </span>
                   ) : (
                     <span className="text-muted-foreground">0 phí</span>
                   )}
@@ -120,7 +135,7 @@ export default function BillList({ bills, onBillClick }) {
               </div>
 
               <div className="pt-2 border-t">
-                <Link 
+                <Link
                   href={`/bills/${bill.id}`}
                   className="text-sm text-primary hover:underline"
                   onClick={(e) => e.stopPropagation()}

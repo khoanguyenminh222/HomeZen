@@ -23,7 +23,7 @@ export default function DashboardPage() {
   const [error, setError] = useState(null);
   const [targetUserId, setTargetUserId] = useState(null);
 
-  const isSuperAdmin = session?.user?.role === 'SUPER_ADMIN';
+  const isSuperAdmin = session?.user?.vai_tro === 'SIEU_QUAN_TRI';
 
   useEffect(() => {
     async function fetchStats() {

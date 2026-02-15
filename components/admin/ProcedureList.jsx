@@ -65,7 +65,7 @@ function HistoryModal({ procedure, isOpen, onClose }) {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <History className="h-5 w-5" />
-            Lịch sử thay đổi: {procedure?.name}
+            Lịch sử thay đổi: {procedure?.ten}
           </DialogTitle>
           <DialogDescription>
             Danh sách các phiên bản đã lưu của stored procedure này.
@@ -91,10 +91,10 @@ function HistoryModal({ procedure, isOpen, onClose }) {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="bg-primary/10 text-primary text-[10px] font-bold px-2 py-0.5 rounded">
-                        v{h.version}
+                        v{h.phien_ban}
                       </span>
                       <span className="text-sm font-semibold">
-                        {h.metaData?.name || procedure.name}
+                        {h.thong_tin_bo_sung?.ten || procedure.ten}
                       </span>
                     </div>
                     <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
@@ -102,13 +102,13 @@ function HistoryModal({ procedure, isOpen, onClose }) {
                       {new Date(h.createdAt).toLocaleString("vi-VN")}
                     </div>
                   </div>
-                  {h.metaData?.description && (
+                  {h.thong_tin_bo_sung?.mo_ta && (
                     <p className="text-xs text-muted-foreground">
-                      {h.metaData.description}
+                      {h.thong_tin_bo_sung.mo_ta}
                     </p>
                   )}
                   <div className="bg-muted p-2 rounded text-[10px] font-mono whitespace-pre-wrap max-h-40 overflow-auto border">
-                    {h.sqlDefinition}
+                    {h.dinh_nghia_sql}
                   </div>
                 </div>
               ))}
@@ -160,8 +160,8 @@ export function ProcedureList() {
   const filtered = procedures.filter((p) =>
     !search.trim()
       ? true
-      : p.name.toLowerCase().includes(search.toLowerCase()) ||
-        (p.description || "").toLowerCase().includes(search.toLowerCase()),
+      : p.ten.toLowerCase().includes(search.toLowerCase()) ||
+        (p.mo_ta || "").toLowerCase().includes(search.toLowerCase()),
   );
 
   function handleEdit(proc) {
@@ -187,7 +187,7 @@ export function ProcedureList() {
 
   function handleDelete(proc) {
     if (
-      !window.confirm(`Bạn có chắc muốn vô hiệu hóa procedure "${proc.name}"?`)
+      !window.confirm(`Bạn có chắc muốn vô hiệu hóa procedure "${proc.ten}"?`)
     ) {
       return;
     }
@@ -203,7 +203,7 @@ export function ProcedureList() {
         }
         toast({
           title: "Đã vô hiệu hóa procedure",
-          description: `"${proc.name}" đã bị đánh dấu không còn hoạt động.`,
+          description: `"${proc.ten}" đã bị đánh dấu không còn hoạt động.`,
           variant: "success",
         });
         loadProcedures();
@@ -287,17 +287,17 @@ export function ProcedureList() {
                     >
                       <td className="px-4 py-4">
                         <div className="font-bold text-base group-hover:text-primary transition-colors">
-                          {proc.name}
+                          {proc.ten}
                         </div>
-                        {proc.description && (
+                        {proc.mo_ta && (
                           <div className="text-xs text-muted-foreground mt-1 line-clamp-1">
-                            {proc.description}
+                            {proc.mo_ta}
                           </div>
                         )}
                       </td>
                       <td className="px-4 py-4 text-center">
                         <span className="bg-secondary px-2 py-0.5 rounded-full text-[10px] font-mono font-bold">
-                          v{proc.version}
+                          v{proc.phien_ban}
                         </span>
                       </td>
 
@@ -348,7 +348,7 @@ export function ProcedureList() {
           <DialogHeader>
             <DialogTitle>
               {selectedProcedure
-                ? `Chỉnh sửa: ${selectedProcedure.name}`
+                ? `Chỉnh sửa: ${selectedProcedure.ten}`
                 : "Thêm mới Stored Procedure"}
             </DialogTitle>
             <DialogDescription>

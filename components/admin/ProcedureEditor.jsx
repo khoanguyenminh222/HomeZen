@@ -26,9 +26,9 @@ export function ProcedureEditor({ initialProcedure, onSaved, onClose }) {
   const [isValidating, setIsValidating] = useState(false);
 
   const [form, setForm] = useState({
-    name: initialProcedure?.name || "",
-    description: initialProcedure?.description || "",
-    sql: initialProcedure?.sqlDefinition || "",
+    ten: initialProcedure?.ten || "",
+    mo_ta: initialProcedure?.mo_ta || "",
+    sql: initialProcedure?.dinh_nghia_sql || "",
   });
 
   const [validationResult, setValidationResult] = useState(null);
@@ -90,7 +90,7 @@ export function ProcedureEditor({ initialProcedure, onSaved, onClose }) {
   }
 
   function handleGenerateBoilerplate(type = "function") {
-    const name = form.name || "new_procedure";
+    const name = form.ten || "new_procedure";
     let template = "";
 
     if (type === "function") {
@@ -143,7 +143,7 @@ $$;`;
   }
 
   async function handleSave() {
-    if (!form.name.trim() || !form.sql.trim()) {
+    if (!form.ten.trim() || !form.sql.trim()) {
       toast({
         title: "Thiếu thông tin",
         description: "Tên procedure và SQL là bắt buộc.",
@@ -152,14 +152,14 @@ $$;`;
       return;
     }
 
-    const metadata = {
-      name: form.name.trim(),
-      description: form.description.trim() || null,
+    const thong_tin_bo_sung = {
+      ten: form.ten.trim(),
+      mo_ta: form.mo_ta.trim() || null,
     };
 
     const payload = {
       sql: form.sql,
-      metadata,
+      thong_tin_bo_sung,
     };
 
     startTransition(async () => {
@@ -183,7 +183,7 @@ $$;`;
 
         toast({
           title: isEdit ? "Cập nhật thành công" : "Tạo procedure thành công",
-          description: `Procedure "${json.data.name}" đã được lưu.`,
+          description: `Procedure "${json.data.ten}" đã được lưu.`,
         });
 
         onSaved?.(json.data);
@@ -210,8 +210,8 @@ $$;`;
             <Input
               id="proc-name"
               placeholder="vd: revenue_summary_report"
-              value={form.name}
-              onChange={handleChange("name")}
+              value={form.ten}
+              onChange={handleChange("ten")}
             />
           </div>
 
@@ -220,8 +220,8 @@ $$;`;
             <Textarea
               id="proc-description"
               placeholder="Mô tả ngắn gọn về báo cáo này..."
-              value={form.description}
-              onChange={handleChange("description")}
+              value={form.mo_ta}
+              onChange={handleChange("mo_ta")}
               rows={4}
             />
           </div>

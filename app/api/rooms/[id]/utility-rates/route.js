@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/app/api/auth/[...nextauth]/route';
 import prisma from '@/lib/prisma';
-import { 
-  roomUtilityRateSchema, 
+import {
+  roomUtilityRateSchema,
   updateRoomUtilityRateSchema,
-  validateTieredRates 
+  validateTieredRates
 } from '@/lib/validations/utilityRate';
 import { validateResourceOwnership } from '@/lib/middleware/authorization';
 
@@ -17,7 +17,7 @@ export async function GET(request, { params }) {
     }
 
     const { id: roomId } = await params;
-    
+
     if (!roomId) {
       return NextResponse.json(
         { error: 'ID phòng không hợp lệ' },
@@ -26,7 +26,7 @@ export async function GET(request, { params }) {
     }
 
     // Kiểm tra phòng có tồn tại không
-    const room = await prisma.room.findUnique({
+    const room = await prisma.pRP_PHONG.findUnique({
       where: { id: roomId }
     });
 
@@ -47,11 +47,11 @@ export async function GET(request, { params }) {
     }
 
     // Tìm đơn giá riêng của phòng
-    const roomRate = await prisma.utilityRate.findUnique({
-      where: { roomId },
+    const roomRate = await prisma.pRP_DON_GIA_DIEN_NUOC.findUnique({
+      where: { phong_id: roomId },
       include: {
-        tieredRates: {
-          orderBy: { minUsage: 'asc' }
+        bac_thang_gia: {
+          orderBy: { muc_tieu_thu_min: 'asc' }
         }
       }
     });
@@ -81,16 +81,16 @@ export async function PUT(request, { params }) {
 
     const { id: roomId } = await params;
     const body = await request.json();
-    
+
     if (!roomId) {
       return NextResponse.json(
         { error: 'ID phòng không hợp lệ' },
         { status: 400 }
       );
     }
-    
+
     // Kiểm tra phòng có tồn tại không
-    const room = await prisma.room.findUnique({
+    const room = await prisma.pRP_PHONG.findUnique({
       where: { id: roomId }
     });
 
@@ -114,44 +114,44 @@ export async function PUT(request, { params }) {
     const validatedData = updateRoomUtilityRateSchema.parse(body);
 
     // Validate tiered rates nếu có
-    if (validatedData.useTieredPricing && validatedData.tieredRates) {
-      const validation = validateTieredRates(validatedData.tieredRates);
+    if (validatedData.su_dung_bac_thang && validatedData.bac_thang_gia) {
+      const validation = validateTieredRates(validatedData.bac_thang_gia);
       if (!validation.isValid) {
         return NextResponse.json(
           { error: validation.error },
           { status: 400 }
         );
       }
-      validatedData.tieredRates = validation.sortedRates;
+      validatedData.bac_thang_gia = validation.sortedRates;
     }
 
     // Tìm đơn giá riêng hiện tại
-    let roomRate = await prisma.utilityRate.findUnique({
-      where: { roomId }
+    let roomRate = await prisma.pRP_DON_GIA_DIEN_NUOC.findUnique({
+      where: { phong_id: roomId }
     });
 
     if (!roomRate) {
       // Tạo mới nếu chưa có
       const createData = {
-        roomId,
-        isGlobal: false,
-        electricityPrice: validatedData.electricityPrice || null,
-        waterPrice: validatedData.waterPrice || null,
-        waterPricingMethod: validatedData.waterPricingMethod || 'METER',
-        waterPricePerPerson: validatedData.waterPricePerPerson || null,
-        useTieredPricing: validatedData.useTieredPricing || false,
+        phong_id: roomId,
+        la_chung: false,
+        gia_dien: validatedData.gia_dien || null,
+        gia_nuoc: validatedData.gia_nuoc || null,
+        phuong_thuc_tinh_nuoc: validatedData.phuong_thuc_tinh_nuoc || 'DONG_HO',
+        gia_nuoc_theo_nguoi: validatedData.gia_nuoc_theo_nguoi || null,
+        su_dung_bac_thang: validatedData.su_dung_bac_thang || false,
       };
 
-      roomRate = await prisma.utilityRate.create({
+      roomRate = await prisma.pRP_DON_GIA_DIEN_NUOC.create({
         data: createData
       });
 
       // Tạo các bậc thang nếu có
-      if (validatedData.useTieredPricing && validatedData.tieredRates && validatedData.tieredRates.length > 0) {
-        await prisma.tieredElectricityRate.createMany({
-          data: validatedData.tieredRates.map(rate => ({
+      if (validatedData.su_dung_bac_thang && validatedData.bac_thang_gia && validatedData.bac_thang_gia.length > 0) {
+        await prisma.pRP_BAC_THANG_GIA_DIEN.createMany({
+          data: validatedData.bac_thang_gia.map(rate => ({
             ...rate,
-            utilityRateId: roomRate.id
+            don_gia_id: roomRate.id
           }))
         });
       }
@@ -159,30 +159,30 @@ export async function PUT(request, { params }) {
       // Cập nhật trong transaction để đảm bảo consistency
       await prisma.$transaction(async (tx) => {
         // Xóa các bậc thang cũ nếu có
-        if (validatedData.tieredRates !== undefined) {
-          await tx.tieredElectricityRate.deleteMany({
-            where: { utilityRateId: roomRate.id }
+        if (validatedData.bac_thang_gia !== undefined) {
+          await tx.pRP_BAC_THANG_GIA_DIEN.deleteMany({
+            where: { don_gia_id: roomRate.id }
           });
         }
 
         // Cập nhật đơn giá riêng
-        roomRate = await tx.utilityRate.update({
+        roomRate = await tx.pRP_DON_GIA_DIEN_NUOC.update({
           where: { id: roomRate.id },
           data: {
-            electricityPrice: validatedData.electricityPrice !== undefined ? validatedData.electricityPrice : roomRate.electricityPrice,
-            waterPrice: validatedData.waterPrice !== undefined ? validatedData.waterPrice : roomRate.waterPrice,
-            waterPricingMethod: validatedData.waterPricingMethod || roomRate.waterPricingMethod,
-            waterPricePerPerson: validatedData.waterPricePerPerson !== undefined ? validatedData.waterPricePerPerson : roomRate.waterPricePerPerson,
-            useTieredPricing: validatedData.useTieredPricing !== undefined ? validatedData.useTieredPricing : roomRate.useTieredPricing,
+            gia_dien: validatedData.gia_dien !== undefined ? validatedData.gia_dien : roomRate.gia_dien,
+            gia_nuoc: validatedData.gia_nuoc !== undefined ? validatedData.gia_nuoc : roomRate.gia_nuoc,
+            phuong_thuc_tinh_nuoc: validatedData.phuong_thuc_tinh_nuoc || roomRate.phuong_thuc_tinh_nuoc,
+            gia_nuoc_theo_nguoi: validatedData.gia_nuoc_theo_nguoi !== undefined ? validatedData.gia_nuoc_theo_nguoi : roomRate.gia_nuoc_theo_nguoi,
+            su_dung_bac_thang: validatedData.su_dung_bac_thang !== undefined ? validatedData.su_dung_bac_thang : roomRate.su_dung_bac_thang,
           }
         });
 
         // Tạo các bậc thang mới nếu có
-        if (validatedData.useTieredPricing && validatedData.tieredRates && validatedData.tieredRates.length > 0) {
-          await tx.tieredElectricityRate.createMany({
-            data: validatedData.tieredRates.map(rate => ({
+        if (validatedData.su_dung_bac_thang && validatedData.bac_thang_gia && validatedData.bac_thang_gia.length > 0) {
+          await tx.pRP_BAC_THANG_GIA_DIEN.createMany({
+            data: validatedData.bac_thang_gia.map(rate => ({
               ...rate,
-              utilityRateId: roomRate.id
+              don_gia_id: roomRate.id
             }))
           });
         }
@@ -190,11 +190,11 @@ export async function PUT(request, { params }) {
     }
 
     // Lấy dữ liệu đầy đủ để trả về
-    const updatedRate = await prisma.utilityRate.findUnique({
+    const updatedRate = await prisma.pRP_DON_GIA_DIEN_NUOC.findUnique({
       where: { id: roomRate.id },
       include: {
-        tieredRates: {
-          orderBy: { minUsage: 'asc' }
+        bac_thang_gia: {
+          orderBy: { muc_tieu_thu_min: 'asc' }
         }
       }
     });
@@ -202,7 +202,7 @@ export async function PUT(request, { params }) {
     return NextResponse.json(updatedRate);
   } catch (error) {
     console.error('Error updating room utility rates:', error);
-    
+
     if (error.name === 'ZodError') {
       return NextResponse.json(
         { error: 'Dữ liệu không hợp lệ', details: error.errors },
@@ -235,7 +235,7 @@ export async function DELETE(request, { params }) {
     }
 
     // Kiểm tra phòng có tồn tại không
-    const room = await prisma.room.findUnique({
+    const room = await prisma.pRP_PHONG.findUnique({
       where: { id: roomId }
     });
 
@@ -256,8 +256,8 @@ export async function DELETE(request, { params }) {
     }
 
     // Tìm và xóa đơn giá riêng
-    const roomRate = await prisma.utilityRate.findUnique({
-      where: { roomId }
+    const roomRate = await prisma.pRP_DON_GIA_DIEN_NUOC.findUnique({
+      where: { phong_id: roomId }
     });
 
     if (!roomRate) {
@@ -270,18 +270,18 @@ export async function DELETE(request, { params }) {
     // Xóa trong transaction để đảm bảo consistency
     await prisma.$transaction(async (tx) => {
       // Xóa các bậc thang trước
-      await tx.tieredElectricityRate.deleteMany({
-        where: { utilityRateId: roomRate.id }
+      await tx.pRP_BAC_THANG_GIA_DIEN.deleteMany({
+        where: { don_gia_id: roomRate.id }
       });
 
       // Xóa đơn giá riêng
-      await tx.utilityRate.delete({
+      await tx.pRP_DON_GIA_DIEN_NUOC.delete({
         where: { id: roomRate.id }
       });
     });
 
-    return NextResponse.json({ 
-      message: 'Đã xóa đơn giá riêng. Phòng sẽ sử dụng đơn giá chung.' 
+    return NextResponse.json({
+      message: 'Đã xóa đơn giá riêng. Phòng sẽ sử dụng đơn giá chung.'
     });
   } catch (error) {
     console.error('Error deleting room utility rates:', error);

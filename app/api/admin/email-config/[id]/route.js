@@ -8,15 +8,16 @@ import { logUnauthorizedAccess, logAuthorizationViolation } from '@/lib/middlewa
  * Xóa cấu hình email (Super Admin only)
  * Requirements: 1.1, 1.3, 5.5, 7.1, 7.2
  */
-export async function DELETE(request, { params }) {
+export async function DELETE(request, props) {
   try {
+    const params = await props.params;
     const session = await auth();
     if (!session) {
       logUnauthorizedAccess(request, null, 'No session found');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (session.user.role !== 'SUPER_ADMIN') {
+    if (session.user.vai_tro !== 'SIEU_QUAN_TRI') {
       logAuthorizationViolation(
         request,
         session,

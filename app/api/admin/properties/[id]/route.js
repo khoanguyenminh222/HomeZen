@@ -8,12 +8,25 @@ import { SuperAdminService } from '@/lib/services/superAdmin.service';
  * Update property information for a property owner
  * Requirements: 2.2, 2.6
  */
-async function patchHandler(request, { params }) {
+async function patchHandler(request, props) {
   try {
+    const params = await props.params;
     const { id: userId } = params;
     const body = await request.json();
 
-    const updatedUser = await SuperAdminService.updatePropertyInfo(userId, body);
+    // Mapping body fields directly to service, using schema exact names
+    const updateData = {
+      ten: body.ten,
+      dia_chi: body.dia_chi,
+      dien_thoai: body.dien_thoai,
+      ten_chu_nha: body.ten_chu_nha,
+      email: body.email,
+      logo_url: body.logo_url,
+      max_dong_ho_dien: body.max_dong_ho_dien,
+      max_dong_ho_nuoc: body.max_dong_ho_nuoc
+    };
+
+    const updatedUser = await SuperAdminService.updatePropertyInfo(userId, updateData);
 
     return NextResponse.json(
       {

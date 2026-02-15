@@ -1,16 +1,19 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { createRoomFeeSchema, updateRoomFeeSchema } from '@/lib/validations/roomFee';
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  createRoomFeeSchema,
+  updateRoomFeeSchema,
+} from "@/lib/validations/roomFee";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -19,20 +22,32 @@ import {
   FormLabel,
   FormMessage,
   FormDescription,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
-import { Loader2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { formatCurrency } from '@/lib/format';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { formatCurrency } from "@/lib/format";
 
 /**
  * RoomFeeForm - Form gán/sửa phí cho phòng
  * Requirements: 6.22-6.24
  */
-export default function RoomFeeForm({ open, onClose, roomId, roomFee, onSuccess }) {
+export default function RoomFeeForm({
+  open,
+  onClose,
+  roomId,
+  roomFee,
+  onSuccess,
+}) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feeTypes, setFeeTypes] = useState([]);
   const { toast } = useToast();
@@ -41,9 +56,9 @@ export default function RoomFeeForm({ open, onClose, roomId, roomFee, onSuccess 
   const form = useForm({
     resolver: zodResolver(isEdit ? updateRoomFeeSchema : createRoomFeeSchema),
     defaultValues: {
-      feeTypeId: '',
-      amount: 0,
-      isActive: true,
+      loai_phi_id: "",
+      so_tien: 0,
+      trang_thai: true,
     },
   });
 
@@ -52,14 +67,14 @@ export default function RoomFeeForm({ open, onClose, roomId, roomFee, onSuccess 
       fetchFeeTypes();
       if (roomFee) {
         form.reset({
-          amount: roomFee.amount ? Number(roomFee.amount) : 0,
-          isActive: roomFee.isActive ?? true,
+          so_tien: roomFee.so_tien ? Number(roomFee.so_tien) : 0,
+          trang_thai: roomFee.trang_thai ?? true,
         });
       } else {
         form.reset({
-          feeTypeId: '',
-          amount: 0,
-          isActive: true,
+          loai_phi_id: "",
+          so_tien: 0,
+          trang_thai: true,
         });
       }
     }
@@ -67,13 +82,13 @@ export default function RoomFeeForm({ open, onClose, roomId, roomFee, onSuccess 
 
   const fetchFeeTypes = async () => {
     try {
-      const response = await fetch('/api/settings/fee-types');
+      const response = await fetch("/api/settings/fee-types");
       if (response.ok) {
         const data = await response.json();
         setFeeTypes(data);
       }
     } catch (error) {
-      console.error('Error fetching fee types:', error);
+      console.error("Error fetching fee types:", error);
     }
   };
 
@@ -85,37 +100,39 @@ export default function RoomFeeForm({ open, onClose, roomId, roomFee, onSuccess 
 
       if (isEdit) {
         url = `/api/rooms/${roomId}/fees/${roomFee.id}`;
-        method = 'PUT';
+        method = "PUT";
       } else {
         url = `/api/rooms/${roomId}/fees`;
-        method = 'POST';
+        method = "POST";
       }
 
       const response = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Có lỗi xảy ra');
+        throw new Error(errorData.error || "Có lỗi xảy ra");
       }
 
       const result = await response.json();
       toast({
-        title: 'Thành công',
-        description: isEdit ? 'Cập nhật phí của phòng thành công' : 'Gán phí cho phòng thành công',
-        variant: 'success',
+        title: "Thành công",
+        description: isEdit
+          ? "Cập nhật phí của phòng thành công"
+          : "Gán phí cho phòng thành công",
+        variant: "success",
       });
       onSuccess?.(result);
       onClose();
     } catch (error) {
-      console.error('Error submitting room fee:', error);
+      console.error("Error submitting room fee:", error);
       toast({
-        title: 'Lỗi',
-        description: error.message || 'Không thể lưu phí của phòng',
-        variant: 'destructive',
+        title: "Lỗi",
+        description: error.message || "Không thể lưu phí của phòng",
+        variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
@@ -126,7 +143,9 @@ export default function RoomFeeForm({ open, onClose, roomId, roomFee, onSuccess 
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>{isEdit ? 'Sửa Phí Của Phòng' : 'Gán Phí Cho Phòng'}</DialogTitle>
+          <DialogTitle>
+            {isEdit ? "Sửa Phí Của Phòng" : "Gán Phí Cho Phòng"}
+          </DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
@@ -134,11 +153,14 @@ export default function RoomFeeForm({ open, onClose, roomId, roomFee, onSuccess 
             {!isEdit && (
               <FormField
                 control={form.control}
-                name="feeTypeId"
+                name="loai_phi_id"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Loại phí *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || ''}>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value || ""}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Chọn loại phí" />
@@ -147,7 +169,7 @@ export default function RoomFeeForm({ open, onClose, roomId, roomFee, onSuccess 
                       <SelectContent>
                         {feeTypes.map((feeType) => (
                           <SelectItem key={feeType.id} value={feeType.id}>
-                            {feeType.name}
+                            {feeType.ten_phi}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -160,7 +182,7 @@ export default function RoomFeeForm({ open, onClose, roomId, roomFee, onSuccess 
 
             <FormField
               control={form.control}
-              name="amount"
+              name="so_tien"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Số tiền *</FormLabel>
@@ -170,8 +192,10 @@ export default function RoomFeeForm({ open, onClose, roomId, roomFee, onSuccess 
                       min="0"
                       step="1000"
                       {...field}
-                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                      value={field.value || ''}
+                      onChange={(e) =>
+                        field.onChange(parseFloat(e.target.value) || 0)
+                      }
+                      value={field.value || ""}
                     />
                   </FormControl>
                   <FormMessage />
@@ -179,15 +203,15 @@ export default function RoomFeeForm({ open, onClose, roomId, roomFee, onSuccess 
               )}
             />
             {/* Hiển thị text format thành tiền */}
-            {form.watch("amount") > 0 && (
+            {form.watch("so_tien") > 0 && (
               <p className="text-sm text-muted-foreground mt-1 font-medium">
-                Số tiền hiển thị: {formatCurrency(form.watch("amount"))}
+                Số tiền hiển thị: {formatCurrency(form.watch("so_tien"))}
               </p>
             )}
 
             <FormField
               control={form.control}
-              name="isActive"
+              name="trang_thai"
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
                   <div className="space-y-0.5">
@@ -207,12 +231,19 @@ export default function RoomFeeForm({ open, onClose, roomId, roomFee, onSuccess 
             />
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                disabled={isSubmitting}
+              >
                 Hủy
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isEdit ? 'Cập nhật' : 'Gán phí'}
+                {isSubmitting && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
+                {isEdit ? "Cập nhật" : "Gán phí"}
               </Button>
             </DialogFooter>
           </form>

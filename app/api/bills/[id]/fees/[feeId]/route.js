@@ -19,14 +19,14 @@ export async function PUT(request, { params }) {
     const validatedData = updateBillFeeSchema.parse(body);
 
     // Kiểm tra hóa đơn có tồn tại không
-    const bill = await prisma.bill.findUnique({
+    const bill = await prisma.bIL_HOA_DON.findUnique({
       where: { id: billId },
       include: {
-        room: {
+        phong: {
           include: {
-            tenant: {
+            nguoi_thue: {
               include: {
-                occupants: true,
+                nguoi_o: true,
               }
             }
           }
@@ -42,7 +42,7 @@ export async function PUT(request, { params }) {
     }
 
     // Không cho phép sửa phí trong hóa đơn đã thanh toán
-    if (bill.isPaid) {
+    if (bill.da_thanh_toan) {
       return NextResponse.json(
         { error: 'Không thể sửa phí trong hóa đơn đã thanh toán' },
         { status: 400 }
@@ -50,11 +50,11 @@ export async function PUT(request, { params }) {
     }
 
     // Kiểm tra phí có tồn tại không
-    const billFee = await prisma.billFee.findUnique({
+    const billFee = await prisma.bIL_PHI_HOA_DON.findUnique({
       where: { id: feeId }
     });
 
-    if (!billFee || billFee.billId !== billId) {
+    if (!billFee || billFee.hoa_don_id !== billId) {
       return NextResponse.json(
         { error: 'Không tìm thấy phí phát sinh' },
         { status: 404 }
@@ -62,16 +62,16 @@ export async function PUT(request, { params }) {
     }
 
     // Cập nhật phí
-    const updatedFee = await prisma.billFee.update({
+    const updatedFee = await prisma.bIL_PHI_HOA_DON.update({
       where: { id: feeId },
       data: {
-        name: validatedData.name ?? billFee.name,
-        amount: validatedData.amount ?? billFee.amount,
+        ten_phi: validatedData.ten_phi ?? billFee.ten_phi,
+        so_tien: validatedData.so_tien ?? billFee.so_tien,
       }
     });
 
     // Tính toán lại tổng tiền hóa đơn
-    const propertyInfo = await prisma.propertyInfo.findFirst();
+    const propertyInfo = await prisma.pRP_THONG_TIN_NHA_TRO.findFirst();
     if (!propertyInfo) {
       return NextResponse.json(
         { error: 'Chưa cấu hình thông tin nhà trọ' },
@@ -79,65 +79,65 @@ export async function PUT(request, { params }) {
       );
     }
 
-    const utilityRate = await getUtilityRateForRoom(bill.roomId);
-    const occupantCount = bill.room.tenant 
-      ? 1 + (bill.room.tenant.occupants?.length || 0) 
+    const utilityRate = await getUtilityRateForRoom(bill.phong_id);
+    const occupantCount = bill.phong.nguoi_thue
+      ? 1 + (bill.phong.nguoi_thue.nguoi_o?.length || 0)
       : 1;
 
-    const allBillFees = await prisma.billFee.findMany({
-      where: { billId }
+    const allBillFees = await prisma.bIL_PHI_HOA_DON.findMany({
+      where: { hoa_don_id: billId }
     });
 
     const calculation = await calculateBill({
-      roomId: bill.roomId,
-      oldElectricReading: bill.oldElectricReading,
-      newElectricReading: bill.newElectricReading,
-      oldWaterReading: bill.oldWaterReading,
-      newWaterReading: bill.newWaterReading,
-      room: bill.room,
+      phong_id: bill.phong_id,
+      chi_so_dien_cu: bill.chi_so_dien_cu,
+      chi_so_dien_moi: bill.chi_so_dien_moi,
+      chi_so_nuoc_cu: bill.chi_so_nuoc_cu,
+      chi_so_nuoc_moi: bill.chi_so_nuoc_moi,
+      room: bill.phong,
       propertyInfo,
       utilityRate,
-      tieredRates: utilityRate.tieredRates || [],
+      bac_thang_gia: utilityRate.bac_thang_gia || [],
       occupantCount,
       billFees: allBillFees,
     });
 
     // Cập nhật tổng tiền hóa đơn
-    const updatedBill = await prisma.bill.update({
+    const updatedBill = await prisma.bIL_HOA_DON.update({
       where: { id: billId },
       data: {
-        totalCost: calculation.totalCost,
-        totalCostText: calculation.totalCostText,
+        tong_tien: calculation.totalCost,
+        tong_tien_chu: calculation.totalCostText,
       },
       include: {
-        room: {
+        phong: {
           select: {
             id: true,
-            code: true,
-            name: true,
+            ma_phong: true,
+            ten_phong: true,
           }
         },
-        billFees: true,
+        phi_hoa_don: true,
       }
     });
 
     // Ghi lịch sử cập nhật phí
     const oldSnapshot = BillHistoryService.createBillSnapshot(bill);
     const newSnapshot = BillHistoryService.createBillSnapshot(updatedBill);
-    
+
     await BillHistoryService.createHistory({
       billId: billId,
-      action: 'FEE_UPDATE',
+      action: 'CAP_NHAT_PHI',
       changedBy: session.user.id,
       oldData: oldSnapshot,
       newData: newSnapshot,
-      description: `Cập nhật phí phát sinh: ${updatedFee.name} - ${updatedFee.amount.toLocaleString('vi-VN')} VNĐ`,
+      description: `Cập nhật phí phát sinh: ${updatedFee.ten_phi} - ${updatedFee.so_tien.toLocaleString('vi-VN')} VNĐ`,
     });
 
     return NextResponse.json(updatedFee);
   } catch (error) {
     console.error('Error updating bill fee:', error);
-    
+
     if (error.name === 'ZodError') {
       return NextResponse.json(
         { error: 'Dữ liệu không hợp lệ', details: error.errors },
@@ -163,19 +163,19 @@ export async function DELETE(request, { params }) {
     const { id: billId, feeId } = await params;
 
     // Kiểm tra hóa đơn có tồn tại không
-    const bill = await prisma.bill.findUnique({
+    const bill = await prisma.bIL_HOA_DON.findUnique({
       where: { id: billId },
       include: {
-        room: {
+        phong: {
           include: {
-            tenant: {
+            nguoi_thue: {
               include: {
-                occupants: true,
+                nguoi_o: true,
               }
             }
           }
         },
-        billFees: true,
+        phi_hoa_don: true,
       }
     });
 
@@ -187,7 +187,7 @@ export async function DELETE(request, { params }) {
     }
 
     // Không cho phép xóa phí trong hóa đơn đã thanh toán
-    if (bill.isPaid) {
+    if (bill.da_thanh_toan) {
       return NextResponse.json(
         { error: 'Không thể xóa phí trong hóa đơn đã thanh toán' },
         { status: 400 }
@@ -195,11 +195,11 @@ export async function DELETE(request, { params }) {
     }
 
     // Kiểm tra phí có tồn tại không
-    const billFee = await prisma.billFee.findUnique({
+    const billFee = await prisma.bIL_PHI_HOA_DON.findUnique({
       where: { id: feeId }
     });
 
-    if (!billFee || billFee.billId !== billId) {
+    if (!billFee || billFee.hoa_don_id !== billId) {
       return NextResponse.json(
         { error: 'Không tìm thấy phí phát sinh' },
         { status: 404 }
@@ -207,12 +207,12 @@ export async function DELETE(request, { params }) {
     }
 
     // Xóa phí
-    await prisma.billFee.delete({
+    await prisma.bIL_PHI_HOA_DON.delete({
       where: { id: feeId }
     });
 
     // Tính toán lại tổng tiền hóa đơn
-    const propertyInfo = await prisma.propertyInfo.findFirst();
+    const propertyInfo = await prisma.pRP_THONG_TIN_NHA_TRO.findFirst();
     if (!propertyInfo) {
       return NextResponse.json(
         { error: 'Chưa cấu hình thông tin nhà trọ' },
@@ -220,59 +220,59 @@ export async function DELETE(request, { params }) {
       );
     }
 
-    const utilityRate = await getUtilityRateForRoom(bill.roomId);
-    const occupantCount = bill.room.tenant 
-      ? 1 + (bill.room.tenant.occupants?.length || 0) 
+    const utilityRate = await getUtilityRateForRoom(bill.phong_id);
+    const occupantCount = bill.phong.nguoi_thue
+      ? 1 + (bill.phong.nguoi_thue.nguoi_o?.length || 0)
       : 1;
 
-    const allBillFees = await prisma.billFee.findMany({
-      where: { billId }
+    const allBillFees = await prisma.bIL_PHI_HOA_DON.findMany({
+      where: { hoa_don_id: billId }
     });
 
     const calculation = await calculateBill({
-      roomId: bill.roomId,
-      oldElectricReading: bill.oldElectricReading,
-      newElectricReading: bill.newElectricReading,
-      oldWaterReading: bill.oldWaterReading,
-      newWaterReading: bill.newWaterReading,
-      room: bill.room,
+      phong_id: bill.phong_id,
+      chi_so_dien_cu: bill.chi_so_dien_cu,
+      chi_so_dien_moi: bill.chi_so_dien_moi,
+      chi_so_nuoc_cu: bill.chi_so_nuoc_cu,
+      chi_so_nuoc_moi: bill.chi_so_nuoc_moi,
+      room: bill.phong,
       propertyInfo,
       utilityRate,
-      tieredRates: utilityRate.tieredRates || [],
+      bac_thang_gia: utilityRate.bac_thang_gia || [],
       occupantCount,
       billFees: allBillFees,
     });
 
     // Cập nhật tổng tiền hóa đơn
-    const updatedBill = await prisma.bill.update({
+    const updatedBill = await prisma.bIL_HOA_DON.update({
       where: { id: billId },
       data: {
-        totalCost: calculation.totalCost,
-        totalCostText: calculation.totalCostText,
+        tong_tien: calculation.totalCost,
+        tong_tien_chu: calculation.totalCostText,
       },
       include: {
-        room: {
+        phong: {
           select: {
             id: true,
-            code: true,
-            name: true,
+            ma_phong: true,
+            ten_phong: true,
           }
         },
-        billFees: true,
+        phi_hoa_don: true,
       }
     });
 
     // Ghi lịch sử xóa phí
     const oldSnapshot = BillHistoryService.createBillSnapshot(bill);
     const newSnapshot = BillHistoryService.createBillSnapshot(updatedBill);
-    
+
     await BillHistoryService.createHistory({
       billId: billId,
-      action: 'FEE_REMOVE',
+      action: 'XOA_PHI',
       changedBy: session.user.id,
       oldData: oldSnapshot,
       newData: newSnapshot,
-      description: `Xóa phí phát sinh: ${billFee.name} - ${billFee.amount.toLocaleString('vi-VN')} VNĐ`,
+      description: `Xóa phí phát sinh: ${billFee.ten_phi} - ${billFee.so_tien.toLocaleString('vi-VN')} VNĐ`,
     });
 
     return NextResponse.json({ message: 'Xóa phí phát sinh thành công' });

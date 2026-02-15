@@ -272,13 +272,13 @@ export default function ResetPasswordPage() {
           <div className="lg:hidden text-center space-y-2 mb-10">
             <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-primary/20 overflow-hidden relative">
               <OptimizedImage
-                src={config?.logoUrl || '/images/home-zen-logo.png'}
-                alt={`${config?.brandName || 'HomeZen'} Logo`}
+                src={config?.logo_url || '/images/home-zen-logo.png'}
+                alt={`${config?.ten_thuong_hieu || 'HomeZen'} Logo`}
                 fill
                 className="object-contain p-3"
               />
             </div>
-            <h2 className="text-3xl font-black text-foreground tracing-tight">{config?.brandName || 'HomeZen'}</h2>
+            <h2 className="text-3xl font-black text-foreground tracing-tight">{config?.ten_thuong_hieu || 'HomeZen'}</h2>
             <p className="text-muted-foreground">Đặt lại mật khẩu</p>
           </div>
 
@@ -405,7 +405,7 @@ export default function ResetPasswordPage() {
           </div>
 
           <p className="text-[10px] text-center text-muted-foreground/50 pt-8 uppercase tracking-tighter">
-            {config?.footerText || 'HomeZen — Boarding House Management v1.0'}
+            {config?.tieu_de_footer || 'HomeZen — Boarding House Management v1.0'}
           </p>
         </div>
       </div>

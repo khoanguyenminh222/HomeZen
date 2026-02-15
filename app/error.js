@@ -32,8 +32,8 @@ export default function Error({ error, reset }) {
             {/* Soft Glow behind image */}
             <div className="absolute inset-0 bg-primary/20 rounded-full blur-2xl scale-75 animate-pulse" />
             <OptimizedImage
-              src={config?.errorImageUrl || '/images/home-zen-error.png'}
-              alt={`${config?.brandName || 'HomeZen'} System Error`}
+              src={config?.anh_loi_url || '/images/home-zen-error.png'}
+              alt={`${config?.ten_thuong_hieu || 'HomeZen'} System Error`}
               fill
               className="object-contain drop-shadow-2xl"
               priority
@@ -118,7 +118,7 @@ export default function Error({ error, reset }) {
 
         {/* Footer */}
         <p className="text-[10px] text-muted-foreground/40 uppercase tracking-tighter">
-          {config?.footerText || 'HomeZen Reliability System — Error Handler 1.0'}
+          {config?.tieu_de_footer || 'HomeZen Reliability System — Error Handler 1.0'}
         </p>
       </div>
     </div>

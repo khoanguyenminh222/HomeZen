@@ -1,16 +1,16 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { addBillFeeSchema, updateBillFeeSchema } from '@/lib/validations/bill';
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { addBillFeeSchema, updateBillFeeSchema } from "@/lib/validations/bill";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -18,31 +18,25 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { formatCurrency } from '@/lib/format';
+} from "@/components/ui/select";
+import { formatCurrency } from "@/lib/format";
 
 /**
  * BillFeeForm - Form thêm/sửa phí phát sinh
  * Requirements: 6.22-6.25
  */
-export default function BillFeeForm({ 
-  open, 
-  onClose, 
-  billId, 
-  fee, 
-  onSuccess 
-}) {
+export default function BillFeeForm({ open, onClose, billId, fee, onSuccess }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feeTypes, setFeeTypes] = useState([]);
   const { toast } = useToast();
@@ -51,9 +45,9 @@ export default function BillFeeForm({
   const form = useForm({
     resolver: zodResolver(isEdit ? updateBillFeeSchema : addBillFeeSchema),
     defaultValues: {
-      name: '',
-      amount: 0,
-      feeTypeId: null,
+      ten_phi: "",
+      so_tien: 0,
+      loai_phi_id: null,
     },
   });
 
@@ -63,15 +57,15 @@ export default function BillFeeForm({
       fetchFeeTypes();
       if (fee) {
         form.reset({
-          name: fee.name || '',
-          amount: fee.amount ? Number(fee.amount) : 0,
-          feeTypeId: fee.feeTypeId || null,
+          ten_phi: fee.ten_phi || "",
+          so_tien: fee.so_tien ? Number(fee.so_tien) : 0,
+          loai_phi_id: fee.loai_phi_id || null,
         });
       } else {
         form.reset({
-          name: '',
-          amount: 0,
-          feeTypeId: null,
+          ten_phi: "",
+          so_tien: 0,
+          loai_phi_id: null,
         });
       }
     }
@@ -79,13 +73,13 @@ export default function BillFeeForm({
 
   const fetchFeeTypes = async () => {
     try {
-      const response = await fetch('/api/settings/fee-types');
+      const response = await fetch("/api/settings/fee-types");
       if (response.ok) {
         const data = await response.json();
         setFeeTypes(data);
       }
     } catch (error) {
-      console.error('Error fetching fee types:', error);
+      console.error("Error fetching fee types:", error);
     }
   };
 
@@ -94,13 +88,15 @@ export default function BillFeeForm({
     try {
       // Đảm bảo khi tạo mới phải chọn loại phí, và tự set tên phí theo danh mục
       if (!isEdit) {
-        if (!data.feeTypeId) {
-          throw new Error('Vui lòng chọn loại phí trong danh mục');
+        if (!data.loai_phi_id) {
+          throw new Error("Vui lòng chọn loại phí trong danh mục");
         }
 
-        const selectedFeeType = feeTypes.find((ft) => ft.id === data.feeTypeId);
+        const selectedFeeType = feeTypes.find(
+          (ft) => ft.id === data.loai_phi_id,
+        );
         if (selectedFeeType) {
-          data.name = selectedFeeType.name;
+          data.ten_phi = selectedFeeType.ten_phi;
         }
       }
 
@@ -109,37 +105,39 @@ export default function BillFeeForm({
 
       if (isEdit) {
         url = `/api/bills/${billId}/fees/${fee.id}`;
-        method = 'PUT';
+        method = "PUT";
       } else {
         url = `/api/bills/${billId}/fees`;
-        method = 'POST';
+        method = "POST";
       }
 
       const response = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Có lỗi xảy ra');
+        throw new Error(errorData.error || "Có lỗi xảy ra");
       }
 
       const result = await response.json();
       toast({
-        title: 'Thành công',
-        description: isEdit ? 'Cập nhật phí phát sinh thành công' : 'Thêm phí phát sinh thành công',
-        variant: 'success',
+        title: "Thành công",
+        description: isEdit
+          ? "Cập nhật phí phát sinh thành công"
+          : "Thêm phí phát sinh thành công",
+        variant: "success",
       });
       onSuccess?.(result);
       onClose();
     } catch (error) {
-      console.error('Error submitting bill fee:', error);
+      console.error("Error submitting bill fee:", error);
       toast({
-        title: 'Lỗi',
-        description: error.message || 'Không thể lưu phí phát sinh',
-        variant: 'destructive',
+        title: "Lỗi",
+        description: error.message || "Không thể lưu phí phát sinh",
+        variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
@@ -150,7 +148,9 @@ export default function BillFeeForm({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>{isEdit ? 'Sửa Phí Phát Sinh' : 'Thêm Phí Phát Sinh'}</DialogTitle>
+          <DialogTitle>
+            {isEdit ? "Sửa Phí Phát Sinh" : "Thêm Phí Phát Sinh"}
+          </DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
@@ -159,12 +159,12 @@ export default function BillFeeForm({
             {isEdit ? (
               <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">Loại phí</p>
-                <p className="font-medium">{fee?.name}</p>
+                <p className="font-medium">{fee?.ten_phi}</p>
               </div>
             ) : (
               <FormField
                 control={form.control}
-                name="feeTypeId"
+                name="loai_phi_id"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Loại phí *</FormLabel>
@@ -173,10 +173,12 @@ export default function BillFeeForm({
                         field.onChange(value);
                         const selected = feeTypes.find((ft) => ft.id === value);
                         if (selected) {
-                          form.setValue('name', selected.name, { shouldValidate: true });
+                          form.setValue("ten_phi", selected.ten_phi, {
+                            shouldValidate: true,
+                          });
                         }
                       }}
-                      value={field.value || ''}
+                      value={field.value || ""}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -186,7 +188,7 @@ export default function BillFeeForm({
                       <SelectContent>
                         {feeTypes.map((feeType) => (
                           <SelectItem key={feeType.id} value={feeType.id}>
-                            {feeType.name}
+                            {feeType.ten_phi}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -197,12 +199,12 @@ export default function BillFeeForm({
               />
             )}
 
-            {/* Field name dùng nội bộ để gửi API, không cần hiển thị */}
-            <input type="hidden" {...form.register('name')} />
+            {/* Field ten_phi dùng nội bộ để gửi API, không cần hiển thị */}
+            <input type="hidden" {...form.register("ten_phi")} />
 
             <FormField
               control={form.control}
-              name="amount"
+              name="so_tien"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Số tiền *</FormLabel>
@@ -212,8 +214,10 @@ export default function BillFeeForm({
                       min="0"
                       step="1000"
                       {...field}
-                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                      value={field.value || ''}
+                      onChange={(e) =>
+                        field.onChange(parseFloat(e.target.value) || 0)
+                      }
+                      value={field.value || ""}
                     />
                   </FormControl>
                   <FormMessage />
@@ -221,18 +225,25 @@ export default function BillFeeForm({
               )}
             />
             {/* Hiển thị text format thành tiền */}
-            {form.watch("amount") > 0 && (
+            {form.watch("so_tien") > 0 && (
               <p className="text-sm text-muted-foreground mt-1 font-medium">
-                Số tiền hiển thị: {formatCurrency(form.watch("amount"))}
+                Số tiền hiển thị: {formatCurrency(form.watch("so_tien"))}
               </p>
             )}
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                disabled={isSubmitting}
+              >
                 Hủy
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isEdit ? 'Cập nhật' : 'Thêm'}
+                {isSubmitting && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
+                {isEdit ? "Cập nhật" : "Thêm"}
               </Button>
             </DialogFooter>
           </form>

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { formatDateTime } from '@/lib/format';
-import { Shield, Clock, User, Globe, AlertTriangle, CheckCircle2, Key, Eye, Monitor, Info } from 'lucide-react';
+import { Shield, Clock, User, Globe, AlertTriangle, CheckCircle2, Key, Eye, Monitor, Info, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import {
     Dialog,
     DialogContent,
@@ -13,28 +13,48 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 export default function SecurityLogsPage() {
     const [logs, setLogs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedLog, setSelectedLog] = useState(null);
+    const [page, setPage] = useState(1);
+    const [limit, setLimit] = useState(50);
+    const [pagination, setPagination] = useState({
+        total: 0,
+        page: 1,
+        limit: 50,
+        totalPages: 0
+    });
+
+    const fetchLogs = async () => {
+        try {
+            setLoading(true);
+            const response = await fetch(`/api/admin/security-logs?page=${page}&limit=${limit}`);
+            if (response.ok) {
+                const result = await response.json();
+                setLogs(result.data || []);
+                if (result.pagination) {
+                    setPagination(result.pagination);
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching logs:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        async function fetchLogs() {
-            try {
-                const response = await fetch('/api/admin/security-logs');
-                if (response.ok) {
-                    const result = await response.json();
-                    setLogs(result.data || []);
-                }
-            } catch (error) {
-                console.error('Error fetching logs:', error);
-            } finally {
-                setLoading(false);
-            }
-        }
         fetchLogs();
-    }, []);
+    }, [page, limit]);
 
     const getLogTypeBadge = (type) => {
         switch (type) {
@@ -72,60 +92,137 @@ export default function SecurityLogsPage() {
                             Chưa có dữ liệu nhật ký.
                         </div>
                     ) : (
-                        <div className="rounded-md border overflow-x-auto">
-                            <table className="w-full text-sm min-w-[700px] md:min-w-full">
-                                <thead>
-                                    <tr className="bg-muted/50 border-b">
-                                        <th className="px-4 py-3 text-left font-medium">Thời gian</th>
-                                        <th className="px-4 py-3 text-left font-medium">Sự kiện</th>
-                                        <th className="px-4 py-3 text-left font-medium">Người dùng</th>
-                                        <th className="px-3 py-3 text-left font-medium hidden sm:table-cell">Địa chỉ IP</th>
-                                        <th className="px-4 py-3 text-left font-medium">Lý do</th>
-                                        <th className="px-4 py-3 text-center font-medium">Hành động</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y">
-                                    {logs.map((log) => (
-                                        <tr key={log.id} className="hover:bg-muted/30 transition-colors">
-                                            <td className="px-4 py-3 whitespace-nowrap text-muted-foreground tabular-nums">
-                                                <div className="flex items-center gap-1.5 text-[12px]">
-                                                    <Clock className="h-3 w-3" />
-                                                    {formatDateTime(log.timestamp)}
-                                                </div>
-                                            </td>
-                                            <td className="px-4 py-3 whitespace-nowrap">
-                                                {getLogTypeBadge(log.type)}
-                                            </td>
-                                            <td className="px-4 py-3 font-medium whitespace-nowrap">
-                                                <div className="flex items-center gap-1.5">
-                                                    <User className="h-3 w-3 text-muted-foreground" />
-                                                    {log.username || 'unknown'}
-                                                </div>
-                                            </td>
-                                            <td className="px-3 py-3 font-mono text-[12px] text-muted-foreground hidden sm:table-cell whitespace-nowrap">
-                                                <div className="flex items-center gap-1.5">
-                                                    <Globe className="h-3 w-3" />
-                                                    {log.ip || '0.0.0.0'}
-                                                </div>
-                                            </td>
-                                            <td className="px-4 py-3 text-muted-foreground truncate max-w-[150px] sm:max-w-[300px]">
-                                                {log.reason}
-                                            </td>
-                                            <td className="px-4 py-3 text-center">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-8 w-8 hover:text-primary hover:bg-primary/5"
-                                                    onClick={() => setSelectedLog(log)}
-                                                >
-                                                    <Eye className="h-4 w-4" />
-                                                </Button>
-                                            </td>
+                        <>
+                            <div className="rounded-md border overflow-x-auto">
+                                <table className="w-full text-sm min-w-[700px] md:min-w-full">
+                                    <thead>
+                                        <tr className="bg-muted/50 border-b">
+                                            <th className="px-4 py-3 text-left font-medium">Thời gian</th>
+                                            <th className="px-4 py-3 text-left font-medium">Sự kiện</th>
+                                            <th className="px-4 py-3 text-left font-medium">Người dùng</th>
+                                            <th className="px-3 py-3 text-left font-medium hidden sm:table-cell">Địa chỉ IP</th>
+                                            <th className="px-4 py-3 text-left font-medium">Lý do</th>
+                                            <th className="px-4 py-3 text-center font-medium">Hành động</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                                    </thead>
+                                    <tbody className="divide-y">
+                                        {logs.map((log) => (
+                                            <tr key={log.id} className="hover:bg-muted/30 transition-colors">
+                                                <td className="px-4 py-3 whitespace-nowrap text-muted-foreground tabular-nums">
+                                                    <div className="flex items-center gap-1.5 text-[12px]">
+                                                        <Clock className="h-3 w-3" />
+                                                        {formatDateTime(log.thoi_gian)}
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 py-3 whitespace-nowrap">
+                                                    {getLogTypeBadge(log.loai)}
+                                                </td>
+                                                <td className="px-4 py-3 font-medium whitespace-nowrap">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <User className="h-3 w-3 text-muted-foreground" />
+                                                        {log.tai_khoan || 'unknown'}
+                                                    </div>
+                                                </td>
+                                                <td className="px-3 py-3 font-mono text-[12px] text-muted-foreground hidden sm:table-cell whitespace-nowrap">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <Globe className="h-3 w-3" />
+                                                        {log.dia_chi_ip || '0.0.0.0'}
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 py-3 text-muted-foreground truncate max-w-[150px] sm:max-w-[300px]">
+                                                    {log.ly_do}
+                                                </td>
+                                                <td className="px-4 py-3 text-center">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8 hover:text-primary hover:bg-primary/5"
+                                                        onClick={() => setSelectedLog(log)}
+                                                    >
+                                                        <Eye className="h-4 w-4" />
+                                                    </Button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {/* Pagination */}
+                            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 pt-4 border-t">
+                                <div className="text-sm text-muted-foreground order-2 sm:order-1">
+                                    Hiển thị {logs.length > 0 ? (page - 1) * limit + 1 : 0} - {Math.min(page * limit, pagination.total)} trong tổng số {pagination.total} nhật ký
+                                </div>
+
+                                <div className="flex items-center gap-6 order-1 sm:order-2">
+                                    <div className="flex items-center gap-2">
+                                        <p className="text-sm font-medium whitespace-nowrap">Số dòng:</p>
+                                        <Select
+                                            value={String(limit)}
+                                            onValueChange={(value) => {
+                                                setLimit(Number(value));
+                                                setPage(1);
+                                            }}
+                                        >
+                                            <SelectTrigger className="h-8 w-[70px]">
+                                                <SelectValue placeholder={limit} />
+                                            </SelectTrigger>
+                                            <SelectContent side="top">
+                                                {[10, 20, 50, 100].map((pageSize) => (
+                                                    <SelectItem key={pageSize} value={String(pageSize)}>
+                                                        {pageSize}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex w-[100px] items-center justify-center text-sm font-medium">
+                                            Trang {page} / {pagination.totalPages || 1}
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <Button
+                                                variant="outline"
+                                                className="hidden h-8 w-8 p-0 lg:flex"
+                                                onClick={() => setPage(1)}
+                                                disabled={page === 1}
+                                            >
+                                                <span className="sr-only">Go to first page</span>
+                                                <ChevronsLeft className="h-4 w-4" />
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                className="h-8 w-8 p-0"
+                                                onClick={() => setPage(p => Math.max(1, p - 1))}
+                                                disabled={page === 1}
+                                            >
+                                                <span className="sr-only">Go to previous page</span>
+                                                <ChevronLeft className="h-4 w-4" />
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                className="h-8 w-8 p-0"
+                                                onClick={() => setPage(p => Math.min(pagination.totalPages, p + 1))}
+                                                disabled={page === pagination.totalPages || pagination.totalPages === 0}
+                                            >
+                                                <span className="sr-only">Go to next page</span>
+                                                <ChevronRight className="h-4 w-4" />
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                className="hidden h-8 w-8 p-0 lg:flex"
+                                                onClick={() => setPage(pagination.totalPages)}
+                                                disabled={page === pagination.totalPages || pagination.totalPages === 0}
+                                            >
+                                                <span className="sr-only">Go to last page</span>
+                                                <ChevronsRight className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </>
                     )}
                 </CardContent>
             </Card>
@@ -150,25 +247,25 @@ export default function SecurityLogsPage() {
                                     <h4 className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Thời gian</h4>
                                     <p className="text-sm font-medium flex items-center gap-2">
                                         <Clock className="h-4 w-4 text-muted-foreground" />
-                                        {formatDateTime(selectedLog.timestamp)}
+                                        {formatDateTime(selectedLog.thoi_gian)}
                                     </p>
                                 </div>
                                 <div className="space-y-1">
                                     <h4 className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Loại sự kiện</h4>
-                                    <div className="flex">{getLogTypeBadge(selectedLog.type)}</div>
+                                    <div className="flex">{getLogTypeBadge(selectedLog.loai)}</div>
                                 </div>
                                 <div className="space-y-1">
                                     <h4 className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Người dùng</h4>
                                     <p className="text-sm font-medium flex items-center gap-2">
                                         <User className="h-4 w-4 text-muted-foreground" />
-                                        {selectedLog.username || 'unknown'} {selectedLog.userId && `(${selectedLog.userId})`}
+                                        {selectedLog.tai_khoan || 'unknown'} {selectedLog.nguoi_dung_id && `(${selectedLog.nguoi_dung_id})`}
                                     </p>
                                 </div>
                                 <div className="space-y-1">
                                     <h4 className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Địa chỉ IP</h4>
                                     <p className="text-sm font-medium font-mono flex items-center gap-2 text-foreground/80">
                                         <Globe className="h-4 w-4 text-muted-foreground" />
-                                        {selectedLog.ip || '0.0.0.0'}
+                                        {selectedLog.dia_chi_ip || '0.0.0.0'}
                                     </p>
                                 </div>
                                 <div className="space-y-1 col-span-full bg-muted/30 p-3 rounded-lg border border-dashed">
@@ -176,7 +273,7 @@ export default function SecurityLogsPage() {
                                     <div className="text-sm font-medium flex items-start sm:items-center gap-2 flex-col sm:flex-row">
                                         <div className="flex items-center gap-2">
                                             <Monitor className="h-4 w-4 text-muted-foreground" />
-                                            <span className="bg-primary/20 text-primary px-1.5 py-0.5 rounded text-[10px] font-bold">{selectedLog.method}</span>
+                                            <span className="bg-primary/20 text-primary px-1.5 py-0.5 rounded text-[10px] font-bold">{selectedLog.phuong_thuc}</span>
                                         </div>
                                         <span className="text-muted-foreground break-all">{selectedLog.endpoint}</span>
                                     </div>
@@ -184,17 +281,17 @@ export default function SecurityLogsPage() {
                                 <div className="space-y-1 col-span-full">
                                     <h4 className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Lý do / Mô tả</h4>
                                     <p className="text-sm border-l-2 border-primary/30 pl-3 py-2 italic bg-muted/20 rounded-r leading-relaxed">
-                                        {selectedLog.reason}
+                                        {selectedLog.ly_do}
                                     </p>
                                 </div>
                             </div>
 
-                            {selectedLog.metadata && Object.keys(selectedLog.metadata).length > 0 && (
+                            {selectedLog.thong_tin_bo_sung && Object.keys(selectedLog.thong_tin_bo_sung).length > 0 && (
                                 <div className="space-y-2 pt-2 border-t">
-                                    <h4 className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Dữ liệu kỹ thuật (Metadata)</h4>
+                                    <h4 className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Dữ liệu kỹ thuật (Thông tin bổ sung)</h4>
                                     <div className="bg-zinc-950 p-4 rounded-xl shadow-inner w-full max-w-full">
                                         <pre className="text-[11px] text-emerald-400 font-mono leading-relaxed whitespace-pre-wrap break-words">
-                                            {JSON.stringify(selectedLog.metadata, null, 2)}
+                                            {JSON.stringify(selectedLog.thong_tin_bo_sung, null, 2)}
                                         </pre>
                                     </div>
                                 </div>

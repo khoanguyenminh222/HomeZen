@@ -1,15 +1,21 @@
-'use client';
+"use client";
 
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
-export default function WaterPricingToggle({ 
-  waterPricingMethod, 
-  onMethodChange, 
-  register, 
+export default function WaterPricingToggle({
+  waterPricingMethod,
+  onMethodChange,
+  register,
   errors,
-  roomId = 'default'
+  roomId = "default",
 }) {
   return (
     <Card>
@@ -27,8 +33,8 @@ export default function WaterPricingToggle({
               type="radio"
               id={`meter-method-${roomId}`}
               name={`waterPricingMethod-${roomId}`}
-              value="METER"
-              checked={waterPricingMethod === 'METER'}
+              value="DONG_HO"
+              checked={waterPricingMethod === "DONG_HO"}
               onChange={(e) => onMethodChange(e.target.value)}
               className="h-4 w-4"
             />
@@ -42,8 +48,8 @@ export default function WaterPricingToggle({
               type="radio"
               id={`person-method-${roomId}`}
               name={`waterPricingMethod-${roomId}`}
-              value="PERSON"
-              checked={waterPricingMethod === 'PERSON'}
+              value="THEO_NGUOI"
+              checked={waterPricingMethod === "THEO_NGUOI"}
               onChange={(e) => onMethodChange(e.target.value)}
               className="h-4 w-4"
             />
@@ -54,25 +60,25 @@ export default function WaterPricingToggle({
         </div>
 
         {/* Form fields tương ứng */}
-        {waterPricingMethod === 'METER' ? (
+        {waterPricingMethod === "DONG_HO" ? (
           <div className="space-y-2">
-            <Label htmlFor={`waterPrice-${roomId}`}>Giá nước theo đồng hồ (VNĐ/m³)</Label>
+            <Label htmlFor={`gia_nuoc-${roomId}`}>
+              Giá nước theo đồng hồ (VNĐ/m³)
+            </Label>
             <Input
-              id={`waterPrice-${roomId}`}
+              id={`gia_nuoc-${roomId}`}
               type="number"
-              step="1000"
+              step="1"
               min="0"
-              {...register('waterPrice', { 
+              {...register("gia_nuoc", {
                 valueAsNumber: true,
-                onChange: () => {} // Trigger dirty state
+                onChange: () => {}, // Trigger dirty state
               })}
               className="mt-1"
               placeholder="Ví dụ: 25000"
             />
-            {errors.waterPrice && (
-              <p className="text-sm text-red-600">
-                {errors.waterPrice.message}
-              </p>
+            {errors.gia_nuoc && (
+              <p className="text-sm text-red-600">{errors.gia_nuoc.message}</p>
             )}
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Tiền nước = Số m³ tiêu thụ × Giá nước/m³
@@ -80,22 +86,24 @@ export default function WaterPricingToggle({
           </div>
         ) : (
           <div className="space-y-2">
-            <Label htmlFor={`waterPricePerPerson-${roomId}`}>Giá nước theo người (VNĐ/người/tháng)</Label>
+            <Label htmlFor={`gia_nuoc_theo_nguoi-${roomId}`}>
+              Giá nước theo người (VNĐ/người/tháng)
+            </Label>
             <Input
-              id={`waterPricePerPerson-${roomId}`}
+              id={`gia_nuoc_theo_nguoi-${roomId}`}
               type="number"
-              step="10000"
+              step="1"
               min="0"
-              {...register('waterPricePerPerson', { 
+              {...register("gia_nuoc_theo_nguoi", {
                 valueAsNumber: true,
-                onChange: () => {} // Trigger dirty state
+                onChange: () => {}, // Trigger dirty state
               })}
               className="mt-1"
               placeholder="Ví dụ: 100000"
             />
-            {errors.waterPricePerPerson && (
+            {errors.gia_nuoc_theo_nguoi && (
               <p className="text-sm text-red-600">
-                {errors.waterPricePerPerson.message}
+                {errors.gia_nuoc_theo_nguoi.message}
               </p>
             )}
             <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -106,18 +114,24 @@ export default function WaterPricingToggle({
 
         {/* Ví dụ tính toán */}
         <div className="bg-blue-50 border border-blue-200 dark:bg-gray-900 dark:border-gray-800 rounded-lg p-3">
-          <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">Ví dụ tính toán:</h4>
-          {waterPricingMethod === 'METER' ? (
+          <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">
+            Ví dụ tính toán:
+          </h4>
+          {waterPricingMethod === "DONG_HO" ? (
             <div className="text-sm text-blue-800 dark:text-blue-200">
               <p>• Phòng tiêu thụ 5 m³ nước</p>
               <p>• Giá nước: 25.000 VNĐ/m³</p>
-              <p>• <strong>Tiền nước = 5 × 25.000 = 125.000 VNĐ</strong></p>
+              <p>
+                • <strong>Tiền nước = 5 × 25.000 = 125.000 VNĐ</strong>
+              </p>
             </div>
           ) : (
             <div className="text-sm text-blue-800 dark:text-blue-200">
               <p>• Phòng có 3 người ở</p>
               <p>• Giá nước: 100.000 VNĐ/người/tháng</p>
-              <p>• <strong>Tiền nước = 3 × 100.000 = 300.000 VNĐ</strong></p>
+              <p>
+                • <strong>Tiền nước = 3 × 100.000 = 300.000 VNĐ</strong>
+              </p>
             </div>
           )}
         </div>

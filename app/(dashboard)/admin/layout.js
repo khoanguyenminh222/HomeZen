@@ -12,8 +12,8 @@ export default async function AdminLayout({ children }) {
     redirect('/login');
   }
 
-  // Only Super Admin can access admin routes
-  if (session.user?.role !== 'SUPER_ADMIN') {
+  // Only SIEU_QUAN_TRI can access admin routes
+  if (session.user?.vai_tro !== 'SIEU_QUAN_TRI') {
     redirect('/');
   }
 

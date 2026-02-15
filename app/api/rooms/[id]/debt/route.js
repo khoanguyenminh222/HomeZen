@@ -25,7 +25,7 @@ export async function GET(request, { params }) {
     }
 
     // Kiểm tra phòng có tồn tại không
-    const room = await prisma.room.findUnique({
+    const room = await prisma.pRP_PHONG.findUnique({
       where: { id },
       select: { id: true },
     });
@@ -41,21 +41,21 @@ export async function GET(request, { params }) {
     const debtInfo = await getRoomDebtInfo(id);
 
     // Lấy hóa đơn cuối cùng (theo thời gian) để tính toán khi trừ tiền cọc
-    const lastBill = await prisma.bill.findFirst({
+    const lastBill = await prisma.bIL_HOA_DON.findFirst({
       where: {
-        roomId: id
+        phong_id: id
       },
       orderBy: [
-        { year: 'desc' },
-        { month: 'desc' }
+        { nam: 'desc' },
+        { thang: 'desc' }
       ],
       select: {
         id: true,
-        month: true,
-        year: true,
-        totalCost: true,
-        isPaid: true,
-        paidAmount: true,
+        thang: true,
+        nam: true,
+        tong_tien: true,
+        da_thanh_toan: true,
+        so_tien_da_tra: true,
       }
     });
 
@@ -63,12 +63,12 @@ export async function GET(request, { params }) {
       ...debtInfo,
       lastBill: lastBill ? {
         id: lastBill.id,
-        month: lastBill.month,
-        year: lastBill.year,
-        totalCost: Number(lastBill.totalCost),
-        isPaid: lastBill.isPaid,
-        paidAmount: lastBill.paidAmount ? Number(lastBill.paidAmount) : 0,
-        remainingDebt: Math.max(0, Number(lastBill.totalCost) - (lastBill.paidAmount ? Number(lastBill.paidAmount) : 0))
+        thang: lastBill.thang,
+        nam: lastBill.nam,
+        tong_tien: Number(lastBill.tong_tien),
+        da_thanh_toan: lastBill.da_thanh_toan,
+        so_tien_da_tra: lastBill.so_tien_da_tra ? Number(lastBill.so_tien_da_tra) : 0,
+        remainingDebt: Math.max(0, Number(lastBill.tong_tien) - (lastBill.so_tien_da_tra ? Number(lastBill.so_tien_da_tra) : 0))
       } : null
     });
   } catch (error) {

@@ -1,19 +1,25 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import RoomUtilityRateForm from './RoomUtilityRateForm';
-import { Loading } from '@/components/ui/loading';
-import { Home, Zap, Droplets, Search, Settings } from 'lucide-react';
-import { formatCurrency } from '@/lib/format';
+import { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import RoomUtilityRateForm from "./RoomUtilityRateForm";
+import { Loading } from "@/components/ui/loading";
+import { Home, Zap, Droplets, Search, Settings } from "lucide-react";
+import { formatCurrency } from "@/lib/format";
 
 export default function RoomUtilityRatesList() {
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
 
@@ -22,9 +28,9 @@ export default function RoomUtilityRatesList() {
     setLoading(true);
     try {
       // Lấy danh sách tất cả phòng
-      const roomsResponse = await fetch('/api/rooms');
+      const roomsResponse = await fetch("/api/rooms");
       if (!roomsResponse.ok) {
-        throw new Error('Không thể tải danh sách phòng');
+        throw new Error("Không thể tải danh sách phòng");
       }
       const roomsData = await roomsResponse.json();
 
@@ -32,7 +38,9 @@ export default function RoomUtilityRatesList() {
       const roomsWithRates = await Promise.all(
         roomsData.map(async (room) => {
           try {
-            const rateResponse = await fetch(`/api/rooms/${room.id}/utility-rates`);
+            const rateResponse = await fetch(
+              `/api/rooms/${room.id}/utility-rates`,
+            );
             if (rateResponse.ok) {
               const rateData = await rateResponse.json();
               return {
@@ -60,12 +68,12 @@ export default function RoomUtilityRatesList() {
               hasWaterRate: false,
             };
           }
-        })
+        }),
       );
 
       setRooms(roomsWithRates);
     } catch (error) {
-      console.error('Error fetching rooms with utility rates:', error);
+      console.error("Error fetching rooms with utility rates:", error);
     } finally {
       setLoading(false);
     }
@@ -76,14 +84,19 @@ export default function RoomUtilityRatesList() {
   }, []);
 
   // Lọc phòng theo từ khóa tìm kiếm
-  const filteredRooms = rooms.filter(room =>
-    room.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    room.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredRooms = rooms.filter(
+    (room) =>
+      room.ma_phong.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      room.ten_phong.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   // Phân loại phòng
-  const roomsWithCustomRates = filteredRooms.filter(room => room.hasCustomRates);
-  const roomsWithGlobalRates = filteredRooms.filter(room => !room.hasCustomRates);
+  const roomsWithCustomRates = filteredRooms.filter(
+    (room) => room.hasCustomRates,
+  );
+  const roomsWithGlobalRates = filteredRooms.filter(
+    (room) => !room.hasCustomRates,
+  );
 
   const handleEditRoom = (room) => {
     setSelectedRoom(room);
@@ -98,18 +111,25 @@ export default function RoomUtilityRatesList() {
   const RoomCard = ({ room }) => (
     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900">
       <div className="flex items-start sm:items-center space-x-3 flex-1 min-w-0">
-        <div className={`p-2 rounded-lg shrink-0 ${room.hasCustomRates ? 'bg-blue-100 dark:bg-blue-900' : 'bg-gray-100 dark:bg-gray-900'}`}>
-          <Home className={`h-4 w-4 ${room.hasCustomRates ? 'text-blue-600' : 'text-gray-600 dark:text-gray-400'}`} />
+        <div
+          className={`p-2 rounded-lg shrink-0 ${room.hasCustomRates ? "bg-blue-100 dark:bg-blue-900" : "bg-gray-100 dark:bg-gray-900"}`}
+        >
+          <Home
+            className={`h-4 w-4 ${room.hasCustomRates ? "text-blue-600" : "text-gray-600 dark:text-gray-400"}`}
+          />
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="font-medium wrap-break-word">{room.name}</h3>
+          <h3 className="font-medium wrap-break-word">{room.ten_phong}</h3>
           <div className="flex flex-wrap items-center gap-1 sm:gap-2 text-sm text-gray-600 dark:text-gray-400 mt-1">
-            <span>Mã: {room.code}</span>
+            <span>Mã: {room.ma_phong}</span>
             <span className="hidden sm:inline">•</span>
-            <span>Giá: {formatCurrency(room.price)}</span>
+            <span>Giá: {formatCurrency(room.gia_phong)}</span>
             <span className="hidden sm:inline">•</span>
-            <Badge variant={room.status === 'EMPTY' ? 'outline' : 'secondary'} className="w-fit">
-              {room.status === 'EMPTY' ? 'Trống' : 'Đã thuê'}
+            <Badge
+              variant={room.trang_thai === "EMPTY" ? "outline" : "secondary"}
+              className="w-fit"
+            >
+              {room.trang_thai === "EMPTY" ? "Trống" : "Đã thuê"}
             </Badge>
           </div>
         </div>
@@ -118,7 +138,10 @@ export default function RoomUtilityRatesList() {
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
         {room.hasCustomRates ? (
           <>
-            <Badge variant="outline" className="text-blue-700 border-blue-300 dark:text-blue-300 dark:border-blue-700 w-fit">
+            <Badge
+              variant="outline"
+              className="text-blue-700 border-blue-300 dark:text-blue-300 dark:border-blue-700 w-fit"
+            >
               <Settings className="h-3 w-3 mr-1" />
               Đơn giá riêng
             </Badge>
@@ -133,7 +156,10 @@ export default function RoomUtilityRatesList() {
           </>
         ) : (
           <>
-            <Badge variant="outline" className="text-gray-600 border-gray-300 dark:text-gray-400 dark:border-gray-700 w-fit">
+            <Badge
+              variant="outline"
+              className="text-gray-600 border-gray-300 dark:text-gray-400 dark:border-gray-700 w-fit"
+            >
               Đơn giá chung
             </Badge>
             <Button
@@ -159,7 +185,8 @@ export default function RoomUtilityRatesList() {
             <span className="wrap-break-word">Quản Lý Đơn Giá Theo Phòng</span>
           </CardTitle>
           <CardDescription className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-            Xem và quản lý đơn giá điện nước cho từng phòng. Phòng có thể sử dụng đơn giá chung hoặc đơn giá riêng.
+            Xem và quản lý đơn giá điện nước cho từng phòng. Phòng có thể sử
+            dụng đơn giá chung hoặc đơn giá riêng.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -177,7 +204,10 @@ export default function RoomUtilityRatesList() {
           </div>
 
           {loading ? (
-            <Loading text="Đang tải danh sách phòng..." className="text-gray-600 dark:text-gray-400" />
+            <Loading
+              text="Đang tải danh sách phòng..."
+              className="text-gray-600 dark:text-gray-400"
+            />
           ) : (
             <div className="space-y-6">
               {/* Thống kê */}
@@ -188,7 +218,9 @@ export default function RoomUtilityRatesList() {
                       <Settings className="h-5 w-5 text-blue-600" />
                       <div>
                         <p className="text-sm text-blue-600">Đơn giá riêng</p>
-                        <p className="text-2xl font-bold text-blue-700">{roomsWithCustomRates.length}</p>
+                        <p className="text-2xl font-bold text-blue-700">
+                          {roomsWithCustomRates.length}
+                        </p>
                       </div>
                     </div>
                   </CardContent>
@@ -200,7 +232,9 @@ export default function RoomUtilityRatesList() {
                       <Home className="h-5 w-5 text-gray-600" />
                       <div>
                         <p className="text-sm text-gray-600">Đơn giá chung</p>
-                        <p className="text-2xl font-bold text-gray-700">{roomsWithGlobalRates.length}</p>
+                        <p className="text-2xl font-bold text-gray-700">
+                          {roomsWithGlobalRates.length}
+                        </p>
                       </div>
                     </div>
                   </CardContent>
@@ -212,7 +246,9 @@ export default function RoomUtilityRatesList() {
                       <Home className="h-5 w-5 text-green-600" />
                       <div>
                         <p className="text-sm text-green-600">Tổng phòng</p>
-                        <p className="text-2xl font-bold text-green-700">{filteredRooms.length}</p>
+                        <p className="text-2xl font-bold text-green-700">
+                          {filteredRooms.length}
+                        </p>
                       </div>
                     </div>
                   </CardContent>
@@ -224,7 +260,9 @@ export default function RoomUtilityRatesList() {
                 <div>
                   <h3 className="text-base sm:text-lg font-medium mb-3 flex items-center space-x-2">
                     <Settings className="h-5 w-5 text-blue-600 shrink-0" />
-                    <span className="wrap-break-word">Phòng Có Đơn Giá Riêng ({roomsWithCustomRates.length})</span>
+                    <span className="wrap-break-word">
+                      Phòng Có Đơn Giá Riêng ({roomsWithCustomRates.length})
+                    </span>
                   </h3>
                   <div className="space-y-2">
                     {roomsWithCustomRates.map((room) => (
@@ -239,7 +277,9 @@ export default function RoomUtilityRatesList() {
                 <div>
                   <h3 className="text-base sm:text-lg font-medium mb-3 flex items-center space-x-2">
                     <Home className="h-5 w-5 text-gray-600 shrink-0" />
-                    <span className="wrap-break-word">Phòng Dùng Đơn Giá Chung ({roomsWithGlobalRates.length})</span>
+                    <span className="wrap-break-word">
+                      Phòng Dùng Đơn Giá Chung ({roomsWithGlobalRates.length})
+                    </span>
                   </h3>
                   <div className="space-y-2">
                     {roomsWithGlobalRates.map((room) => (
@@ -253,13 +293,14 @@ export default function RoomUtilityRatesList() {
                 <div className="text-center py-8">
                   <div className="p-4 bg-gray-50 rounded-lg">
                     <p className="text-gray-600 mb-2">
-                      {searchTerm ? 'Không tìm thấy phòng nào' : 'Chưa có phòng nào'}
+                      {searchTerm
+                        ? "Không tìm thấy phòng nào"
+                        : "Chưa có phòng nào"}
                     </p>
                     <p className="text-sm text-gray-500">
                       {searchTerm
-                        ? 'Thử thay đổi từ khóa tìm kiếm'
-                        : 'Hãy tạo phòng mới trong trang quản lý phòng'
-                      }
+                        ? "Thử thay đổi từ khóa tìm kiếm"
+                        : "Hãy tạo phòng mới trong trang quản lý phòng"}
                     </p>
                   </div>
                 </div>

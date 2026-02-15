@@ -23,6 +23,7 @@ export async function POST(request, { params }) {
     } catch (error) {
         console.error('Error restoring tenant:', error);
 
+
         if (error.message === 'TENANT_NOT_FOUND') {
             return NextResponse.json({ error: 'Không tìm thấy người thuê' }, { status: 404 });
         }

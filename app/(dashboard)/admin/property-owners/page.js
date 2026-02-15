@@ -44,9 +44,9 @@ export default function PropertyOwnersPage() {
 
   useEffect(() => {
     const filtered = propertyOwners.filter(owner =>
-      owner.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      owner.propertyInfo?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      owner.propertyInfo?.ownerName?.toLowerCase().includes(searchQuery.toLowerCase())
+      owner.tai_khoan.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      owner.thong_tin_nha_tro?.ten?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      owner.thong_tin_nha_tro?.ten_chu_nha?.toLowerCase().includes(searchQuery.toLowerCase())
     );
     setFilteredOwners(filtered);
   }, [searchQuery, propertyOwners]);
@@ -231,31 +231,31 @@ export default function PropertyOwnersPage() {
                   <div className="p-1.5 rounded-full bg-primary/10">
                     <User className="h-4 w-4 text-primary" />
                   </div>
-                  <CardTitle className="text-lg font-bold">{owner.username}</CardTitle>
+                  <CardTitle className="text-lg font-bold">{owner.tai_khoan}</CardTitle>
                 </div>
-                <Badge variant={owner.isActive ? 'success' : 'destructive'} className="text-[10px] h-5">
-                  {owner.isActive ? 'Hoạt động' : 'Tạm khóa'}
+                <Badge variant={owner.trang_thai ? 'success' : 'destructive'} className="text-[10px] h-5">
+                  {owner.trang_thai ? 'Hoạt động' : 'Tạm khóa'}
                 </Badge>
               </div>
               <CardDescription className="flex items-center gap-1.5 text-foreground/80 font-medium">
                 <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
-                {owner.propertyInfo?.name || 'Chưa có thông tin nhà trọ'}
+                {owner.thong_tin_nha_tro?.ten || 'Chưa có thông tin nhà trọ'}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3 text-xs">
                 <div className="flex items-start gap-2">
                   <span className="text-muted-foreground font-semibold shrink-0">Địa chỉ:</span>
-                  <span className="line-clamp-1">{owner.propertyInfo?.address || 'N/A'}</span>
+                  <span className="line-clamp-1">{owner.thong_tin_nha_tro?.dia_chi || 'N/A'}</span>
                 </div>
                 <div className="flex items-center gap-4 py-2 border-y border-dashed border-border/50">
                   <div className="flex flex-col">
                     <span className="text-[10px] text-muted-foreground uppercase font-bold">Số phòng</span>
-                    <span className="text-base font-extrabold">{owner._count?.rooms || 0}</span>
+                    <span className="text-base font-extrabold">{owner._count?.phong || 0}</span>
                   </div>
                   <div className="flex flex-col">
                     <span className="text-[10px] text-muted-foreground uppercase font-bold">Loại phí</span>
-                    <span className="text-base font-extrabold">{owner._count?.feeTypes || 0}</span>
+                    <span className="text-base font-extrabold">{owner._count?.loai_phi || 0}</span>
                   </div>
                 </div>
               </div>
@@ -266,9 +266,9 @@ export default function PropertyOwnersPage() {
                   variant="outline"
                   size="sm"
                   className="h-9"
-                  onClick={() => handleToggleActive(owner.id, owner.isActive)}
+                  onClick={() => handleToggleActive(owner.id, owner.trang_thai)}
                 >
-                  {owner.isActive ? (
+                  {owner.trang_thai ? (
                     <><ShieldOff className="mr-2 h-4 w-4 text-red-500" /> Khóa</>
                   ) : (
                     <><Shield className="mr-2 h-4 w-4 text-green-500" /> Mở khóa</>
@@ -338,7 +338,7 @@ export default function PropertyOwnersPage() {
       {resetPasswordOwner && (
         <ResetPasswordDialog
           userId={resetPasswordOwner.id}
-          username={resetPasswordOwner.username}
+          username={resetPasswordOwner.tai_khoan}
           open={isResetPasswordDialogOpen}
           onOpenChange={(open) => {
             setIsResetPasswordDialogOpen(open);

@@ -53,11 +53,13 @@ import { HTMLTemplateLibrary } from "@/components/admin/reporting/HTMLTemplateLi
  */
 export function TemplateDesigner({ templateId, onSaveComplete, onLoad }) {
   const [templateInfo, setTemplateInfo] = useState({
-    name: "Template mới",
-    procedureId: "",
-    description: "",
-    category: "",
+    ten: "Template mới",
+    thu_tuc_id: "",
+    mo_ta: "",
+    danh_muc: "",
+    anh_xa_tham_so: [],
   });
+  const [parameterMapping, setParameterMapping] = useState({});
   const [availableVariables, setAvailableVariables] = useState([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("preview");
@@ -71,6 +73,7 @@ export function TemplateDesigner({ templateId, onSaveComplete, onLoad }) {
   const [isDiscovering, setIsDiscovering] = useState(false);
   const [discoveryError, setDiscoveryError] = useState(null);
   const [isProcOpen, setIsProcOpen] = useState(false);
+  const [selectedProcedure, setSelectedProcedure] = useState(null);
   const [vSearch, setVSearch] = useState("");
 
   const editorRef = useRef(null);
@@ -157,16 +160,27 @@ th {
         if (json.success) {
           const t = json.data;
           setTemplateInfo({
-            name: t.name,
-            procedureId: t.procedureId,
-            description: t.description || "",
-            category: t.category || "",
+            ten: t.ten,
+            thu_tuc_id: t.thu_tuc_id,
+            mo_ta: t.mo_ta || "",
+            danh_muc: t.danh_muc || "",
           });
 
-          if (t.content) setRawHtml(t.content);
+          if (t.noi_dung) setRawHtml(t.noi_dung);
           if (t.css) setRawCss(t.css);
           if (t.js) setRawJs(t.js);
-          if (t.orientation) setOrientation(t.orientation);
+          if (t.huong_giay) setOrientation(t.huong_giay);
+          if (t.anh_xa_tham_so) {
+            const mapping = {};
+            t.anh_xa_tham_so.forEach((m) => {
+              mapping[m.ten_tham_so] = m.loai_hien_thi;
+            });
+            setParameterMapping(mapping);
+            setTemplateInfo((prev) => ({
+              ...prev,
+              anh_xa_tham_so: t.anh_xa_tham_so,
+            }));
+          }
 
           if (onLoad) onLoad(t);
         }
@@ -213,43 +227,40 @@ th {
     }
 
     async function fetchVariables() {
-      const pid = templateInfo.procedureId;
+      const pid = templateInfo.thu_tuc_id;
       if (!pid) {
         setAvailableVariables([]);
+        setSelectedProcedure(null);
         setDiscoveryError(null);
         return;
       }
       try {
         setIsDiscovering(true);
         setDiscoveryError(null);
-        const res = await fetch(`/api/reports/discover-variables/${pid}`);
-        const json = await res.json();
-        if (json.success) {
-          if (!json.data || json.data.length === 0) {
-            setDiscoveryError(
-              "Procedure này không trả về dữ liệu mẫu hoặc không có biến.",
-            );
-            setAvailableVariables([]);
-          } else {
-            setAvailableVariables(json.data);
-            setSampleData(json.sample);
-          }
-        } else {
-          setDiscoveryError(
-            json.message || "Không thể phân tích biến từ Procedure này.",
-          );
-          setAvailableVariables([]);
+
+        // 1. Fetch Variables (Outputs)
+        const varRes = await fetch(`/api/reports/discover-variables/${pid}`);
+        const varJson = await varRes.json();
+        if (varJson.success) {
+          setAvailableVariables(varJson.data || []);
+          setSampleData(varJson.sample);
+        }
+
+        // 2. Fetch Procedure Details (Inputs)
+        const procRes = await fetch(`/api/procedures/${pid}`);
+        const procJson = await procRes.json();
+        if (procJson.success) {
+          setSelectedProcedure(procJson.data);
         }
       } catch (err) {
-        console.error("Failed to fetch variables", err);
+        console.error("Failed to fetch discovery data", err);
         setDiscoveryError("Lỗi kết nối khi lấy dữ liệu biến.");
-        setAvailableVariables([]);
       } finally {
         setIsDiscovering(false);
       }
     }
     fetchVariables();
-  }, [templateInfo.procedureId]);
+  }, [templateInfo.thu_tuc_id]);
 
   // Fetch procedures list
   useEffect(() => {
@@ -271,7 +282,7 @@ th {
   }, []);
 
   const handleSave = async () => {
-    if (!templateInfo.name || !templateInfo.procedureId) {
+    if (!templateInfo.ten || !templateInfo.thu_tuc_id) {
       toast({
         title: "Thiếu thông tin",
         description: "Vui lòng nhập tên và chọn Procedure",
@@ -284,20 +295,28 @@ th {
       setLoading(true);
       const formData = new FormData();
       formData.append("html", rawHtml);
-      formData.append("name", templateInfo.name);
-      formData.append("procedureId", templateInfo.procedureId);
-      formData.append("description", templateInfo.description || "");
-      formData.append("category", templateInfo.category || "");
+      formData.append("name", templateInfo.ten);
+      formData.append("procedureId", templateInfo.thu_tuc_id);
+      formData.append("description", templateInfo.mo_ta || "");
+      formData.append("category", templateInfo.danh_muc || "");
       formData.append("css", rawCss || "");
       formData.append("js", rawJs || "");
       formData.append("orientation", orientation);
-      // Gửi designerState rỗng vì đã gỡ bỏ tính năng kéo thả
-      formData.append("designerState", "[]");
 
+      const mappingArray = Object.entries(parameterMapping).map(
+        ([ten, loai]) => ({
+          ten_tham_so: ten,
+          loai_hien_thi: loai,
+        }),
+      );
+
+      formData.append("parameterMapping", JSON.stringify(mappingArray));
+
+      const isEdit = Boolean(templateId);
+      const method = templateId ? "PATCH" : "POST";
       const url = templateId
         ? `/api/templates/${templateId}`
         : "/api/templates";
-      const method = templateId ? "PATCH" : "POST";
 
       const res = await fetch(url, { method, body: formData });
       const json = await res.json();
@@ -330,7 +349,7 @@ th {
         data: [sampleData || {}],
         ...(sampleData || {}),
         metadata: {
-          templateName: templateInfo.name,
+          templateName: templateInfo.ten,
           generatedAt: new Date().toLocaleString("vi-VN"),
           userName: "Preview User",
           isPreview: true,
@@ -454,11 +473,11 @@ th {
                   <div className="space-y-2">
                     <Label>Tên mẫu báo cáo</Label>
                     <Input
-                      value={templateInfo.name}
+                      value={templateInfo.ten}
                       onChange={(e) =>
                         setTemplateInfo({
                           ...templateInfo,
-                          name: e.target.value,
+                          ten: e.target.value,
                         })
                       }
                     />
@@ -466,11 +485,11 @@ th {
                   <div className="space-y-2">
                     <Label>Mô tả</Label>
                     <Textarea
-                      value={templateInfo.description}
+                      value={templateInfo.mo_ta}
                       onChange={(e) =>
                         setTemplateInfo({
                           ...templateInfo,
-                          description: e.target.value,
+                          mo_ta: e.target.value,
                         })
                       }
                       className="min-h-[100px]"
@@ -490,10 +509,10 @@ th {
                           type="button"
                         >
                           <span className="truncate flex items-center gap-2">
-                            {templateInfo.procedureId ? (
+                            {templateInfo.thu_tuc_id ? (
                               procedures.find(
-                                (p) => p.id === templateInfo.procedureId,
-                              )?.name
+                                (p) => p.id === templateInfo.thu_tuc_id,
+                              )?.ten
                             ) : isLoadingProcs ? (
                               <Loading
                                 size="sm"
@@ -526,23 +545,23 @@ th {
                               {procedures.map((proc) => (
                                 <CommandItem
                                   key={proc.id}
-                                  value={proc.name}
+                                  value={proc.ten}
                                   onSelect={() => {
                                     setTemplateInfo({
                                       ...templateInfo,
-                                      procedureId: proc.id,
+                                      thu_tuc_id: proc.id,
                                     });
                                     setIsProcOpen(false);
                                   }}
                                   className="flex items-center justify-between cursor-pointer"
                                 >
                                   <span className="truncate flex-1">
-                                    {proc.name}
+                                    {proc.ten}
                                   </span>
                                   <CheckIcon
                                     className={cn(
                                       "ml-2 h-4 w-4 shrink-0",
-                                      templateInfo.procedureId === proc.id
+                                      templateInfo.thu_tuc_id === proc.id
                                         ? "opacity-100"
                                         : "opacity-0",
                                     )}
@@ -582,15 +601,79 @@ th {
                     <div className="space-y-2">
                       <Label>Danh mục</Label>
                       <Input
-                        value={templateInfo.category}
+                        value={templateInfo.danh_muc}
                         onChange={(e) =>
                           setTemplateInfo({
                             ...templateInfo,
-                            category: e.target.value,
+                            danh_muc: e.target.value,
                           })
                         }
                       />
                     </div>
+                  </div>
+
+                  {/* Phần Cấu hình Tham số mới */}
+                  <div className="space-y-4 pt-4 border-t">
+                    <div className="flex items-center gap-2">
+                      <FileCode className="h-5 w-5 text-primary" />
+                      <h4 className="font-bold">Cấu hình tham số Procedure</h4>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Thiết lập cách hiển thị tham số cho người dùng khi sinh
+                      báo cáo.
+                    </p>
+
+                    {selectedProcedure?.tham_so?.length > 0 ? (
+                      <div className="grid gap-3 border rounded-lg p-4 bg-muted/20">
+                        {selectedProcedure.tham_so
+                          .filter((v) => v.name !== "p_uid")
+                          .map((v) => (
+                            <div
+                              key={v.name}
+                              className="grid grid-cols-2 items-center gap-4"
+                            >
+                              <Label className="text-xs font-mono">
+                                {v.name}
+                              </Label>
+                              <Select
+                                value={parameterMapping[v.name] || "TEXT"}
+                                onValueChange={(val) =>
+                                  setParameterMapping((prev) => ({
+                                    ...prev,
+                                    [v.name]: val,
+                                  }))
+                                }
+                              >
+                                <SelectTrigger className="h-8 text-xs">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="TEXT">
+                                    Văn bản (Mặc định)
+                                  </SelectItem>
+                                  <SelectItem value="NUMBER">Số</SelectItem>
+                                  <SelectItem value="DATE">
+                                    Chọn ngày
+                                  </SelectItem>
+                                  <SelectItem value="ROOM_SELECT">
+                                    Chọn phòng (System)
+                                  </SelectItem>
+                                  <SelectItem value="MONTH_SELECT">
+                                    Chọn tháng
+                                  </SelectItem>
+                                  <SelectItem value="YEAR_SELECT">
+                                    Chọn năm
+                                  </SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          ))}
+                      </div>
+                    ) : (
+                      <div className="text-xs italic text-muted-foreground p-4 border border-dashed rounded-lg text-center">
+                        Vui lòng chọn Procedure để cấu hình tham số.
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -658,12 +741,12 @@ th {
                   className="h-8 text-[10px]"
                   onClick={() => {
                     const pid = templateInfo.procedureId;
-                    setTemplateInfo({ ...templateInfo, procedureId: "" });
+                    setTemplateInfo({ ...templateInfo, thu_tuc_id: "" });
                     setTimeout(
                       () =>
                         setTemplateInfo({
                           ...templateInfo,
-                          procedureId: pid,
+                          thu_tuc_id: pid,
                         }),
                       10,
                     );

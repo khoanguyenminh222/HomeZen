@@ -26,16 +26,16 @@ export async function generateMetadata() {
   try {
     const websiteConfigService = getWebsiteConfigurationService();
     const config = await websiteConfigService.getCurrentConfiguration();
-    
+
     return {
-      title: config.websiteTitle || "HomeZen - Ứng dụng quản lý nhà trọ",
-      description: config.websiteDescription || "Quản lý phòng trọ, người thuê, hóa đơn điện nước dễ dàng và hiện đại",
+      title: config.tieu_de_website || "HomeZen - Ứng dụng quản lý nhà trọ",
+      description: config.mo_ta_website || "Quản lý phòng trọ, người thuê, hóa đơn điện nước dễ dàng và hiện đại",
       icons: {
         icon: [
-          { url: config.faviconUrl || '/images/favicon.ico', type: 'image/x-icon' },
+          { url: config.favicon_url || '/images/favicon.ico', type: 'image/x-icon' },
         ],
-        shortcut: config.faviconUrl || '/images/favicon.ico',
-        apple: config.faviconUrl || '/images/favicon.ico',
+        shortcut: config.favicon_url || '/images/favicon.ico',
+        apple: config.favicon_url || '/images/favicon.ico',
       },
     };
   } catch (error) {

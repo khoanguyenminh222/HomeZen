@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requireSuperAdmin } from '@/lib/middleware/authorization';
+import { requireAuth } from '@/lib/middleware/authorization';
 import { getReportGeneratorService } from '@/lib/services/report-generator.service.js';
 import { auth } from '@/app/api/auth/[...nextauth]/route';
 import { handleErrorResponse } from '@/lib/utils/report-errors';
@@ -32,4 +32,4 @@ async function generateReportHandler(request) {
     }
 }
 
-export const POST = requireSuperAdmin(generateReportHandler);
+export const POST = requireAuth(generateReportHandler);

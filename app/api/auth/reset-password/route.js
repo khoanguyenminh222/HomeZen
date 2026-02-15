@@ -33,15 +33,15 @@ export async function POST(request) {
     }
 
     // Tìm token trong database
-    const resetToken = await prisma.passwordResetToken.findUnique({
+    const resetToken = await prisma.uSR_TOKEN_DAT_LAI_MAT_KHAU.findUnique({
       where: {
         token: token,
       },
       include: {
-        user: {
+        nguoi_dung: {
           select: {
             id: true,
-            isActive: true,
+            trang_thai: true,
           },
         },
       },
@@ -55,7 +55,7 @@ export async function POST(request) {
     }
 
     // Kiểm tra token đã được sử dụng chưa
-    if (resetToken.used) {
+    if (resetToken.da_su_dung) {
       return NextResponse.json(
         { error: 'Token đã được sử dụng. Vui lòng yêu cầu đặt lại mật khẩu mới.' },
         { status: 400 }
@@ -63,7 +63,7 @@ export async function POST(request) {
     }
 
     // Kiểm tra token đã hết hạn chưa
-    if (new Date() > resetToken.expiresAt) {
+    if (new Date() > resetToken.het_han_luc) {
       return NextResponse.json(
         { error: 'Token đã hết hạn. Vui lòng yêu cầu đặt lại mật khẩu mới.' },
         { status: 400 }
@@ -71,7 +71,7 @@ export async function POST(request) {
     }
 
     // Kiểm tra user có active không
-    if (!resetToken.user.isActive) {
+    if (!resetToken.nguoi_dung.trang_thai) {
       return NextResponse.json(
         { error: 'Tài khoản đã bị vô hiệu hóa' },
         { status: 403 }
@@ -84,27 +84,27 @@ export async function POST(request) {
     // Cập nhật mật khẩu và đánh dấu token đã sử dụng (transaction)
     await prisma.$transaction([
       // Cập nhật mật khẩu
-      prisma.user.update({
+      prisma.uSR_NGUOI_DUNG.update({
         where: {
-          id: resetToken.user.id,
+          id: resetToken.nguoi_dung.id,
         },
         data: {
-          password: hashedPassword,
+          mat_khau: hashedPassword,
         },
       }),
       // Đánh dấu token đã sử dụng
-      prisma.passwordResetToken.update({
+      prisma.uSR_TOKEN_DAT_LAI_MAT_KHAU.update({
         where: {
           id: resetToken.id,
         },
         data: {
-          used: true,
+          da_su_dung: true,
         },
       }),
     ]);
 
     return NextResponse.json(
-      { 
+      {
         success: true,
         message: 'Đặt lại mật khẩu thành công'
       },

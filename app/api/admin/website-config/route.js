@@ -41,28 +41,28 @@ export const PUT = requireSuperAdmin(async (request) => {
     // Delete old images if URLs are being replaced
     const currentConfig = await service.getCurrentConfiguration();
 
-    if (data.logoUrl && currentConfig.logoUrl &&
-      data.logoUrl !== currentConfig.logoUrl &&
-      currentConfig.logoUrl.startsWith('http')) {
-      await service.deleteOldImage(currentConfig.logoUrl);
+    if (data.logo_url && currentConfig.logo_url &&
+      data.logo_url !== currentConfig.logo_url &&
+      currentConfig.logo_url.startsWith('http')) {
+      await service.deleteOldImage(currentConfig.logo_url);
     }
 
-    if (data.faviconUrl && currentConfig.faviconUrl &&
-      data.faviconUrl !== currentConfig.faviconUrl &&
-      currentConfig.faviconUrl.startsWith('http')) {
-      await service.deleteOldImage(currentConfig.faviconUrl);
+    if (data.favicon_url && currentConfig.favicon_url &&
+      data.favicon_url !== currentConfig.favicon_url &&
+      currentConfig.favicon_url.startsWith('http')) {
+      await service.deleteOldImage(currentConfig.favicon_url);
     }
 
-    if (data.heroImageUrl && currentConfig.heroImageUrl &&
-      data.heroImageUrl !== currentConfig.heroImageUrl &&
-      currentConfig.heroImageUrl.startsWith('http')) {
-      await service.deleteOldImage(currentConfig.heroImageUrl);
+    if (data.anh_hero_url && currentConfig.anh_hero_url &&
+      data.anh_hero_url !== currentConfig.anh_hero_url &&
+      currentConfig.anh_hero_url.startsWith('http')) {
+      await service.deleteOldImage(currentConfig.anh_hero_url);
     }
 
-    if (data.errorImageUrl && currentConfig.errorImageUrl &&
-      data.errorImageUrl !== currentConfig.errorImageUrl &&
-      currentConfig.errorImageUrl.startsWith('http')) {
-      await service.deleteOldImage(currentConfig.errorImageUrl);
+    if (data.anh_loi_url && currentConfig.anh_loi_url &&
+      data.anh_loi_url !== currentConfig.anh_loi_url &&
+      currentConfig.anh_loi_url.startsWith('http')) {
+      await service.deleteOldImage(currentConfig.anh_loi_url);
     }
 
     const config = await service.updateConfiguration(data, session.user.id);

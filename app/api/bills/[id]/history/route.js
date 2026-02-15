@@ -18,12 +18,12 @@ export async function GET(request, { params }) {
     const skip = parseInt(searchParams.get('skip') || '0');
 
     // Kiểm tra hóa đơn có tồn tại không
-    const bill = await prisma.bill.findUnique({
+    const bill = await prisma.bIL_HOA_DON.findUnique({
       where: { id: billId },
       select: {
         id: true,
-        roomId: true,
-        userId: true,
+        phong_id: true,
+        nguoi_dung_id: true,
       }
     });
 
@@ -32,19 +32,19 @@ export async function GET(request, { params }) {
     if (!bill) {
       // Lấy một history record để kiểm tra quyền truy cập
       // Tìm với billId hoặc originalBillId
-      let firstHistory = await prisma.billHistory.findFirst({
+      let firstHistory = await prisma.bIL_LICH_SU_THAY_DOI.findFirst({
         where: {
           OR: [
-            { billId },
-            { originalBillId: billId },
+            { hoa_don_id: billId },
+            { hoa_don_goc_id: billId },
           ],
         },
         select: {
-          oldData: true,
-          billId: true,
-          originalBillId: true,
+          du_lieu_cu: true,
+          hoa_don_id: true,
+          hoa_don_goc_id: true,
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { ngay_tao: 'desc' },
       });
 
       if (!firstHistory) {
@@ -56,22 +56,22 @@ export async function GET(request, { params }) {
 
       // Validate property access through oldData
       if (!isSuperAdmin(session)) {
-        if (firstHistory.oldData) {
-          const oldData = typeof firstHistory.oldData === 'string' 
-            ? JSON.parse(firstHistory.oldData) 
-            : firstHistory.oldData;
-          
+        if (firstHistory.du_lieu_cu) {
+          const oldData = typeof firstHistory.du_lieu_cu === 'string'
+            ? JSON.parse(firstHistory.du_lieu_cu)
+            : firstHistory.du_lieu_cu;
+
           // Kiểm tra userId trong oldData
-          if (oldData.userId && oldData.userId !== session.user.id) {
+          if (oldData.nguoi_dung_id && oldData.nguoi_dung_id !== session.user.id) {
             return NextResponse.json(
               { error: 'Forbidden: No access to this bill' },
               { status: 403 }
             );
           }
-          
+
           // Nếu không có userId trong oldData, kiểm tra roomId
-          if (oldData.roomId) {
-            const hasAccess = await validateResourceOwnership(session.user.id, oldData.roomId, 'room');
+          if (oldData.phong_id) {
+            const hasAccess = await validateResourceOwnership(session.user.id, oldData.phong_id, 'room');
             if (!hasAccess) {
               return NextResponse.json(
                 { error: 'Forbidden: No access to this bill' },
@@ -90,7 +90,7 @@ export async function GET(request, { params }) {
     } else {
       // Bill còn tồn tại, validate như bình thường
       if (!isSuperAdmin(session)) {
-        const hasAccess = await validateResourceOwnership(session.user.id, bill.roomId, 'room');
+        const hasAccess = await validateResourceOwnership(session.user.id, bill.phong_id, 'room');
         if (!hasAccess) {
           return NextResponse.json(
             { error: 'Forbidden: No access to this bill' },
@@ -103,23 +103,23 @@ export async function GET(request, { params }) {
     // Lấy lịch sử thay đổi
     // Nếu bill đã bị xóa, billId trong BillHistory có thể là null
     // Nhưng originalBillId vẫn giữ giá trị gốc
-    const histories = await prisma.billHistory.findMany({
+    const histories = await prisma.bIL_LICH_SU_THAY_DOI.findMany({
       where: {
         OR: [
-          { billId: billId }, // Bill còn tồn tại
-          { originalBillId: billId }, // Bill đã bị xóa, tìm với originalBillId
+          { hoa_don_id: billId }, // Bill còn tồn tại
+          { hoa_don_goc_id: billId }, // Bill đã bị xóa, tìm với originalBillId
         ],
       },
       include: {
-        user: {
+        nguoi_dung: {
           select: {
             id: true,
-            username: true,
+            tai_khoan: true,
           },
         },
       },
       orderBy: {
-        createdAt: 'desc',
+        ngay_tao: 'desc',
       },
       take: limit,
       skip: skip,
@@ -128,65 +128,65 @@ export async function GET(request, { params }) {
     // Enrich oldData và newData với thông tin room nếu thiếu
     for (const history of histories) {
       // Enrich oldData
-      if (history.oldData) {
-        const oldData = typeof history.oldData === 'string' 
-          ? JSON.parse(history.oldData) 
-          : history.oldData;
-        
+      if (history.du_lieu_cu) {
+        const oldData = typeof history.du_lieu_cu === 'string'
+          ? JSON.parse(history.du_lieu_cu)
+          : history.du_lieu_cu;
+
         // Nếu oldData có roomId nhưng không có room object, query từ database
-        if (oldData.roomId && !oldData.room) {
+        if (oldData.phong_id && !oldData.phong) {
           try {
-            const room = await prisma.room.findUnique({
-              where: { id: oldData.roomId },
+            const room = await prisma.pRP_PHONG.findUnique({
+              where: { id: oldData.phong_id },
               select: {
                 id: true,
-                code: true,
-                name: true,
+                ma_phong: true,
+                ten_phong: true,
               },
             });
-            
+
             if (room) {
-              oldData.room = {
+              oldData.phong = {
                 id: room.id,
-                code: room.code,
-                name: room.name,
+                ma_phong: room.ma_phong,
+                ten_phong: room.ten_phong,
               };
-              history.oldData = oldData;
+              history.du_lieu_cu = oldData;
             }
           } catch (error) {
-            console.warn(`Could not fetch room ${oldData.roomId} for history ${history.id}:`, error.message);
+            console.warn(`Could not fetch room ${oldData.phong_id} for history ${history.id}:`, error.message);
           }
         }
       }
-      
+
       // Enrich newData
-      if (history.newData) {
-        const newData = typeof history.newData === 'string' 
-          ? JSON.parse(history.newData) 
-          : history.newData;
-        
+      if (history.du_lieu_moi) {
+        const newData = typeof history.du_lieu_moi === 'string'
+          ? JSON.parse(history.du_lieu_moi)
+          : history.du_lieu_moi;
+
         // Nếu newData có roomId nhưng không có room object, query từ database
-        if (newData.roomId && !newData.room) {
+        if (newData.phong_id && !newData.phong) {
           try {
-            const room = await prisma.room.findUnique({
-              where: { id: newData.roomId },
+            const room = await prisma.pRP_PHONG.findUnique({
+              where: { id: newData.phong_id },
               select: {
                 id: true,
-                code: true,
-                name: true,
+                ma_phong: true,
+                ten_phong: true,
               },
             });
-            
+
             if (room) {
-              newData.room = {
+              newData.phong = {
                 id: room.id,
-                code: room.code,
-                name: room.name,
+                ma_phong: room.ma_phong,
+                ten_phong: room.ten_phong,
               };
-              history.newData = newData;
+              history.du_lieu_moi = newData;
             }
           } catch (error) {
-            console.warn(`Could not fetch room ${newData.roomId} for history ${history.id}:`, error.message);
+            console.warn(`Could not fetch room ${newData.phong_id} for history ${history.id}:`, error.message);
           }
         }
       }
@@ -204,7 +204,7 @@ export async function GET(request, { params }) {
       billId,
     });
     return NextResponse.json(
-      { 
+      {
         error: 'Lỗi khi lấy lịch sử thay đổi hóa đơn',
         details: process.env.NODE_ENV === 'development' ? error.message : undefined
       },

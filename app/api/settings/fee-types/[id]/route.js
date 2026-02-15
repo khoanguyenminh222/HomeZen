@@ -13,11 +13,11 @@ export async function GET(request, { params }) {
 
     const { id } = await params;
 
-    const feeType = await prisma.feeType.findUnique({
+    const feeType = await prisma.bIL_LOAI_PHI.findUnique({
       where: { id },
       include: {
         _count: {
-          select: { roomFees: true }
+          select: { phi_phong: true }
         }
       }
     });
@@ -52,7 +52,7 @@ export async function PUT(request, { params }) {
     const validatedData = updateFeeTypeSchema.parse(body);
 
     // Kiểm tra loại phí có tồn tại không
-    const existing = await prisma.feeType.findUnique({
+    const existing = await prisma.bIL_LOAI_PHI.findUnique({
       where: { id }
     });
 
@@ -64,9 +64,9 @@ export async function PUT(request, { params }) {
     }
 
     // Nếu đổi tên, kiểm tra tên mới có trùng không
-    if (validatedData.name && validatedData.name !== existing.name) {
-      const nameExists = await prisma.feeType.findUnique({
-        where: { name: validatedData.name }
+    if (validatedData.ten_phi && validatedData.ten_phi !== existing.ten_phi) {
+      const nameExists = await prisma.bIL_LOAI_PHI.findUnique({
+        where: { ten_phi: validatedData.ten_phi }
       });
 
       if (nameExists) {
@@ -77,7 +77,7 @@ export async function PUT(request, { params }) {
       }
     }
 
-    const feeType = await prisma.feeType.update({
+    const feeType = await prisma.bIL_LOAI_PHI.update({
       where: { id },
       data: validatedData
     });
@@ -85,7 +85,7 @@ export async function PUT(request, { params }) {
     return NextResponse.json(feeType);
   } catch (error) {
     console.error('Error updating fee type:', error);
-    
+
     if (error.name === 'ZodError') {
       return NextResponse.json(
         { error: 'Dữ liệu không hợp lệ', details: error.errors },
@@ -111,11 +111,11 @@ export async function DELETE(request, { params }) {
     const { id } = await params;
 
     // Kiểm tra loại phí có tồn tại không
-    const feeType = await prisma.feeType.findUnique({
+    const feeType = await prisma.bIL_LOAI_PHI.findUnique({
       where: { id },
       include: {
         _count: {
-          select: { roomFees: true }
+          select: { phi_phong: true }
         }
       }
     });
@@ -128,14 +128,14 @@ export async function DELETE(request, { params }) {
     }
 
     // Kiểm tra xem có phòng nào đang sử dụng loại phí này không
-    if (feeType._count.roomFees > 0) {
+    if (feeType._count.phi_phong > 0) {
       return NextResponse.json(
         { error: 'Không thể xóa loại phí đang được sử dụng bởi các phòng' },
         { status: 400 }
       );
     }
 
-    await prisma.feeType.delete({
+    await prisma.bIL_LOAI_PHI.delete({
       where: { id }
     });
 

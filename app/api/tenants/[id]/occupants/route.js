@@ -18,7 +18,7 @@ export async function POST(request, { params }) {
     const validatedData = createOccupantSchema.parse(body);
 
     // Kiểm tra người thuê có tồn tại không
-    const tenant = await prisma.tenant.findUnique({
+    const tenant = await prisma.tNT_NGUOI_THUE_CHINH.findUnique({
       where: { id }
     });
 
@@ -30,9 +30,9 @@ export async function POST(request, { params }) {
     }
 
     // Kiểm tra CMND/CCCD trùng (nếu có)
-    if (validatedData.idCard) {
-      const existingOccupant = await prisma.occupant.findFirst({
-        where: { idCard: validatedData.idCard }
+    if (validatedData.can_cuoc) {
+      const existingOccupant = await prisma.tNT_NGUOI_O.findFirst({
+        where: { can_cuoc: validatedData.can_cuoc }
       });
 
       if (existingOccupant) {
@@ -44,26 +44,26 @@ export async function POST(request, { params }) {
     }
 
     // Tạo người ở mới
-    const occupant = await prisma.occupant.create({
+    const occupant = await prisma.tNT_NGUOI_O.create({
       data: {
-        fullName: validatedData.fullName,
-        idCard: validatedData.idCard || null,
-        dateOfBirth: validatedData.dateOfBirth || null,
-        hometown: validatedData.hometown || null,
-        relationship: validatedData.relationship || null,
-        residenceType: validatedData.residenceType,
-        tenantId: id,
+        ho_ten: validatedData.ho_ten,
+        can_cuoc: validatedData.can_cuoc || null,
+        ngay_sinh: validatedData.ngay_sinh || null,
+        que_quan: validatedData.que_quan || null,
+        moi_quan_he: validatedData.moi_quan_he || null,
+        loai_cu_tru: validatedData.loai_cu_tru,
+        nguoi_thue_id: id,
         // Thông tin bổ sung
-        phone: validatedData.phone || null,
-        gender: validatedData.gender || null,
-        occupation: validatedData.occupation || null,
-        ethnicity: validatedData.ethnicity || null,
-        nationality: validatedData.nationality || null,
-        permanentAddress: validatedData.permanentAddress || null,
-        temporaryAddress: validatedData.temporaryAddress || null,
-        insuranceCardNumber: validatedData.insuranceCardNumber || null,
-        issueDate: validatedData.issueDate || null,
-        placeOfIssue: validatedData.placeOfIssue || null,
+        dien_thoai: validatedData.dien_thoai || null,
+        gioi_tinh: validatedData.gioi_tinh || null,
+        nghe_nghiep: validatedData.nghe_nghiep || null,
+        dan_toc: validatedData.dan_toc || null,
+        quoc_tich: validatedData.quoc_tich || null,
+        dia_chi_thuong_tru: validatedData.dia_chi_thuong_tru || null,
+        dia_chi_tam_tru: validatedData.dia_chi_tam_tru || null,
+        so_the_bao_hiem: validatedData.so_the_bao_hiem || null,
+        ngay_cap: validatedData.ngay_cap || null,
+        noi_cap: validatedData.noi_cap || null,
       }
     });
 

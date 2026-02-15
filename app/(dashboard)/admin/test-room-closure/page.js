@@ -15,13 +15,13 @@ import { Badge } from '@/components/ui/badge';
  * Trang test để gửi thông báo chốt sổ phòng
  */
 export default function TestRoomClosurePage() {
-  const [daysBefore, setDaysBefore] = useState(1);
+  const [soNgayTruoc, setSoNgayTruoc] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState(null);
   const { toast } = useToast();
 
   const handleTest = async () => {
-    if (!daysBefore || daysBefore < 0) {
+    if (!soNgayTruoc || soNgayTruoc < 0) {
       toast({
         title: 'Lỗi',
         description: 'Vui lòng nhập số ngày hợp lệ (>= 0)',
@@ -39,7 +39,7 @@ export default function TestRoomClosurePage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ daysBefore: parseInt(daysBefore) }),
+        body: JSON.stringify({ so_ngay_truoc: parseInt(soNgayTruoc) }),
       });
 
       const data = await response.json();
@@ -96,13 +96,13 @@ export default function TestRoomClosurePage() {
                   id="daysBefore"
                   type="number"
                   min="0"
-                  value={daysBefore}
-                  onChange={(e) => setDaysBefore(e.target.value)}
+                  value={soNgayTruoc}
+                  onChange={(e) => setSoNgayTruoc(e.target.value)}
                   placeholder="VD: 1 (1 ngày trước ngày chốt sổ)"
                   className="h-11 sm:h-10 text-sm sm:text-base"
                 />
                 <p className="text-xs sm:text-sm text-muted-foreground">
-                  Nhập số ngày còn lại đến ngày chốt sổ để gửi thông báo. 
+                  Nhập số ngày còn lại đến ngày chốt sổ để gửi thông báo.
                   <span className="block mt-1">
                     💡 <strong>Ví dụ:</strong> Nếu ngày chốt sổ là 20, hôm nay là 24, thì ngày chốt sổ tiếp theo là 20 tháng sau (khoảng 27 ngày nữa). Để test, nhập số ngày còn lại (ví dụ: 27).
                   </span>
@@ -169,7 +169,7 @@ export default function TestRoomClosurePage() {
                       <div className="flex items-center gap-2">
                         <span className="text-sm sm:text-base font-semibold">Tổng số chủ trọ:</span>
                         <Badge variant="default" className="text-sm">
-                          {result.data.totalUsers || 0}
+                          {result.data.tong_so_chu_tro || 0}
                         </Badge>
                       </div>
 
@@ -180,11 +180,10 @@ export default function TestRoomClosurePage() {
                             {result.data.results.map((item, index) => (
                               <div
                                 key={index}
-                                className={`p-3 rounded-lg border ${
-                                  item.success
-                                    ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800'
-                                    : 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800'
-                                }`}
+                                className={`p-3 rounded-lg border ${item.success
+                                  ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800'
+                                  : 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800'
+                                  }`}
                               >
                                 <div className="flex items-start gap-2">
                                   {item.success ? (
@@ -193,11 +192,14 @@ export default function TestRoomClosurePage() {
                                     <XCircle className="h-4 w-4 text-red-600 dark:text-red-400 mt-0.5 shrink-0" />
                                   )}
                                   <div className="flex-1 min-w-0">
-                                    <p className="text-xs sm:text-sm font-medium">
-                                      User ID: {item.userId}
+                                    <p className="text-xs sm:text-sm font-semibold">
+                                      Tên chủ trọ: {item.ten_chu_tro}
                                     </p>
                                     <p className="text-xs sm:text-sm text-muted-foreground">
-                                      Số phòng: {item.roomsCount}
+                                      User ID: {item.nguoi_dung_id}
+                                    </p>
+                                    <p className="text-xs sm:text-sm text-muted-foreground">
+                                      Số phòng: {item.so_phong}
                                     </p>
                                     {item.error && (
                                       <p className="text-xs sm:text-sm text-red-600 dark:text-red-400 mt-1">
@@ -217,7 +219,7 @@ export default function TestRoomClosurePage() {
                           <div className="flex items-start gap-2">
                             <AlertCircle className="h-4 w-4 text-yellow-600 dark:text-yellow-400 mt-0.5 shrink-0" />
                             <p className="text-xs sm:text-sm text-yellow-700 dark:text-yellow-300">
-                              Không có phòng nào sắp đến ngày chốt sổ trong {daysBefore} ngày tới.
+                              Không có phòng nào sắp đến ngày chốt sổ trong {soNgayTruoc} ngày tới.
                             </p>
                           </div>
                         </div>

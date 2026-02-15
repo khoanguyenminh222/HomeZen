@@ -25,22 +25,22 @@ export default function WebsiteConfigPage() {
     // Only set formData when config is loaded and not loading
     if (config && !configLoading) {
       setFormData({
-        logoUrl: config.logoUrl || '',
-        faviconUrl: config.faviconUrl || '',
-        heroImageUrl: config.heroImageUrl || '',
-        errorImageUrl: config.errorImageUrl || '',
-        websiteTitle: config.websiteTitle || '',
-        websiteDescription: config.websiteDescription || '',
-        brandName: config.brandName || '',
-        heroTitle: config.heroTitle || '',
-        heroSubtitle: config.heroSubtitle || '',
-        footerText: config.footerText || '',
-        stat1Value: config.stat1Value || '',
-        stat1Label: config.stat1Label || '',
-        stat2Value: config.stat2Value || '',
-        stat2Label: config.stat2Label || '',
-        contactEmail: config.contactEmail || '',
-        contactPhone: config.contactPhone || ''
+        logo_url: config.logo_url || '',
+        favicon_url: config.favicon_url || '',
+        anh_hero_url: config.anh_hero_url || '',
+        anh_loi_url: config.anh_loi_url || '',
+        tieu_de_website: config.tieu_de_website || '',
+        mo_ta_website: config.mo_ta_website || '',
+        ten_thuong_hieu: config.ten_thuong_hieu || '',
+        tieu_de_hero: config.tieu_de_hero || '',
+        phu_de_hero: config.phu_de_hero || '',
+        tieu_de_footer: config.tieu_de_footer || '',
+        gia_tri_thong_ke_1: config.gia_tri_thong_ke_1 || '',
+        ten_thong_ke_1: config.ten_thong_ke_1 || '',
+        gia_tri_thong_ke_2: config.gia_tri_thong_ke_2 || '',
+        ten_thong_ke_2: config.ten_thong_ke_2 || '',
+        email_lien_he: config.email_lien_he || '',
+        sdt_lien_he: config.sdt_lien_he || ''
       });
     }
   }, [config, configLoading]);
@@ -71,98 +71,98 @@ export default function WebsiteConfigPage() {
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.websiteTitle || formData.websiteTitle.trim().length === 0) {
-      newErrors.websiteTitle = 'Tiêu đề website không được để trống';
-    } else if (formData.websiteTitle.length > 100) {
-      newErrors.websiteTitle = 'Tiêu đề website không được vượt quá 100 ký tự';
+    if (!formData.tieu_de_website || formData.tieu_de_website.trim().length === 0) {
+      newErrors.tieu_de_website = 'Tiêu đề website không được để trống';
+    } else if (formData.tieu_de_website.length > 100) {
+      newErrors.tieu_de_website = 'Tiêu đề website không được vượt quá 100 ký tự';
     }
 
-    if (!formData.websiteDescription || formData.websiteDescription.trim().length === 0) {
-      newErrors.websiteDescription = 'Mô tả website không được để trống';
-    } else if (formData.websiteDescription.length > 500) {
-      newErrors.websiteDescription = 'Mô tả website không được vượt quá 500 ký tự';
+    if (!formData.mo_ta_website || formData.mo_ta_website.trim().length === 0) {
+      newErrors.mo_ta_website = 'Mô tả website không được để trống';
+    } else if (formData.mo_ta_website.length > 500) {
+      newErrors.mo_ta_website = 'Mô tả website không được vượt quá 500 ký tự';
     }
 
-    if (!formData.brandName || formData.brandName.trim().length === 0) {
-      newErrors.brandName = 'Tên thương hiệu không được để trống';
-    } else if (formData.brandName.length > 50) {
-      newErrors.brandName = 'Tên thương hiệu không được vượt quá 50 ký tự';
+    if (!formData.ten_thuong_hieu || formData.ten_thuong_hieu.trim().length === 0) {
+      newErrors.ten_thuong_hieu = 'Tên thương hiệu không được để trống';
+    } else if (formData.ten_thuong_hieu.length > 50) {
+      newErrors.ten_thuong_hieu = 'Tên thương hiệu không được vượt quá 50 ký tự';
     }
 
-    if (!formData.heroTitle || formData.heroTitle.trim().length === 0) {
-      newErrors.heroTitle = 'Tiêu đề hero không được để trống';
-    } else if (formData.heroTitle.length > 200) {
-      newErrors.heroTitle = 'Tiêu đề hero không được vượt quá 200 ký tự';
+    if (!formData.tieu_de_hero || formData.tieu_de_hero.trim().length === 0) {
+      newErrors.tieu_de_hero = 'Tiêu đề hero không được để trống';
+    } else if (formData.tieu_de_hero.length > 200) {
+      newErrors.tieu_de_hero = 'Tiêu đề hero không được vượt quá 200 ký tự';
     }
 
-    if (!formData.heroSubtitle || formData.heroSubtitle.trim().length === 0) {
-      newErrors.heroSubtitle = 'Phụ đề hero không được để trống';
-    } else if (formData.heroSubtitle.length > 200) {
-      newErrors.heroSubtitle = 'Phụ đề hero không được vượt quá 200 ký tự';
+    if (!formData.phu_de_hero || formData.phu_de_hero.trim().length === 0) {
+      newErrors.phu_de_hero = 'Phụ đề hero không được để trống';
+    } else if (formData.phu_de_hero.length > 200) {
+      newErrors.phu_de_hero = 'Phụ đề hero không được vượt quá 200 ký tự';
     }
 
-    if (!formData.footerText || formData.footerText.trim().length === 0) {
-      newErrors.footerText = 'Văn bản footer không được để trống';
-    } else     if (formData.footerText.length > 200) {
-      newErrors.footerText = 'Văn bản footer không được vượt quá 200 ký tự';
+    if (!formData.tieu_de_footer || formData.tieu_de_footer.trim().length === 0) {
+      newErrors.tieu_de_footer = 'Văn bản footer không được để trống';
+    } else if (formData.tieu_de_footer.length > 200) {
+      newErrors.tieu_de_footer = 'Văn bản footer không được vượt quá 200 ký tự';
     }
 
-    if (!formData.stat1Value || formData.stat1Value.trim().length === 0) {
-      newErrors.stat1Value = 'Giá trị thống kê 1 không được để trống';
-    } else if (formData.stat1Value.length > 50) {
-      newErrors.stat1Value = 'Giá trị thống kê 1 không được vượt quá 50 ký tự';
+    if (!formData.gia_tri_thong_ke_1 || formData.gia_tri_thong_ke_1.trim().length === 0) {
+      newErrors.gia_tri_thong_ke_1 = 'Giá trị thống kê 1 không được để trống';
+    } else if (formData.gia_tri_thong_ke_1.length > 50) {
+      newErrors.gia_tri_thong_ke_1 = 'Giá trị thống kê 1 không được vượt quá 50 ký tự';
     }
 
-    if (!formData.stat1Label || formData.stat1Label.trim().length === 0) {
-      newErrors.stat1Label = 'Nhãn thống kê 1 không được để trống';
-    } else if (formData.stat1Label.length > 50) {
-      newErrors.stat1Label = 'Nhãn thống kê 1 không được vượt quá 50 ký tự';
+    if (!formData.ten_thong_ke_1 || formData.ten_thong_ke_1.trim().length === 0) {
+      newErrors.ten_thong_ke_1 = 'Nhãn thống kê 1 không được để trống';
+    } else if (formData.ten_thong_ke_1.length > 50) {
+      newErrors.ten_thong_ke_1 = 'Nhãn thống kê 1 không được vượt quá 50 ký tự';
     }
 
-    if (!formData.stat2Value || formData.stat2Value.trim().length === 0) {
-      newErrors.stat2Value = 'Giá trị thống kê 2 không được để trống';
-    } else if (formData.stat2Value.length > 50) {
-      newErrors.stat2Value = 'Giá trị thống kê 2 không được vượt quá 50 ký tự';
+    if (!formData.gia_tri_thong_ke_2 || formData.gia_tri_thong_ke_2.trim().length === 0) {
+      newErrors.gia_tri_thong_ke_2 = 'Giá trị thống kê 2 không được để trống';
+    } else if (formData.gia_tri_thong_ke_2.length > 50) {
+      newErrors.gia_tri_thong_ke_2 = 'Giá trị thống kê 2 không được vượt quá 50 ký tự';
     }
 
-    if (!formData.stat2Label || formData.stat2Label.trim().length === 0) {
-      newErrors.stat2Label = 'Nhãn thống kê 2 không được để trống';
-    } else if (formData.stat2Label.length > 50) {
-      newErrors.stat2Label = 'Nhãn thống kê 2 không được vượt quá 50 ký tự';
+    if (!formData.ten_thong_ke_2 || formData.ten_thong_ke_2.trim().length === 0) {
+      newErrors.ten_thong_ke_2 = 'Nhãn thống kê 2 không được để trống';
+    } else if (formData.ten_thong_ke_2.length > 50) {
+      newErrors.ten_thong_ke_2 = 'Nhãn thống kê 2 không được vượt quá 50 ký tự';
     }
 
     // Validate URLs if provided
-    if (formData.logoUrl && formData.logoUrl.trim() && !formData.logoUrl.startsWith('/') && !formData.logoUrl.startsWith('http')) {
-      newErrors.logoUrl = 'Logo URL không hợp lệ';
+    if (formData.logo_url && formData.logo_url.trim() && !formData.logo_url.startsWith('/') && !formData.logo_url.startsWith('http')) {
+      newErrors.logo_url = 'Logo URL không hợp lệ';
     }
 
-    if (formData.faviconUrl && formData.faviconUrl.trim() && !formData.faviconUrl.startsWith('/') && !formData.faviconUrl.startsWith('http')) {
-      newErrors.faviconUrl = 'Favicon URL không hợp lệ';
+    if (formData.favicon_url && formData.favicon_url.trim() && !formData.favicon_url.startsWith('/') && !formData.favicon_url.startsWith('http')) {
+      newErrors.favicon_url = 'Favicon URL không hợp lệ';
     }
 
-    if (formData.heroImageUrl && formData.heroImageUrl.trim() && !formData.heroImageUrl.startsWith('/') && !formData.heroImageUrl.startsWith('http')) {
-      newErrors.heroImageUrl = 'Hero image URL không hợp lệ';
+    if (formData.anh_hero_url && formData.anh_hero_url.trim() && !formData.anh_hero_url.startsWith('/') && !formData.anh_hero_url.startsWith('http')) {
+      newErrors.anh_hero_url = 'Hero image URL không hợp lệ';
     }
 
-    if (formData.errorImageUrl && formData.errorImageUrl.trim() && !formData.errorImageUrl.startsWith('/') && !formData.errorImageUrl.startsWith('http')) {
-      newErrors.errorImageUrl = 'Error image URL không hợp lệ';
+    if (formData.anh_loi_url && formData.anh_loi_url.trim() && !formData.anh_loi_url.startsWith('/') && !formData.anh_loi_url.startsWith('http')) {
+      newErrors.anh_loi_url = 'Error image URL không hợp lệ';
     }
 
     // Validate contact email if provided
-    if (formData.contactEmail && formData.contactEmail.trim()) {
+    if (formData.email_lien_he && formData.email_lien_he.trim()) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(formData.contactEmail)) {
-        newErrors.contactEmail = 'Email liên hệ phải là email hợp lệ';
+      if (!emailRegex.test(formData.email_lien_he)) {
+        newErrors.email_lien_he = 'Email liên hệ phải là email hợp lệ';
       }
     }
 
     // Validate contact phone if provided
-    if (formData.contactPhone && formData.contactPhone.trim()) {
+    if (formData.sdt_lien_he && formData.sdt_lien_he.trim()) {
       const phoneRegex = /^[0-9+\-\s()]*$/;
-      if (!phoneRegex.test(formData.contactPhone)) {
-        newErrors.contactPhone = 'Số điện thoại chỉ được chứa số, dấu +, -, khoảng trắng và dấu ngoặc';
-      } else if (formData.contactPhone.length > 20) {
-        newErrors.contactPhone = 'Số điện thoại không được vượt quá 20 ký tự';
+      if (!phoneRegex.test(formData.sdt_lien_he)) {
+        newErrors.sdt_lien_he = 'Số điện thoại chỉ được chứa số, dấu +, -, khoảng trắng và dấu ngoặc';
+      } else if (formData.sdt_lien_he.length > 20) {
+        newErrors.sdt_lien_he = 'Số điện thoại không được vượt quá 20 ký tự';
       }
     }
 
@@ -172,7 +172,7 @@ export default function WebsiteConfigPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       toast({
         title: 'Lỗi xác thực',
@@ -183,7 +183,7 @@ export default function WebsiteConfigPage() {
     }
 
     setSaving(true);
-    
+
     try {
       await updateConfiguration(formData);
       toast({
@@ -213,7 +213,7 @@ export default function WebsiteConfigPage() {
   }
 
   // Don't render form until formData is initialized with config data
-  const isFormDataInitialized = formData.hasOwnProperty('websiteTitle');
+  const isFormDataInitialized = formData.hasOwnProperty('tieu_de_website');
   if (!isFormDataInitialized) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -234,205 +234,205 @@ export default function WebsiteConfigPage() {
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Logo Upload */}
         <div className="space-y-2">
-          {/* <Label htmlFor="logoUrl">Logo Chính</Label> */}
+          {/* <Label htmlFor="logo_url">Logo Chính</Label> */}
           <CloudinaryUploadWidget
-            onUpload={(result) => handleImageUpload('logoUrl', result)}
-            currentImage={formData.logoUrl}
+            onUpload={(result) => handleImageUpload('logo_url', result)}
+            currentImage={formData.logo_url}
             folder="website-config/logo"
             label="Logo chính"
           />
-          {errors.logoUrl && (
-            <p className="text-sm text-destructive">{errors.logoUrl}</p>
+          {errors.logo_url && (
+            <p className="text-sm text-destructive">{errors.logo_url}</p>
           )}
         </div>
 
         {/* Favicon Upload */}
         <div className="space-y-2">
-          {/* <Label htmlFor="faviconUrl">Favicon</Label> */}
+          {/* <Label htmlFor="favicon_url">Favicon</Label> */}
           <CloudinaryUploadWidget
-            onUpload={(result) => handleImageUpload('faviconUrl', result)}
-            currentImage={formData.faviconUrl}
+            onUpload={(result) => handleImageUpload('favicon_url', result)}
+            currentImage={formData.favicon_url}
             folder="website-config/favicon"
             label="Favicon"
           />
-          {errors.faviconUrl && (
-            <p className="text-sm text-destructive">{errors.faviconUrl}</p>
+          {errors.favicon_url && (
+            <p className="text-sm text-destructive">{errors.favicon_url}</p>
           )}
         </div>
 
         {/* Hero Image Upload */}
         <div className="space-y-2">
-          {/* <Label htmlFor="heroImageUrl">Hình Ảnh Hero</Label> */}
+          {/* <Label htmlFor="anh_hero_url">Hình Ảnh Hero</Label> */}
           <CloudinaryUploadWidget
-            onUpload={(result) => handleImageUpload('heroImageUrl', result)}
-            currentImage={formData.heroImageUrl}
+            onUpload={(result) => handleImageUpload('anh_hero_url', result)}
+            currentImage={formData.anh_hero_url}
             folder="website-config/hero"
             label="Hình ảnh hero"
           />
-          {errors.heroImageUrl && (
-            <p className="text-sm text-destructive">{errors.heroImageUrl}</p>
+          {errors.anh_hero_url && (
+            <p className="text-sm text-destructive">{errors.anh_hero_url}</p>
           )}
         </div>
 
         {/* Error Image Upload */}
         <div className="space-y-2">
-          {/* <Label htmlFor="errorImageUrl">Hình Ảnh Error Page</Label> */}
+          {/* <Label htmlFor="anh_loi_url">Hình Ảnh Error Page</Label> */}
           <CloudinaryUploadWidget
-            onUpload={(result) => handleImageUpload('errorImageUrl', result)}
-            currentImage={formData.errorImageUrl}
+            onUpload={(result) => handleImageUpload('anh_loi_url', result)}
+            currentImage={formData.anh_loi_url}
             folder="website-config/error"
             label="Hình ảnh error page"
           />
-          {errors.errorImageUrl && (
-            <p className="text-sm text-destructive">{errors.errorImageUrl}</p>
+          {errors.anh_loi_url && (
+            <p className="text-sm text-destructive">{errors.anh_loi_url}</p>
           )}
         </div>
 
         {/* Website Title */}
         <div className="space-y-2">
-          <Label htmlFor="websiteTitle">Tiêu Đề Website *</Label>
+          <Label htmlFor="tieu_de_website">Tiêu Đề Website *</Label>
           <Input
-            id="websiteTitle"
-            value={formData.websiteTitle || ''}
-            onChange={(e) => handleInputChange('websiteTitle', e.target.value)}
+            id="tieu_de_website"
+            value={formData.tieu_de_website || ''}
+            onChange={(e) => handleInputChange('tieu_de_website', e.target.value)}
             maxLength={100}
             placeholder="HomeZen - Ứng dụng quản lý nhà trọ"
           />
           <p className="text-xs text-muted-foreground">
-            {formData.websiteTitle?.length || 0}/100 ký tự
+            {formData.tieu_de_website?.length || 0}/100 ký tự
           </p>
-          {errors.websiteTitle && (
-            <p className="text-sm text-destructive">{errors.websiteTitle}</p>
+          {errors.tieu_de_website && (
+            <p className="text-sm text-destructive">{errors.tieu_de_website}</p>
           )}
         </div>
 
         {/* Website Description */}
         <div className="space-y-2">
-          <Label htmlFor="websiteDescription">Mô Tả Website *</Label>
+          <Label htmlFor="mo_ta_website">Mô Tả Website *</Label>
           <Textarea
-            id="websiteDescription"
-            value={formData.websiteDescription || ''}
-            onChange={(e) => handleInputChange('websiteDescription', e.target.value)}
+            id="mo_ta_website"
+            value={formData.mo_ta_website || ''}
+            onChange={(e) => handleInputChange('mo_ta_website', e.target.value)}
             maxLength={500}
             rows={3}
             placeholder="Quản lý phòng trọ, người thuê, hóa đơn điện nước dễ dàng và hiện đại"
           />
           <p className="text-xs text-muted-foreground">
-            {formData.websiteDescription?.length || 0}/500 ký tự
+            {formData.mo_ta_website?.length || 0}/500 ký tự
           </p>
-          {errors.websiteDescription && (
-            <p className="text-sm text-destructive">{errors.websiteDescription}</p>
+          {errors.mo_ta_website && (
+            <p className="text-sm text-destructive">{errors.mo_ta_website}</p>
           )}
         </div>
 
         {/* Brand Name */}
         <div className="space-y-2">
-          <Label htmlFor="brandName">Tên Thương Hiệu *</Label>
+          <Label htmlFor="ten_thuong_hieu">Tên Thương Hiệu *</Label>
           <Input
-            id="brandName"
-            value={formData.brandName || ''}
-            onChange={(e) => handleInputChange('brandName', e.target.value)}
+            id="ten_thuong_hieu"
+            value={formData.ten_thuong_hieu || ''}
+            onChange={(e) => handleInputChange('ten_thuong_hieu', e.target.value)}
             maxLength={50}
             placeholder="HomeZen"
           />
           <p className="text-xs text-muted-foreground">
-            {formData.brandName?.length || 0}/50 ký tự
+            {formData.ten_thuong_hieu?.length || 0}/50 ký tự
           </p>
-          {errors.brandName && (
-            <p className="text-sm text-destructive">{errors.brandName}</p>
+          {errors.ten_thuong_hieu && (
+            <p className="text-sm text-destructive">{errors.ten_thuong_hieu}</p>
           )}
         </div>
 
         {/* Hero Title */}
         <div className="space-y-2">
-          <Label htmlFor="heroTitle">Tiêu Đề Hero *</Label>
+          <Label htmlFor="tieu_de_hero">Tiêu Đề Hero *</Label>
           <Input
-            id="heroTitle"
-            value={formData.heroTitle || ''}
-            onChange={(e) => handleInputChange('heroTitle', e.target.value)}
+            id="tieu_de_hero"
+            value={formData.tieu_de_hero || ''}
+            onChange={(e) => handleInputChange('tieu_de_hero', e.target.value)}
             maxLength={200}
             placeholder="Chào Mừng Đến Với HomeZen"
           />
           <p className="text-xs text-muted-foreground">
-            {formData.heroTitle?.length || 0}/200 ký tự
+            {formData.tieu_de_hero?.length || 0}/200 ký tự
           </p>
-          {errors.heroTitle && (
-            <p className="text-sm text-destructive">{errors.heroTitle}</p>
+          {errors.tieu_de_hero && (
+            <p className="text-sm text-destructive">{errors.tieu_de_hero}</p>
           )}
         </div>
 
         {/* Hero Subtitle */}
         <div className="space-y-2">
-          <Label htmlFor="heroSubtitle">Phụ Đề Hero *</Label>
+          <Label htmlFor="phu_de_hero">Phụ Đề Hero *</Label>
           <Input
-            id="heroSubtitle"
-            value={formData.heroSubtitle || ''}
-            onChange={(e) => handleInputChange('heroSubtitle', e.target.value)}
+            id="phu_de_hero"
+            value={formData.phu_de_hero || ''}
+            onChange={(e) => handleInputChange('phu_de_hero', e.target.value)}
             maxLength={200}
             placeholder="Quản lý nhà trọ thảnh thơi"
           />
           <p className="text-xs text-muted-foreground">
-            {formData.heroSubtitle?.length || 0}/200 ký tự
+            {formData.phu_de_hero?.length || 0}/200 ký tự
           </p>
-          {errors.heroSubtitle && (
-            <p className="text-sm text-destructive">{errors.heroSubtitle}</p>
+          {errors.phu_de_hero && (
+            <p className="text-sm text-destructive">{errors.phu_de_hero}</p>
           )}
         </div>
 
         {/* Footer Text */}
         <div className="space-y-2">
-          <Label htmlFor="footerText">Văn Bản Footer *</Label>
+          <Label htmlFor="tieu_de_footer">Văn Bản Footer *</Label>
           <Input
-            id="footerText"
-            value={formData.footerText || ''}
-            onChange={(e) => handleInputChange('footerText', e.target.value)}
+            id="tieu_de_footer"
+            value={formData.tieu_de_footer || ''}
+            onChange={(e) => handleInputChange('tieu_de_footer', e.target.value)}
             maxLength={200}
             placeholder="HomeZen — Boarding House Management v1.0"
           />
           <p className="text-xs text-muted-foreground">
-            {formData.footerText?.length || 0}/200 ký tự
+            {formData.tieu_de_footer?.length || 0}/200 ký tự
           </p>
-          {errors.footerText && (
-            <p className="text-sm text-destructive">{errors.footerText}</p>
+          {errors.tieu_de_footer && (
+            <p className="text-sm text-destructive">{errors.tieu_de_footer}</p>
           )}
         </div>
 
         {/* Statistics Section */}
         <div className="space-y-6 pt-4 border-t">
           <h3 className="text-lg font-semibold">Thống Kê</h3>
-          
+
           {/* Stat 1 */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="stat1Value">Giá Trị Thống Kê 1 *</Label>
+              <Label htmlFor="gia_tri_thong_ke_1">Giá Trị Thống Kê 1 *</Label>
               <Input
-                id="stat1Value"
-                value={formData.stat1Value || ''}
-                onChange={(e) => handleInputChange('stat1Value', e.target.value)}
+                id="gia_tri_thong_ke_1"
+                value={formData.gia_tri_thong_ke_1 || ''}
+                onChange={(e) => handleInputChange('gia_tri_thong_ke_1', e.target.value)}
                 maxLength={50}
                 placeholder="1k+"
               />
               <p className="text-xs text-muted-foreground">
-                {formData.stat1Value?.length || 0}/50 ký tự
+                {formData.gia_tri_thong_ke_1?.length || 0}/50 ký tự
               </p>
-              {errors.stat1Value && (
-                <p className="text-sm text-destructive">{errors.stat1Value}</p>
+              {errors.gia_tri_thong_ke_1 && (
+                <p className="text-sm text-destructive">{errors.gia_tri_thong_ke_1}</p>
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="stat1Label">Nhãn Thống Kê 1 *</Label>
+              <Label htmlFor="ten_thong_ke_1">Nhãn Thống Kê 1 *</Label>
               <Input
-                id="stat1Label"
-                value={formData.stat1Label || ''}
-                onChange={(e) => handleInputChange('stat1Label', e.target.value)}
+                id="ten_thong_ke_1"
+                value={formData.ten_thong_ke_1 || ''}
+                onChange={(e) => handleInputChange('ten_thong_ke_1', e.target.value)}
                 maxLength={50}
                 placeholder="Tin cậy"
               />
               <p className="text-xs text-muted-foreground">
-                {formData.stat1Label?.length || 0}/50 ký tự
+                {formData.ten_thong_ke_1?.length || 0}/50 ký tự
               </p>
-              {errors.stat1Label && (
-                <p className="text-sm text-destructive">{errors.stat1Label}</p>
+              {errors.ten_thong_ke_1 && (
+                <p className="text-sm text-destructive">{errors.ten_thong_ke_1}</p>
               )}
             </div>
           </div>
@@ -440,35 +440,35 @@ export default function WebsiteConfigPage() {
           {/* Stat 2 */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="stat2Value">Giá Trị Thống Kê 2 *</Label>
+              <Label htmlFor="gia_tri_thong_ke_2">Giá Trị Thống Kê 2 *</Label>
               <Input
-                id="stat2Value"
-                value={formData.stat2Value || ''}
-                onChange={(e) => handleInputChange('stat2Value', e.target.value)}
+                id="gia_tri_thong_ke_2"
+                value={formData.gia_tri_thong_ke_2 || ''}
+                onChange={(e) => handleInputChange('gia_tri_thong_ke_2', e.target.value)}
                 maxLength={50}
                 placeholder="99%"
               />
               <p className="text-xs text-muted-foreground">
-                {formData.stat2Value?.length || 0}/50 ký tự
+                {formData.gia_tri_thong_ke_2?.length || 0}/50 ký tự
               </p>
-              {errors.stat2Value && (
-                <p className="text-sm text-destructive">{errors.stat2Value}</p>
+              {errors.gia_tri_thong_ke_2 && (
+                <p className="text-sm text-destructive">{errors.gia_tri_thong_ke_2}</p>
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="stat2Label">Nhãn Thống Kê 2 *</Label>
+              <Label htmlFor="ten_thong_ke_2">Nhãn Thống Kê 2 *</Label>
               <Input
-                id="stat2Label"
-                value={formData.stat2Label || ''}
-                onChange={(e) => handleInputChange('stat2Label', e.target.value)}
+                id="ten_thong_ke_2"
+                value={formData.ten_thong_ke_2 || ''}
+                onChange={(e) => handleInputChange('ten_thong_ke_2', e.target.value)}
                 maxLength={50}
                 placeholder="Hài lòng"
               />
               <p className="text-xs text-muted-foreground">
-                {formData.stat2Label?.length || 0}/50 ký tự
+                {formData.ten_thong_ke_2?.length || 0}/50 ký tự
               </p>
-              {errors.stat2Label && (
-                <p className="text-sm text-destructive">{errors.stat2Label}</p>
+              {errors.ten_thong_ke_2 && (
+                <p className="text-sm text-destructive">{errors.ten_thong_ke_2}</p>
               )}
             </div>
           </div>
@@ -477,38 +477,38 @@ export default function WebsiteConfigPage() {
         {/* Contact Information Section */}
         <div className="space-y-6 pt-4 border-t">
           <h3 className="text-lg font-semibold">Thông Tin Liên Hệ</h3>
-          
+
           {/* Contact Email */}
           <div className="space-y-2">
-            <Label htmlFor="contactEmail">Email Liên Hệ</Label>
+            <Label htmlFor="email_lien_he">Email Liên Hệ</Label>
             <Input
-              id="contactEmail"
+              id="email_lien_he"
               type="email"
-              value={formData.contactEmail || ''}
-              onChange={(e) => handleInputChange('contactEmail', e.target.value)}
+              value={formData.email_lien_he || ''}
+              onChange={(e) => handleInputChange('email_lien_he', e.target.value)}
               placeholder="support@homezen.com"
             />
-            {errors.contactEmail && (
-              <p className="text-sm text-destructive">{errors.contactEmail}</p>
+            {errors.email_lien_he && (
+              <p className="text-sm text-destructive">{errors.email_lien_he}</p>
             )}
           </div>
 
           {/* Contact Phone */}
           <div className="space-y-2">
-            <Label htmlFor="contactPhone">Số Điện Thoại Liên Hệ</Label>
+            <Label htmlFor="sdt_lien_he">Số Điện Thoại Liên Hệ</Label>
             <Input
-              id="contactPhone"
+              id="sdt_lien_he"
               type="tel"
-              value={formData.contactPhone || ''}
-              onChange={(e) => handleInputChange('contactPhone', e.target.value)}
+              value={formData.sdt_lien_he || ''}
+              onChange={(e) => handleInputChange('sdt_lien_he', e.target.value)}
               maxLength={20}
               placeholder="0123456789"
             />
             <p className="text-xs text-muted-foreground">
-              {formData.contactPhone?.length || 0}/20 ký tự
+              {formData.sdt_lien_he?.length || 0}/20 ký tự
             </p>
-            {errors.contactPhone && (
-              <p className="text-sm text-destructive">{errors.contactPhone}</p>
+            {errors.sdt_lien_he && (
+              <p className="text-sm text-destructive">{errors.sdt_lien_he}</p>
             )}
           </div>
         </div>

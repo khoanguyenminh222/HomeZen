@@ -19,16 +19,16 @@ export async function GET(request) {
 
     const where = {};
     if (!includeInactive) {
-      where.isActive = true;
+      where.trang_thai = true;
     }
 
     // Add user filter for Property Owners
     const queryOptions = await addUserFilter({
       where,
-      orderBy: { name: 'asc' },
+      orderBy: { ten_phi: 'asc' },
     }, session.user.id);
 
-    const feeTypes = await prisma.feeType.findMany(queryOptions);
+    const feeTypes = await prisma.bIL_LOAI_PHI.findMany(queryOptions);
 
     return NextResponse.json(feeTypes);
   } catch (error) {
@@ -52,26 +52,21 @@ export async function POST(request) {
     const body = await request.json();
     const validatedData = createFeeTypeSchema.parse(body);
 
-    // For Property Owners, automatically set userId (remove propertyId if present)
+    // For Property Owners, automatically set nguoi_dung_id
     const dataToCreate = { ...validatedData };
     if (!isSuperAdmin(session)) {
       // Property owners can only create fee types for their own property
-      dataToCreate.userId = session.user.id;
-      delete dataToCreate.propertyId; // Remove propertyId if schema allows it
+      dataToCreate.nguoi_dung_id = session.user.id;
     } else {
-      // Super Admin can specify userId or leave it null
-      if (dataToCreate.propertyId) {
-        // If propertyId is provided, we need to find the userId
-        // But in new model, we use userId directly
-        delete dataToCreate.propertyId;
-      }
+      // Super Admin can specify nguoi_dung_id or leave it null
+      // In new model, we use nguoi_dung_id directly
     }
 
     // Kiểm tra tên loại phí đã tồn tại chưa trong cùng property owner
-    const existing = await prisma.feeType.findFirst({
-      where: { 
-        name: validatedData.name,
-        userId: dataToCreate.userId || null
+    const existing = await prisma.bIL_LOAI_PHI.findFirst({
+      where: {
+        ten_phi: validatedData.ten_phi,
+        nguoi_dung_id: dataToCreate.nguoi_dung_id || null
       }
     });
 
@@ -82,14 +77,14 @@ export async function POST(request) {
       );
     }
 
-    const feeType = await prisma.feeType.create({
+    const feeType = await prisma.bIL_LOAI_PHI.create({
       data: dataToCreate
     });
 
     return NextResponse.json(feeType, { status: 201 });
   } catch (error) {
     console.error('Error creating fee type:', error);
-    
+
     if (error.name === 'ZodError') {
       return NextResponse.json(
         { error: 'Dữ liệu không hợp lệ', details: error.errors },

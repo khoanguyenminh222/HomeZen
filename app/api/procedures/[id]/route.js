@@ -27,12 +27,12 @@ async function updateProcedureHandler(request, { params }) {
     const { id } = await params;
     const session = await auth();
     const body = await request.json();
-    const { sql, metadata } = body;
+    const { sql, thong_tin_bo_sung } = body;
 
     const updated = await procedureManager.updateProcedure(
       id,
       sql,
-      metadata,
+      thong_tin_bo_sung,
       session?.user?.id || null
     );
 

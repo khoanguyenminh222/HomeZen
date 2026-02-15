@@ -1,34 +1,56 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Loading } from '@/components/ui/loading';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
-import { Mail, Send, CheckCircle2, XCircle, Clock, ChevronDown, ChevronUp } from 'lucide-react';
+import { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Loading } from "@/components/ui/loading";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import {
+  Mail,
+  Send,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 
 // Helper function to format date
 function formatDate(dateString) {
-  if (!dateString) return '';
+  if (!dateString) return "";
   const date = new Date(dateString);
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
   const year = date.getFullYear();
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
   return `${day}/${month}/${year} ${hours}:${minutes}`;
 }
 
 // Notification Log Item Component
 function NotificationLogItem({ log, getStatusBadge, getTypeIcon }) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const TypeIcon = getTypeIcon(log.type);
-  const messageLines = log.message?.split('\n') || [];
-  const shouldTruncate = messageLines.length > 3 || log.message?.length > 200;
-  const displayMessage = shouldTruncate && !isExpanded 
-    ? messageLines.slice(0, 3).join('\n') + (messageLines.length > 3 ? '...' : '')
-    : log.message;
+  const TypeIcon = getTypeIcon(log.loai);
+  const messageLines = log.noi_dung?.split("\n") || [];
+  const shouldTruncate = messageLines.length > 3 || log.noi_dung?.length > 200;
+  const displayMessage =
+    shouldTruncate && !isExpanded
+      ? messageLines.slice(0, 3).join("\n") +
+        (messageLines.length > 3 ? "..." : "")
+      : log.noi_dung;
 
   return (
     <div className="border rounded-lg p-4 sm:p-5 hover:bg-muted/50 transition-colors">
@@ -38,21 +60,21 @@ function NotificationLogItem({ log, getStatusBadge, getTypeIcon }) {
           <div className="flex items-center gap-2">
             <TypeIcon className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground shrink-0" />
             <span className="font-medium text-sm sm:text-base">
-              {log.type === 'EMAIL' ? 'Email' : 'Telegram'}
+              {log.loai === "EMAIL" ? "Email" : "Telegram"}
             </span>
           </div>
-          {getStatusBadge(log.status)}
-          {log.retryCount > 0 && (
+          {getStatusBadge(log.trang_thai)}
+          {log.so_lan_thu_lai > 0 && (
             <Badge variant="outline" className="text-xs">
-              Thử lại: {log.retryCount}
+              Thử lại: {log.so_lan_thu_lai}
             </Badge>
           )}
         </div>
 
         {/* Subject */}
-        {log.subject && (
+        {log.tieu_de && (
           <p className="font-semibold text-sm sm:text-base wrap-break-word line-clamp-2">
-            {log.subject}
+            {log.tieu_de}
           </p>
         )}
 
@@ -87,25 +109,29 @@ function NotificationLogItem({ log, getStatusBadge, getTypeIcon }) {
         <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground pt-2 border-t border-border/50">
           <div className="flex items-center gap-1 sm:gap-2">
             <span className="font-medium">Đến:</span>
-            <span className="break-all">{log.recipient}</span>
+            <span className="break-all">{log.nguoi_nhan}</span>
           </div>
-          {log.sentAt && (
+          {log.thoi_gian_gui && (
             <div className="flex items-center gap-1 sm:gap-2">
               <span className="font-medium">Gửi lúc:</span>
-              <span className="whitespace-nowrap">{formatDate(log.sentAt)}</span>
+              <span className="whitespace-nowrap">
+                {formatDate(log.thoi_gian_gui)}
+              </span>
             </div>
           )}
           <div className="flex items-center gap-1 sm:gap-2">
             <span className="font-medium">Tạo lúc:</span>
-            <span className="whitespace-nowrap">{formatDate(log.createdAt)}</span>
+            <span className="whitespace-nowrap">
+              {formatDate(log.ngay_tao)}
+            </span>
           </div>
         </div>
 
         {/* Error Message */}
-        {log.errorMessage && (
+        {log.thong_bao_loi && (
           <div className="text-xs sm:text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 p-3 rounded-lg border border-red-200 dark:border-red-800 wrap-break-word">
             <span className="font-semibold">Lỗi: </span>
-            <span>{log.errorMessage}</span>
+            <span>{log.thong_bao_loi}</span>
           </div>
         )}
       </div>
@@ -121,8 +147,8 @@ function NotificationLogItem({ log, getStatusBadge, getTypeIcon }) {
 export default function NotificationLogsList() {
   const [logs, setLogs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [typeFilter, setTypeFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   useEffect(() => {
     fetchLogs();
@@ -132,21 +158,23 @@ export default function NotificationLogsList() {
     setIsLoading(true);
     try {
       const params = new URLSearchParams();
-      if (typeFilter !== 'all') {
-        params.append('type', typeFilter);
+      if (typeFilter !== "all") {
+        params.append("loai", typeFilter);
       }
-      if (statusFilter !== 'all') {
-        params.append('status', statusFilter);
+      if (statusFilter !== "all") {
+        params.append("trang_thai", statusFilter);
       }
-      params.append('limit', '50');
+      params.append("limit", "50");
 
-      const response = await fetch(`/api/notifications/logs?${params.toString()}`);
+      const response = await fetch(
+        `/api/notifications/logs?${params.toString()}`,
+      );
       if (response.ok) {
         const result = await response.json();
         setLogs(result.data || []);
       }
     } catch (error) {
-      console.error('Error fetching notification logs:', error);
+      console.error("Error fetching notification logs:", error);
     } finally {
       setIsLoading(false);
     }
@@ -154,10 +182,10 @@ export default function NotificationLogsList() {
 
   const getStatusBadge = (status) => {
     const variants = {
-      SENT: { variant: 'default', icon: CheckCircle2, label: 'Đã gửi' },
-      FAILED: { variant: 'destructive', icon: XCircle, label: 'Thất bại' },
-      PENDING: { variant: 'secondary', icon: Clock, label: 'Chờ xử lý' },
-      RETRY: { variant: 'outline', icon: Clock, label: 'Đang thử lại' },
+      DA_GUI: { variant: "default", icon: CheckCircle2, label: "Đã gửi" },
+      THAT_BAI: { variant: "destructive", icon: XCircle, label: "Thất bại" },
+      CHO_XU_LY: { variant: "secondary", icon: Clock, label: "Chờ xử lý" },
+      THU_LAI: { variant: "outline", icon: Clock, label: "Đang thử lại" },
     };
 
     const config = variants[status] || variants.PENDING;
@@ -172,7 +200,7 @@ export default function NotificationLogsList() {
   };
 
   const getTypeIcon = (type) => {
-    return type === 'EMAIL' ? Mail : Send;
+    return type === "EMAIL" ? Mail : Send;
   };
 
   if (isLoading) {
@@ -183,7 +211,9 @@ export default function NotificationLogsList() {
     <div className="space-y-4 sm:space-y-6">
       <Card>
         <CardHeader className="pb-4 sm:pb-6">
-          <CardTitle className="text-xl sm:text-2xl">Lịch Sử Thông Báo</CardTitle>
+          <CardTitle className="text-xl sm:text-2xl">
+            Lịch Sử Thông Báo
+          </CardTitle>
           <CardDescription className="text-sm sm:text-base mt-1 sm:mt-2">
             Xem lịch sử các thông báo đã được gửi qua email và telegram
           </CardDescription>
@@ -192,7 +222,9 @@ export default function NotificationLogsList() {
           {/* Filters */}
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-4 sm:mb-6">
             <div className="flex-1 w-full">
-              <label className="text-sm font-medium mb-2 block">Loại thông báo</label>
+              <label className="text-sm font-medium mb-2 block">
+                Loại thông báo
+              </label>
               <Select value={typeFilter} onValueChange={setTypeFilter}>
                 <SelectTrigger className="h-11 sm:h-10">
                   <SelectValue />
@@ -205,17 +237,19 @@ export default function NotificationLogsList() {
               </Select>
             </div>
             <div className="flex-1 w-full">
-              <label className="text-sm font-medium mb-2 block">Trạng thái</label>
+              <label className="text-sm font-medium mb-2 block">
+                Trạng thái
+              </label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="h-11 sm:h-10">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tất cả</SelectItem>
-                  <SelectItem value="SENT">Đã gửi</SelectItem>
-                  <SelectItem value="FAILED">Thất bại</SelectItem>
-                  <SelectItem value="PENDING">Chờ xử lý</SelectItem>
-                  <SelectItem value="RETRY">Đang thử lại</SelectItem>
+                  <SelectItem value="DA_GUI">Đã gửi</SelectItem>
+                  <SelectItem value="THAT_BAI">Thất bại</SelectItem>
+                  <SelectItem value="CHO_XU_LY">Chờ xử lý</SelectItem>
+                  <SelectItem value="THU_LAI">Đang thử lại</SelectItem>
                 </SelectContent>
               </Select>
             </div>

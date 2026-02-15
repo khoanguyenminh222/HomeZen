@@ -14,14 +14,11 @@ export async function PUT(request, { params }) {
     const { id, occupantId } = await params;
     const body = await request.json();
 
-    // Validate input
-    const validatedData = updateOccupantSchema.parse(body);
-
     // Kiểm tra người ở có tồn tại và thuộc về tenant này không
-    const existingOccupant = await prisma.occupant.findFirst({
+    const existingOccupant = await prisma.tNT_NGUOI_O.findFirst({
       where: {
         id: occupantId,
-        tenantId: id
+        nguoi_thue_id: id
       }
     });
 
@@ -32,11 +29,25 @@ export async function PUT(request, { params }) {
       );
     }
 
+    // Validate request body
+    const validatedResult = updateOccupantSchema.safeParse(body);
+    if (!validatedResult.success) {
+      return NextResponse.json(
+        {
+          error: 'Dữ liệu không hợp lệ',
+          details: validatedResult.error.errors
+        },
+        { status: 400 }
+      );
+    }
+
+    const validatedData = validatedResult.data;
+
     // Kiểm tra CMND/CCCD trùng (nếu có thay đổi)
-    if (validatedData.idCard && validatedData.idCard !== existingOccupant.idCard) {
-      const idCardExists = await prisma.occupant.findFirst({
+    if (validatedData.can_cuoc && validatedData.can_cuoc !== existingOccupant.can_cuoc) {
+      const idCardExists = await prisma.tNT_NGUOI_O.findFirst({
         where: {
-          idCard: validatedData.idCard,
+          can_cuoc: validatedData.can_cuoc,
           id: { not: occupantId }
         }
       });
@@ -50,26 +61,26 @@ export async function PUT(request, { params }) {
     }
 
     // Cập nhật người ở
-    const updatedOccupant = await prisma.occupant.update({
+    const updatedOccupant = await prisma.tNT_NGUOI_O.update({
       where: { id: occupantId },
       data: {
-        ...(validatedData.fullName && { fullName: validatedData.fullName }),
-        ...(validatedData.idCard !== undefined && { idCard: validatedData.idCard || null }),
-        ...(validatedData.dateOfBirth !== undefined && { dateOfBirth: validatedData.dateOfBirth }),
-        ...(validatedData.hometown !== undefined && { hometown: validatedData.hometown || null }),
-        ...(validatedData.relationship !== undefined && { relationship: validatedData.relationship || null }),
-        ...(validatedData.residenceType && { residenceType: validatedData.residenceType }),
+        ...(validatedData.ho_ten && { ho_ten: validatedData.ho_ten }),
+        ...(validatedData.can_cuoc !== undefined && { can_cuoc: validatedData.can_cuoc || null }),
+        ...(validatedData.ngay_sinh !== undefined && { ngay_sinh: validatedData.ngay_sinh }),
+        ...(validatedData.que_quan !== undefined && { que_quan: validatedData.que_quan || null }),
+        ...(validatedData.moi_quan_he !== undefined && { moi_quan_he: validatedData.moi_quan_he || null }),
+        ...(validatedData.loai_cu_tru && { loai_cu_tru: validatedData.loai_cu_tru }),
         // Thông tin bổ sung
-        ...(validatedData.phone !== undefined && { phone: validatedData.phone || null }),
-        ...(validatedData.gender !== undefined && { gender: validatedData.gender || null }),
-        ...(validatedData.occupation !== undefined && { occupation: validatedData.occupation || null }),
-        ...(validatedData.ethnicity !== undefined && { ethnicity: validatedData.ethnicity || null }),
-        ...(validatedData.nationality !== undefined && { nationality: validatedData.nationality || null }),
-        ...(validatedData.permanentAddress !== undefined && { permanentAddress: validatedData.permanentAddress || null }),
-        ...(validatedData.temporaryAddress !== undefined && { temporaryAddress: validatedData.temporaryAddress || null }),
-        ...(validatedData.insuranceCardNumber !== undefined && { insuranceCardNumber: validatedData.insuranceCardNumber || null }),
-        ...(validatedData.issueDate !== undefined && { issueDate: validatedData.issueDate }),
-        ...(validatedData.placeOfIssue !== undefined && { placeOfIssue: validatedData.placeOfIssue || null }),
+        ...(validatedData.dien_thoai !== undefined && { dien_thoai: validatedData.dien_thoai || null }),
+        ...(validatedData.gioi_tinh !== undefined && { gioi_tinh: validatedData.gioi_tinh || null }),
+        ...(validatedData.nghe_nghiep !== undefined && { nghe_nghiep: validatedData.nghe_nghiep || null }),
+        ...(validatedData.dan_toc !== undefined && { dan_toc: validatedData.dan_toc || null }),
+        ...(validatedData.quoc_tich !== undefined && { quoc_tich: validatedData.quoc_tich || null }),
+        ...(validatedData.dia_chi_thuong_tru !== undefined && { dia_chi_thuong_tru: validatedData.dia_chi_thuong_tru || null }),
+        ...(validatedData.dia_chi_tam_tru !== undefined && { dia_chi_tam_tru: validatedData.dia_chi_tam_tru || null }),
+        ...(validatedData.so_the_bao_hiem !== undefined && { so_the_bao_hiem: validatedData.so_the_bao_hiem || null }),
+        ...(validatedData.ngay_cap !== undefined && { ngay_cap: validatedData.ngay_cap }),
+        ...(validatedData.noi_cap !== undefined && { noi_cap: validatedData.noi_cap || null }),
       }
     });
 
@@ -105,10 +116,10 @@ export async function DELETE(request, { params }) {
     const { id, occupantId } = await params;
 
     // Kiểm tra người ở có tồn tại và thuộc về tenant này không
-    const occupant = await prisma.occupant.findFirst({
+    const occupant = await prisma.tNT_NGUOI_O.findFirst({
       where: {
         id: occupantId,
-        tenantId: id
+        nguoi_thue_id: id
       }
     });
 
@@ -120,7 +131,7 @@ export async function DELETE(request, { params }) {
     }
 
     // Xóa người ở
-    await prisma.occupant.delete({
+    await prisma.tNT_NGUOI_O.delete({
       where: { id: occupantId }
     });
 

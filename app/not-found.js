@@ -21,8 +21,8 @@ export default function NotFound() {
             {/* Soft Glow behind image */}
             <div className="absolute inset-0 bg-primary/20 rounded-full blur-2xl scale-75 animate-pulse" />
             <OptimizedImage
-              src={config?.heroImageUrl || '/images/home-zen-master-removebg-preview.png'}
-              alt={`${config?.brandName || 'HomeZen'} Master Visual`}
+              src={config?.anh_hero_url || '/images/home-zen-master-removebg-preview.png'}
+              alt={`${config?.ten_thuong_hieu || 'HomeZen'} Master Visual`}
               fill
               className="object-contain drop-shadow-2xl"
               priority
@@ -87,7 +87,7 @@ export default function NotFound() {
 
           <div className="mt-4 sm:mt-8 opacity-40 px-6">
             <p className="text-[10px] font-medium text-muted-foreground leading-relaxed">
-              {config?.footerText || 'HomeZen — Quản lý nhà trọ thảnh thơi.'}
+              {config?.tieu_de_footer || 'HomeZen — Quản lý nhà trọ thảnh thơi.'}
             </p>
           </div>
         </div>

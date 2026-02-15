@@ -16,7 +16,7 @@ export async function GET(request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (session.user.role !== 'SUPER_ADMIN') {
+    if (session.user.vai_tro !== 'SIEU_QUAN_TRI') {
       logAuthorizationViolation(
         request,
         session,
@@ -64,7 +64,7 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (session.user.role !== 'SUPER_ADMIN') {
+    if (session.user.vai_tro !== 'SIEU_QUAN_TRI') {
       logAuthorizationViolation(
         request,
         session,
@@ -90,7 +90,7 @@ export async function POST(request) {
     );
   } catch (error) {
     console.error('Create/Update telegram bot config error:', error);
-    
+
     if (error.name === 'ZodError') {
       return NextResponse.json(
         {

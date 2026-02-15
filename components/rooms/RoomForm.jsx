@@ -1,16 +1,16 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { createRoomSchema } from '@/lib/validations/room';
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { createRoomSchema } from "@/lib/validations/room";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -18,12 +18,12 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { formatCurrency } from '@/lib/format';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { formatCurrency } from "@/lib/format";
 
 /**
  * RoomForm - Form tạo/sửa phòng (Dialog)
@@ -37,13 +37,13 @@ export default function RoomForm({ open, onClose, room, onSuccess }) {
   const form = useForm({
     resolver: zodResolver(createRoomSchema),
     defaultValues: {
-      code: '',
-      name: '',
-      price: '',
-      status: 'EMPTY',
-      meterReadingDay: null,
-      maxElectricMeter: null,
-      maxWaterMeter: null,
+      ma_phong: "",
+      ten_phong: "",
+      gia_phong: "",
+      trang_thai: "TRONG",
+      ngay_chot_so: null,
+      max_dong_ho_dien: null,
+      max_dong_ho_nuoc: null,
     },
   });
 
@@ -51,23 +51,23 @@ export default function RoomForm({ open, onClose, room, onSuccess }) {
   useEffect(() => {
     if (room) {
       form.reset({
-        code: room.code || '',
-        name: room.name || '',
-        price: room.price || '',
-        status: room.status || 'EMPTY',
-        meterReadingDay: room.meterReadingDay || null,
-        maxElectricMeter: room.maxElectricMeter || null,
-        maxWaterMeter: room.maxWaterMeter || null,
+        ma_phong: room.ma_phong || "",
+        ten_phong: room.ten_phong || "",
+        gia_phong: room.gia_phong || "",
+        trang_thai: room.trang_thai || "TRONG",
+        ngay_chot_so: room.ngay_chot_so || null,
+        max_dong_ho_dien: room.max_dong_ho_dien || null,
+        max_dong_ho_nuoc: room.max_dong_ho_nuoc || null,
       });
     } else {
       form.reset({
-        code: '',
-        name: '',
-        price: '',
-        status: 'EMPTY',
-        meterReadingDay: null,
-        maxElectricMeter: null,
-        maxWaterMeter: null,
+        ma_phong: "",
+        ten_phong: "",
+        gia_phong: "",
+        trang_thai: "TRONG",
+        ngay_chot_so: null,
+        max_dong_ho_dien: null,
+        max_dong_ho_nuoc: null,
       });
     }
   }, [room, form]);
@@ -75,36 +75,38 @@ export default function RoomForm({ open, onClose, room, onSuccess }) {
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
-      const url = isEdit ? `/api/rooms/${room.id}` : '/api/rooms';
-      const method = isEdit ? 'PUT' : 'POST';
+      const url = isEdit ? `/api/rooms/${room.id}` : "/api/rooms";
+      const method = isEdit ? "PUT" : "POST";
 
       const response = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Có lỗi xảy ra');
+        throw new Error(error.error || "Có lỗi xảy ra");
       }
 
       const result = await response.json();
 
       toast({
-        variant: 'success',
-        title: 'Thành công',
-        description: isEdit ? 'Cập nhật phòng thành công' : 'Tạo phòng thành công',
+        variant: "success",
+        title: "Thành công",
+        description: isEdit
+          ? "Cập nhật phòng thành công"
+          : "Tạo phòng thành công",
       });
 
       onSuccess(result);
       onClose();
       form.reset();
     } catch (error) {
-      console.error('Error saving room:', error);
+      console.error("Error saving room:", error);
       toast({
-        variant: 'destructive',
-        title: 'Lỗi',
+        variant: "destructive",
+        title: "Lỗi",
         description: error.message,
       });
     } finally {
@@ -117,7 +119,7 @@ export default function RoomForm({ open, onClose, room, onSuccess }) {
       <DialogContent className="w-[95vw] sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl">
-            {isEdit ? 'Sửa Phòng' : 'Tạo Phòng Mới'}
+            {isEdit ? "Sửa Phòng" : "Tạo Phòng Mới"}
           </DialogTitle>
         </DialogHeader>
 
@@ -125,7 +127,7 @@ export default function RoomForm({ open, onClose, room, onSuccess }) {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="code"
+              name="ma_phong"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-base">Mã phòng *</FormLabel>
@@ -143,7 +145,7 @@ export default function RoomForm({ open, onClose, room, onSuccess }) {
 
             <FormField
               control={form.control}
-              name="name"
+              name="ten_phong"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-base">Tên phòng *</FormLabel>
@@ -161,7 +163,7 @@ export default function RoomForm({ open, onClose, room, onSuccess }) {
 
             <FormField
               control={form.control}
-              name="price"
+              name="gia_phong"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-base">Giá phòng (VNĐ) *</FormLabel>
@@ -179,15 +181,15 @@ export default function RoomForm({ open, onClose, room, onSuccess }) {
               )}
             />
             {/* Hiển thị text  giá phòng theo format tiền để người dùng dễ nhìn, không input */}
-            {form.watch("price") > 0 && (
+            {form.watch("gia_phong") > 0 && (
               <p className="text-sm text-muted-foreground mt-1 font-medium">
-                Giá hiển thị: {formatCurrency(form.watch("price"))}
+                Giá hiển thị: {formatCurrency(form.watch("gia_phong"))}
               </p>
             )}
 
             <FormField
               control={form.control}
-              name="meterReadingDay"
+              name="ngay_chot_so"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-base">
@@ -201,10 +203,10 @@ export default function RoomForm({ open, onClose, room, onSuccess }) {
                       max="31"
                       placeholder="VD: 5"
                       className="text-base h-12"
-                      value={field.value || ''}
+                      value={field.value || ""}
                       onChange={(e) =>
                         field.onChange(
-                          e.target.value ? Number(e.target.value) : null
+                          e.target.value ? Number(e.target.value) : null,
                         )
                       }
                     />
@@ -216,15 +218,17 @@ export default function RoomForm({ open, onClose, room, onSuccess }) {
 
             {/* Max chỉ số đồng hồ riêng cho phòng */}
             <div className="space-y-4 border-t pt-4">
-              <h3 className="text-base font-semibold">Cấu hình chỉ số đồng hồ riêng (tùy chọn)</h3>
+              <h3 className="text-base font-semibold">
+                Cấu hình chỉ số đồng hồ riêng (tùy chọn)
+              </h3>
               <p className="text-sm text-muted-foreground">
                 Để trống nếu muốn dùng giá trị chung từ cấu hình nhà trọ
               </p>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="maxElectricMeter"
+                  name="max_dong_ho_dien"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-base">
@@ -238,10 +242,10 @@ export default function RoomForm({ open, onClose, room, onSuccess }) {
                           max="9999999"
                           placeholder="Để trống = dùng chung"
                           className="text-base h-12"
-                          value={field.value || ''}
+                          value={field.value || ""}
                           onChange={(e) =>
                             field.onChange(
-                              e.target.value ? Number(e.target.value) : null
+                              e.target.value ? Number(e.target.value) : null,
                             )
                           }
                         />
@@ -253,7 +257,7 @@ export default function RoomForm({ open, onClose, room, onSuccess }) {
 
                 <FormField
                   control={form.control}
-                  name="maxWaterMeter"
+                  name="max_dong_ho_nuoc"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-base">
@@ -267,10 +271,10 @@ export default function RoomForm({ open, onClose, room, onSuccess }) {
                           max="9999999"
                           placeholder="Để trống = dùng chung"
                           className="text-base h-12"
-                          value={field.value || ''}
+                          value={field.value || ""}
                           onChange={(e) =>
                             field.onChange(
-                              e.target.value ? Number(e.target.value) : null
+                              e.target.value ? Number(e.target.value) : null,
                             )
                           }
                         />
@@ -303,9 +307,9 @@ export default function RoomForm({ open, onClose, room, onSuccess }) {
                     Đang lưu...
                   </>
                 ) : isEdit ? (
-                  'Cập nhật'
+                  "Cập nhật"
                 ) : (
-                  'Tạo phòng'
+                  "Tạo phòng"
                 )}
               </Button>
             </DialogFooter>

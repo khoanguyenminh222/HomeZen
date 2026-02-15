@@ -80,7 +80,7 @@ export default function FeesPage() {
                     <SelectContent>
                       {rooms.map((room) => (
                         <SelectItem key={room.id} value={room.id}>
-                          {room.code} - {room.name}
+                          {room.ma_phong} - {room.ten_phong}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -90,7 +90,7 @@ export default function FeesPage() {
                 {selectedRoom && (
                   <RoomFeesList
                     roomId={selectedRoom.id}
-                    roomCode={selectedRoom.code}
+                    roomCode={selectedRoom.ma_phong}
                   />
                 )}
 

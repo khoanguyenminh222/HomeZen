@@ -77,13 +77,13 @@ export default function RoomDetailPage() {
   }
 
   const statusColors = {
-    EMPTY: 'bg-gray-500 text-white',
-    OCCUPIED: 'bg-emerald-500 text-white',
+    TRONG: 'bg-gray-500 text-white',
+    DA_THUE: 'bg-emerald-500 text-white',
   };
 
   const statusText = {
-    EMPTY: 'Phòng trống',
-    OCCUPIED: 'Đã thuê',
+    TRONG: 'Phòng trống',
+    DA_THUE: 'Đã thuê',
   };
 
   return (
@@ -101,11 +101,11 @@ export default function RoomDetailPage() {
 
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold">{room.code}</h1>
-            <p className="text-lg text-muted-foreground mt-1">{room.name}</p>
+            <h1 className="text-2xl sm:text-3xl font-bold">{room.ma_phong}</h1>
+            <p className="text-lg text-muted-foreground mt-1">{room.ten_phong}</p>
           </div>
-          <Badge className={`${statusColors[room.status]} text-sm px-3 py-1 hover:bg-${statusColors[room.status]}/10 hover:text-${statusColors[room.status]}`}>
-              {statusText[room.status]}
+          <Badge className={`${statusColors[room.trang_thai]} text-sm px-3 py-1 hover:bg-${statusColors[room.trang_thai]}/10 hover:text-${statusColors[room.trang_thai]}`}>
+            {statusText[room.trang_thai]}
           </Badge>
         </div>
       </div>
@@ -122,23 +122,23 @@ export default function RoomDetailPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-muted-foreground">Mã phòng</p>
-                  <p className="font-medium text-lg">{room.code}</p>
+                  <p className="font-medium text-lg">{room.ma_phong}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Tên phòng</p>
-                  <p className="font-medium">{room.name}</p>
+                  <p className="font-medium">{room.ten_phong}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Giá phòng</p>
                   <p className="font-medium text-lg text-primary">
-                    {formatCurrency(room.price)}
+                    {formatCurrency(room.gia_phong)}
                   </p>
                 </div>
-                {room.meterReadingDay && (
+                {room.ngay_chot_so && (
                   <div>
                     <p className="text-sm text-muted-foreground">Ngày chốt số</p>
                     <p className="font-medium">
-                      Ngày {room.meterReadingDay} hàng tháng
+                      Ngày {room.ngay_chot_so} hàng tháng
                     </p>
                   </div>
                 )}

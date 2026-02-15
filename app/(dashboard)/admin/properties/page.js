@@ -65,7 +65,7 @@ export default function PropertiesPage() {
 
   const handleEditSubmit = async (data) => {
     try {
-      const response = await fetch(`/api/admin/properties/${selectedProperty.userId}`, {
+      const response = await fetch(`/api/admin/properties/${selectedProperty.nguoi_dung_id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -121,37 +121,37 @@ export default function PropertiesPage() {
           <Card key={property.id}>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">{property.name}</CardTitle>
-                <Badge variant={property.user?.isActive ? 'default' : 'secondary'}>
-                  {property.user?.isActive ? 'Hoạt động' : 'Vô hiệu hóa'}
+                <CardTitle className="text-lg">{property.ten}</CardTitle>
+                <Badge variant={property.nguoi_dung?.trang_thai ? 'default' : 'secondary'}>
+                  {property.nguoi_dung?.trang_thai ? 'Hoạt động' : 'Vô hiệu hóa'}
                 </Badge>
               </div>
               <CardDescription>
-                Chủ trọ: {property.user?.username || 'N/A'}
+                Chủ trọ: {property.nguoi_dung?.tai_khoan || 'N/A'}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-2 text-sm">
                 <div>
                   <span className="text-muted-foreground">Địa chỉ: </span>
-                  <span>{property.address}</span>
+                  <span>{property.dia_chi}</span>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Số điện thoại: </span>
-                  <span>{property.phone || 'N/A'}</span>
+                  <span>{property.dien_thoai || 'N/A'}</span>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Chủ nhà: </span>
-                  <span>{property.ownerName || 'N/A'}</span>
+                  <span>{property.ten_chu_nha || 'N/A'}</span>
                 </div>
                 <div className="flex items-center gap-4 pt-2">
                   <div className="flex items-center gap-1">
                     <Home className="h-4 w-4 text-muted-foreground" />
-                    <span>{property.user?._count?.rooms || 0} phòng</span>
+                    <span>{property.nguoi_dung?._count?.phong || 0} phòng</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <Users className="h-4 w-4 text-muted-foreground" />
-                    <span>{property.user?._count?.feeTypes || 0} loại phí</span>
+                    <span>{property.nguoi_dung?._count?.loai_phi || 0} loại phí</span>
                   </div>
                 </div>
               </div>
@@ -255,7 +255,7 @@ function PropertyTransferForm({ property, onSuccess, onCancel }) {
         const data = await response.json();
         // Filter out current owner and owners who already have properties
         const availableOwners = (data.data || []).filter(
-          owner => owner.id !== property.userId && !owner.propertyInfo
+          owner => owner.id !== property.nguoi_dung_id && !owner.thong_tin_nha_tro
         );
         setPropertyOwners(availableOwners);
       }
@@ -280,7 +280,7 @@ function PropertyTransferForm({ property, onSuccess, onCancel }) {
     try {
       // Use the transfer endpoint - note: the route is /api/admin/properties/[id]/assign
       // where [id] is the fromUserId (current owner)
-      const response = await fetch(`/api/admin/properties/${property.userId}/assign`, {
+      const response = await fetch(`/api/admin/properties/${property.nguoi_dung_id}/assign`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ toUserId }),
@@ -316,7 +316,7 @@ function PropertyTransferForm({ property, onSuccess, onCancel }) {
         <input
           type="text"
           disabled
-          value={property.user?.username || 'N/A'}
+          value={property.nguoi_dung?.tai_khoan || 'N/A'}
           className="w-full mt-1 px-3 py-2 border rounded-md bg-muted"
         />
       </div>
@@ -331,7 +331,7 @@ function PropertyTransferForm({ property, onSuccess, onCancel }) {
           <option value="">-- Chọn chủ trọ --</option>
           {propertyOwners.map((owner) => (
             <option key={owner.id} value={owner.id}>
-              {owner.username} {owner.propertyInfo ? '(Đã có nhà trọ)' : ''}
+              {owner.tai_khoan} {owner.thong_tin_nha_tro ? '(Đã có nhà trọ)' : ''}
             </option>
           ))}
         </select>

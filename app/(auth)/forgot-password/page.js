@@ -129,13 +129,13 @@ export default function ForgotPasswordPage() {
           <div className="lg:hidden text-center space-y-2 mb-10">
             <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-primary/20 overflow-hidden relative">
               <OptimizedImage
-                src={config?.logoUrl || '/images/home-zen-logo.png'}
-                alt={`${config?.brandName || 'HomeZen'} Logo`}
+                src={config?.logo_url || '/images/home-zen-logo.png'}
+                alt={`${config?.ten_thuong_hieu || 'HomeZen'} Logo`}
                 fill
                 className="object-contain p-3"
               />
             </div>
-            <h2 className="text-3xl font-black text-foreground tracing-tight">{config?.brandName || 'HomeZen'}</h2>
+            <h2 className="text-3xl font-black text-foreground tracing-tight">{config?.ten_thuong_hieu || 'HomeZen'}</h2>
             <p className="text-muted-foreground">Khôi phục mật khẩu</p>
           </div>
 
@@ -151,7 +151,7 @@ export default function ForgotPasswordPage() {
           {success ? (
             <div className="space-y-6 pt-2">
               <div className="p-6 text-sm font-medium text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-2xl animate-in fade-in slide-in-from-left-2 duration-300">
-                  <div className="flex items-start gap-3">
+                <div className="flex items-start gap-3">
                   <div className="shrink-0 mt-0.5">
                     <ShieldCheck className="w-5 h-5" />
                   </div>
@@ -160,18 +160,18 @@ export default function ForgotPasswordPage() {
                     <p className="text-muted-foreground">
                       {successMessage || (
                         <>
-                          Nếu tên đăng nhập tồn tại trong hệ thống, bạn sẽ nhận được hướng dẫn đặt lại mật khẩu. 
-                          {config?.contactEmail || config?.contactPhone ? (
+                          Nếu tên đăng nhập tồn tại trong hệ thống, bạn sẽ nhận được hướng dẫn đặt lại mật khẩu.
+                          {config?.email_lien_he || config?.sdt_lien_he ? (
                             <> Vui lòng kiểm tra email hoặc liên hệ{' '}
-                              {config.contactEmail && (
-                                <a href={`mailto:${config.contactEmail}`} className="text-primary hover:underline font-medium">
-                                  {config.contactEmail}
+                              {config.email_lien_he && (
+                                <a href={`mailto:${config.email_lien_he}`} className="text-primary hover:underline font-medium">
+                                  {config.email_lien_he}
                                 </a>
                               )}
-                              {config.contactEmail && config.contactPhone && ' / '}
-                              {config.contactPhone && (
-                                <a href={`tel:${config.contactPhone}`} className="text-primary hover:underline font-medium">
-                                  {config.contactPhone}
+                              {config.email_lien_he && config.sdt_lien_he && ' / '}
+                              {config.sdt_lien_he && (
+                                <a href={`tel:${config.sdt_lien_he}`} className="text-primary hover:underline font-medium">
+                                  {config.sdt_lien_he}
                                 </a>
                               )}
                               {' '}để được hỗ trợ.
@@ -261,7 +261,7 @@ export default function ForgotPasswordPage() {
           </div>
 
           <p className="text-[10px] text-center text-muted-foreground/50 pt-8 uppercase tracking-tighter">
-            {config?.footerText || 'HomeZen — Boarding House Management v1.0'}
+            {config?.tieu_de_footer || 'HomeZen — Boarding House Management v1.0'}
           </p>
         </div>
       </div>

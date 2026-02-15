@@ -46,9 +46,9 @@ export async function POST(request) {
     const { currentPassword, newPassword } = validationResult.data;
 
     // Get user from database
-    const user = await prisma.user.findUnique({
+    const user = await prisma.uSR_NGUOI_DUNG.findUnique({
       where: { id: session.user.id },
-      select: { id: true, password: true, role: true, isActive: true }
+      select: { id: true, mat_khau: true, vai_tro: true, trang_thai: true }
     });
 
     if (!user) {
@@ -59,7 +59,7 @@ export async function POST(request) {
     }
 
     // Check if user is active
-    if (!user.isActive) {
+    if (!user.trang_thai) {
       return NextResponse.json(
         { error: 'Tài khoản đã bị vô hiệu hóa' },
         { status: 403 }
@@ -67,7 +67,7 @@ export async function POST(request) {
     }
 
     // Verify current password
-    const isCurrentPasswordValid = await verifyPassword(currentPassword, user.password);
+    const isCurrentPasswordValid = await verifyPassword(currentPassword, user.mat_khau);
     if (!isCurrentPasswordValid) {
       return NextResponse.json(
         { error: 'Mật khẩu hiện tại không đúng' },
@@ -76,7 +76,7 @@ export async function POST(request) {
     }
 
     // Check if new password is different from current password
-    const isSamePassword = await verifyPassword(newPassword, user.password);
+    const isSamePassword = await verifyPassword(newPassword, user.mat_khau);
     if (isSamePassword) {
       return NextResponse.json(
         { error: 'Mật khẩu mới phải khác mật khẩu hiện tại' },
@@ -87,12 +87,12 @@ export async function POST(request) {
     // Hash new password
     const hashedPassword = await hashPassword(newPassword);
 
-    // Update password (maintain role and other fields)
-    await prisma.user.update({
+    // Update password (maintain vai_tro and other fields)
+    await prisma.uSR_NGUOI_DUNG.update({
       where: { id: user.id },
       data: {
-        password: hashedPassword,
-        // Role and other fields remain unchanged
+        mat_khau: hashedPassword,
+        // vai_tro and other fields remain unchanged
       }
     });
 

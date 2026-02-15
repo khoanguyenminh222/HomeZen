@@ -15,12 +15,12 @@ async function getHandler(request) {
         const skip = (page - 1) * limit;
 
         const [logs, total] = await Promise.all([
-            prisma.securityLog.findMany({
-                orderBy: { timestamp: 'desc' },
+            prisma.uSR_NHAT_KY_BAO_MAT.findMany({
+                orderBy: { thoi_gian: 'desc' },
                 take: limit,
                 skip: skip,
             }),
-            prisma.securityLog.count(),
+            prisma.uSR_NHAT_KY_BAO_MAT.count(),
         ]);
 
         return NextResponse.json({

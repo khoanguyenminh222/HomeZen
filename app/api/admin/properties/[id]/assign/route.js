@@ -8,8 +8,9 @@ import { SuperAdminService } from '@/lib/services/superAdmin.service';
  * Transfer property ownership from one owner to another
  * Requirements: 2.6
  */
-async function postHandler(request, { params }) {
+async function postHandler(request, props) {
   try {
+    const params = await props.params;
     const { id: fromUserId } = params;
     const body = await request.json();
     const { toUserId } = body;

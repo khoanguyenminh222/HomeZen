@@ -12,7 +12,7 @@ export async function GET(request) {
     // Kiểm tra Authorization header (Vercel Cron Jobs sẽ gửi secret)
     const authHeader = request.headers.get('authorization');
     const cronSecret = process.env.CRON_SECRET;
-    
+
     if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -26,7 +26,7 @@ export async function GET(request) {
     return NextResponse.json(
       {
         success: true,
-        message: `Đã tự động gửi thông báo cho ${result.totalUsers} chủ trọ`,
+        message: `Đã tự động gửi thông báo cho ${result.tong_so_chu_tro} chủ trọ`,
         data: result,
         timestamp: new Date().toISOString(),
       },
@@ -35,9 +35,9 @@ export async function GET(request) {
   } catch (error) {
     console.error('Cron job room closure notification error:', error);
     return NextResponse.json(
-      { 
+      {
         error: 'Đã xảy ra lỗi khi gửi thông báo chốt sổ',
-        message: error.message 
+        message: error.message
       },
       { status: 500 }
     );

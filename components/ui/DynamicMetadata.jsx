@@ -1,7 +1,7 @@
 // components/ui/DynamicMetadata.jsx
-'use client';
-import { useEffect } from 'react';
-import { useWebsiteConfig } from '@/contexts/WebsiteConfigContext';
+"use client";
+import { useEffect } from "react";
+import { useWebsiteConfig } from "@/contexts/WebsiteConfigContext";
 
 /**
  * DynamicMetadata component
@@ -12,14 +12,17 @@ export function DynamicMetadata() {
 
   useEffect(() => {
     if (!loading && config) {
-      const title = config.websiteTitle || 'HomeZen - Ứng dụng quản lý nhà trọ';
-      const description = config.websiteDescription || 'Quản lý phòng trọ, người thuê, hóa đơn điện nước dễ dàng và hiện đại';
+      const title =
+        config.tieu_de_website || "HomeZen - Ứng dụng quản lý nhà trọ";
+      const description =
+        config.mo_ta_website ||
+        "Quản lý phòng trọ, người thuê, hóa đơn điện nước dễ dàng và hiện đại";
 
       // 1. Update Title
       if (document.title !== title) {
         document.title = title;
       }
-      const titleElement = document.querySelector('title');
+      const titleElement = document.querySelector("title");
       if (titleElement && titleElement.textContent !== title) {
         titleElement.textContent = title;
       }
@@ -27,49 +30,52 @@ export function DynamicMetadata() {
       // 2. Update Meta Description
       let metaDescription = document.querySelector('meta[name="description"]');
       if (!metaDescription) {
-        metaDescription = document.createElement('meta');
-        metaDescription.setAttribute('name', 'description');
+        metaDescription = document.createElement("meta");
+        metaDescription.setAttribute("name", "description");
         document.head.appendChild(metaDescription);
       }
-      if (metaDescription.getAttribute('content') !== description) {
-        metaDescription.setAttribute('content', description);
+      if (metaDescription.getAttribute("content") !== description) {
+        metaDescription.setAttribute("content", description);
       }
 
       // 3. Update Favicon
-      const faviconUrl = config.faviconUrl && config.faviconUrl.trim() !== ''
-        ? config.faviconUrl
-        : '/images/favicon.ico';
+      const favicon_url =
+        config.favicon_url && config.favicon_url.trim() !== ""
+          ? config.favicon_url
+          : "/images/favicon.ico";
 
       // Always use aggressive cache buster for tab browser to force refresh
-      const version = config.updatedAt ? new Date(config.updatedAt).getTime() : Date.now();
-      const finalFaviconUrl = faviconUrl.startsWith('data:')
-        ? faviconUrl
-        : `${faviconUrl}${faviconUrl.includes('?') ? '&' : '?'}v=${version}&t=${Date.now()}`;
+      const version = config.ngay_cap_nhat
+        ? new Date(config.ngay_cap_nhat).getTime()
+        : Date.now();
+      const finalFaviconUrl = favicon_url.startsWith("data:")
+        ? favicon_url
+        : `${favicon_url}${favicon_url.includes("?") ? "&" : "?"}v=${version}&t=${Date.now()}`;
 
       const iconSelectors = [
         'link[rel="icon"]',
         'link[rel="shortcut icon"]',
-        'link[rel="apple-touch-icon"]'
+        'link[rel="apple-touch-icon"]',
       ];
 
-      iconSelectors.forEach(selector => {
+      iconSelectors.forEach((selector) => {
         let link = document.querySelector(selector);
         if (!link) {
-          link = document.createElement('link');
+          link = document.createElement("link");
           link.rel = selector.split('"')[1];
           document.head.appendChild(link);
         }
 
         link.href = finalFaviconUrl;
 
-        if (faviconUrl.startsWith('data:')) {
-          const match = faviconUrl.match(/^data:([^;]+);/);
+        if (favicon_url.startsWith("data:")) {
+          const match = favicon_url.match(/^data:([^;]+);/);
           if (match) link.type = match[1];
         } else {
-          const urlPath = faviconUrl.split('?')[0].toLowerCase();
-          if (urlPath.endsWith('.svg')) link.type = 'image/svg+xml';
-          else if (urlPath.endsWith('.png')) link.type = 'image/png';
-          else link.type = 'image/x-icon';
+          const urlPath = favicon_url.split("?")[0].toLowerCase();
+          if (urlPath.endsWith(".svg")) link.type = "image/svg+xml";
+          else if (urlPath.endsWith(".png")) link.type = "image/png";
+          else link.type = "image/x-icon";
         }
       });
     }

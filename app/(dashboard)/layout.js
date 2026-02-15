@@ -23,19 +23,24 @@ export default async function DashboardLayout({ children }) {
   }
 
   // Check if user is active
-  if (!session.user?.isActive) {
+  if (!session.user?.trang_thai) {
     redirect('/login?error=Account is deactivated');
   }
 
-  const isSuperAdmin = session.user?.role === 'SUPER_ADMIN';
+  const isSuperAdmin = session.user?.vai_tro === 'SIEU_QUAN_TRI';
+
+  // Check if user has allowed roles for dashboard access
+  if (session.user.vai_tro !== 'SIEU_QUAN_TRI' && session.user.vai_tro !== 'CHU_NHA_TRO') {
+    redirect('/login?error=Unauthorized access'); // Or a more specific error/page
+  }
 
   // Transform session for client component
   const clientSession = {
     user: {
       id: session.user.id,
-      username: session.user.username,
-      role: session.user.role,
-      isActive: session.user.isActive,
+      tai_khoan: session.user.tai_khoan,
+      vai_tro: session.user.vai_tro,
+      trang_thai: session.user.trang_thai,
     },
     expires: session.expires,
   };
@@ -61,7 +66,7 @@ export default async function DashboardLayout({ children }) {
                   {isSuperAdmin && <Shield className="h-4 w-4 text-primary" />}
                   <User className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm font-medium text-foreground hidden sm:inline">
-                    {session.user?.username || 'Admin'}
+                    {session.user?.tai_khoan || 'Admin'}
                   </span>
                   {isSuperAdmin && (
                     <span className="text-xs text-primary font-semibold hidden sm:inline">

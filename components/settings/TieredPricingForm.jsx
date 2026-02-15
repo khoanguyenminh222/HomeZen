@@ -1,24 +1,36 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Trash2, Plus } from 'lucide-react';
-import { validateTieredRates } from '@/lib/validations/utilityRate';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Trash2, Plus } from "lucide-react";
+import { validateTieredRates } from "@/lib/validations/utilityRate";
 
-export default function TieredPricingForm({ tieredRates, onTieredRatesChange }) {
-  const [validationError, setValidationError] = useState('');
+export default function TieredPricingForm({
+  tieredRates,
+  onTieredRatesChange,
+}) {
+  const [validationError, setValidationError] = useState("");
 
   // Thêm bậc mới
   const addTier = () => {
     const newTier = {
-      minUsage: tieredRates.length > 0 ? (tieredRates[tieredRates.length - 1].maxUsage || 0) + 1 : 0,
-      maxUsage: null,
-      price: 3000,
+      muc_tieu_thu_min:
+        tieredRates.length > 0
+          ? (tieredRates[tieredRates.length - 1].muc_tieu_thu_max || 0) + 1
+          : 0,
+      muc_tieu_thu_max: null,
+      gia: 3000,
     };
-    
+
     const updatedRates = [...tieredRates, newTier];
     onTieredRatesChange(updatedRates);
     validateRates(updatedRates);
@@ -36,7 +48,8 @@ export default function TieredPricingForm({ tieredRates, onTieredRatesChange }) 
     const updatedRates = [...tieredRates];
     updatedRates[index] = {
       ...updatedRates[index],
-      [field]: field === 'price' ? parseFloat(value) || 0 : parseInt(value) || null,
+      [field]:
+        field === "gia" ? parseFloat(value) || 0 : parseInt(value) || null,
     };
     onTieredRatesChange(updatedRates);
     validateRates(updatedRates);
@@ -48,7 +61,7 @@ export default function TieredPricingForm({ tieredRates, onTieredRatesChange }) 
     if (!validation.isValid) {
       setValidationError(validation.error);
     } else {
-      setValidationError('');
+      setValidationError("");
       // Cập nhật với rates đã được sắp xếp
       if (validation.sortedRates) {
         onTieredRatesChange(validation.sortedRates);
@@ -61,7 +74,8 @@ export default function TieredPricingForm({ tieredRates, onTieredRatesChange }) 
       <CardHeader>
         <CardTitle className="text-lg">Bậc Thang Giá Điện</CardTitle>
         <CardDescription>
-          Cấu hình các bậc giá điện theo quy định của EVN. Bậc cuối cùng sẽ áp dụng cho tất cả mức tiêu thụ cao hơn.
+          Cấu hình các bậc giá điện theo quy định của EVN. Bậc cuối cùng sẽ áp
+          dụng cho tất cả mức tiêu thụ cao hơn.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -92,7 +106,10 @@ export default function TieredPricingForm({ tieredRates, onTieredRatesChange }) 
               {/* Row 1: Từ và Đến */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor={`minUsage-${index}`} className="text-sm font-medium">
+                  <Label
+                    htmlFor={`muc_tieu_thu_min-${index}`}
+                    className="text-sm font-medium"
+                  >
                     Từ (kWh)
                   </Label>
                   {/* Placeholder để đảm bảo height đồng đều */}
@@ -102,17 +119,22 @@ export default function TieredPricingForm({ tieredRates, onTieredRatesChange }) 
                     </span>
                   </div>
                   <Input
-                    id={`minUsage-${index}`}
+                    id={`muc_tieu_thu_min-${index}`}
                     type="number"
                     min="0"
-                    value={tier.minUsage}
-                    onChange={(e) => updateTier(index, 'minUsage', e.target.value)}
+                    value={tier.muc_tieu_thu_min}
+                    onChange={(e) =>
+                      updateTier(index, "muc_tieu_thu_min", e.target.value)
+                    }
                     className="mt-1"
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor={`maxUsage-${index}`} className="text-sm font-medium">
+                  <Label
+                    htmlFor={`muc_tieu_thu_max-${index}`}
+                    className="text-sm font-medium"
+                  >
                     Đến (kWh)
                   </Label>
                   {/* Luôn có div với height cố định */}
@@ -128,12 +150,16 @@ export default function TieredPricingForm({ tieredRates, onTieredRatesChange }) 
                     )}
                   </div>
                   <Input
-                    id={`maxUsage-${index}`}
+                    id={`muc_tieu_thu_max-${index}`}
                     type="number"
                     min="0"
-                    value={tier.maxUsage || ''}
-                    onChange={(e) => updateTier(index, 'maxUsage', e.target.value)}
-                    placeholder={index === tieredRates.length - 1 ? 'Không giới hạn' : ''}
+                    value={tier.muc_tieu_thu_max || ""}
+                    onChange={(e) =>
+                      updateTier(index, "muc_tieu_thu_max", e.target.value)
+                    }
+                    placeholder={
+                      index === tieredRates.length - 1 ? "Không giới hạn" : ""
+                    }
                     className="mt-1"
                   />
                 </div>
@@ -141,16 +167,16 @@ export default function TieredPricingForm({ tieredRates, onTieredRatesChange }) 
 
               {/* Row 2: Giá */}
               <div>
-                <Label htmlFor={`price-${index}`} className="text-sm font-medium">
+                <Label htmlFor={`gia-${index}`} className="text-sm font-medium">
                   Giá điện (VNĐ/kWh)
                 </Label>
                 <Input
-                  id={`price-${index}`}
+                  id={`gia-${index}`}
                   type="number"
                   min="0"
-                  step="100"
-                  value={tier.price}
-                  onChange={(e) => updateTier(index, 'price', e.target.value)}
+                  step="1"
+                  value={tier.gia}
+                  onChange={(e) => updateTier(index, "gia", e.target.value)}
                   className="mt-1"
                   placeholder="Ví dụ: 3000"
                 />
@@ -159,10 +185,16 @@ export default function TieredPricingForm({ tieredRates, onTieredRatesChange }) 
 
             {/* Hiển thị mô tả bậc */}
             <div className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
-              {tier.maxUsage ? (
-                <>Từ {tier.minUsage} đến {tier.maxUsage} kWh: {tier.price?.toLocaleString('vi-VN')} VNĐ/kWh</>
+              {tier.muc_tieu_thu_max ? (
+                <>
+                  Từ {tier.muc_tieu_thu_min} đến {tier.muc_tieu_thu_max} kWh:{" "}
+                  {tier.gia?.toLocaleString("vi-VN")} VNĐ/kWh
+                </>
               ) : (
-                <>Từ {tier.minUsage} kWh trở lên: {tier.price?.toLocaleString('vi-VN')} VNĐ/kWh</>
+                <>
+                  Từ {tier.muc_tieu_thu_min} kWh trở lên:{" "}
+                  {tier.gia?.toLocaleString("vi-VN")} VNĐ/kWh
+                </>
               )}
             </div>
           </div>
@@ -192,15 +224,26 @@ export default function TieredPricingForm({ tieredRates, onTieredRatesChange }) 
             </CardHeader>
             <CardContent className="pt-0">
               <div className="text-sm space-y-1">
-                <p><strong>Tiêu thụ 150 kWh:</strong></p>
+                <p>
+                  <strong>Tiêu thụ 150 kWh:</strong>
+                </p>
                 {tieredRates.map((tier, index) => {
-                  const usage150 = Math.min(150, tier.maxUsage || 150) - tier.minUsage + 1;
-                  if (usage150 > 0 && tier.minUsage <= 150) {
-                    const actualUsage = Math.max(0, Math.min(usage150, 150 - tier.minUsage));
+                  const usage150 =
+                    Math.min(150, tier.muc_tieu_thu_max || 150) -
+                    tier.muc_tieu_thu_min +
+                    1;
+                  if (usage150 > 0 && tier.muc_tieu_thu_min <= 150) {
+                    const actualUsage = Math.max(
+                      0,
+                      Math.min(usage150, 150 - tier.muc_tieu_thu_min),
+                    );
                     if (actualUsage > 0) {
                       return (
                         <p key={index} className="ml-2">
-                          • Bậc {index + 1}: {actualUsage} kWh × {tier.price?.toLocaleString('vi-VN')} = {(actualUsage * tier.price)?.toLocaleString('vi-VN')} VNĐ
+                          • Bậc {index + 1}: {actualUsage} kWh ×{" "}
+                          {tier.gia?.toLocaleString("vi-VN")} ={" "}
+                          {(actualUsage * tier.gia)?.toLocaleString("vi-VN")}{" "}
+                          VNĐ
                         </p>
                       );
                     }

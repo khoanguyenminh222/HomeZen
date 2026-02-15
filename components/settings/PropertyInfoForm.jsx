@@ -33,14 +33,14 @@ export default function PropertyInfoForm() {
   } = useForm({
     resolver: zodResolver(propertyInfoSchema),
     defaultValues: {
-      name: "",
-      address: "",
-      phone: "",
-      ownerName: "",
+      ten: "",
+      dia_chi: "",
+      dien_thoai: "",
+      ten_chu_nha: "",
       email: "",
-      logoUrl: "",
-      maxElectricMeter: 999999,
-      maxWaterMeter: 99999,
+      logo_url: "",
+      max_dong_ho_dien: 999999,
+      max_dong_ho_nuoc: 99999,
     },
   });
 
@@ -53,14 +53,14 @@ export default function PropertyInfoForm() {
           const result = await response.json();
           if (result.data) {
             reset({
-              name: result.data.name || "",
-              address: result.data.address || "",
-              phone: result.data.phone || "",
-              ownerName: result.data.ownerName || "",
+              ten: result.data.ten || "",
+              dia_chi: result.data.dia_chi || "",
+              dien_thoai: result.data.dien_thoai || "",
+              ten_chu_nha: result.data.ten_chu_nha || "",
               email: result.data.email || "",
-              logoUrl: result.data.logoUrl || "",
-              maxElectricMeter: result.data.maxElectricMeter || 999999,
-              maxWaterMeter: result.data.maxWaterMeter || 99999,
+              logo_url: result.data.logo_url || "",
+              max_dong_ho_dien: result.data.max_dong_ho_dien || 999999,
+              max_dong_ho_nuoc: result.data.max_dong_ho_nuoc || 99999,
             });
           }
         }
@@ -137,66 +137,70 @@ export default function PropertyInfoForm() {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Tên nhà trọ */}
           <div className="space-y-2">
-            <Label htmlFor="name" className="text-sm sm:text-base">
+            <Label htmlFor="ten" className="text-sm sm:text-base">
               Tên nhà trọ <span className="text-red-500">*</span>
             </Label>
             <Input
-              id="name"
-              {...register("name")}
+              id="ten"
+              {...register("ten")}
               placeholder="VD: Nhà trọ Hòa Bình"
               className="text-base h-12"
             />
-            {errors.name && (
-              <p className="text-sm text-red-500">{errors.name.message}</p>
+            {errors.ten && (
+              <p className="text-sm text-red-500">{errors.ten.message}</p>
             )}
           </div>
 
           {/* Địa chỉ */}
           <div className="space-y-2">
-            <Label htmlFor="address" className="text-sm sm:text-base">
+            <Label htmlFor="dia_chi" className="text-sm sm:text-base">
               Địa chỉ <span className="text-red-500">*</span>
             </Label>
             <Input
-              id="address"
-              {...register("address")}
+              id="dia_chi"
+              {...register("dia_chi")}
               placeholder="VD: 123 Đường ABC, Phường XYZ, Quận 1, TP.HCM"
               className="text-base h-12"
             />
-            {errors.address && (
-              <p className="text-sm text-red-500">{errors.address.message}</p>
+            {errors.dia_chi && (
+              <p className="text-sm text-red-500">{errors.dia_chi.message}</p>
             )}
           </div>
 
           {/* Số điện thoại */}
           <div className="space-y-2">
-            <Label htmlFor="phone" className="text-sm sm:text-base">
+            <Label htmlFor="dien_thoai" className="text-sm sm:text-base">
               Số điện thoại <span className="text-red-500">*</span>
             </Label>
             <Input
-              id="phone"
-              {...register("phone")}
+              id="dien_thoai"
+              {...register("dien_thoai")}
               placeholder="VD: 0901234567"
               className="text-base h-12"
             />
-            {errors.phone && (
-              <p className="text-sm text-red-500">{errors.phone.message}</p>
+            {errors.dien_thoai && (
+              <p className="text-sm text-red-500">
+                {errors.dien_thoai.message}
+              </p>
             )}
           </div>
 
           {/* Tên chủ nhà */}
           <div className="space-y-2">
-            <Label htmlFor="ownerName" className="text-sm sm:text-base">
+            <Label htmlFor="ten_chu_nha" className="text-sm sm:text-base">
               Tên chủ nhà / Người quản lý{" "}
               <span className="text-red-500">*</span>
             </Label>
             <Input
-              id="ownerName"
-              {...register("ownerName")}
+              id="ten_chu_nha"
+              {...register("ten_chu_nha")}
               placeholder="VD: Nguyễn Văn A"
               className="text-base h-12"
             />
-            {errors.ownerName && (
-              <p className="text-sm text-red-500">{errors.ownerName.message}</p>
+            {errors.ten_chu_nha && (
+              <p className="text-sm text-red-500">
+                {errors.ten_chu_nha.message}
+              </p>
             )}
           </div>
 
@@ -219,12 +223,12 @@ export default function PropertyInfoForm() {
 
           {/* Logo URL (tạm thời skip upload, sẽ làm ở Task 26) */}
           <div className="space-y-2">
-            <Label htmlFor="logoUrl" className="text-sm sm:text-base">
+            <Label htmlFor="logo_url" className="text-sm sm:text-base">
               URL Logo (tùy chọn)
             </Label>
             <Input
-              id="logoUrl"
-              {...register("logoUrl")}
+              id="logo_url"
+              {...register("logo_url")}
               placeholder="Sẽ hỗ trợ upload logo ở phiên bản sau"
               className="text-base h-12"
               disabled
@@ -241,24 +245,24 @@ export default function PropertyInfoForm() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label
-                  htmlFor="maxElectricMeter"
+                  htmlFor="max_dong_ho_dien"
                   className="text-sm sm:text-base"
                 >
                   Max chỉ số đồng hồ điện{" "}
                   <span className="text-red-500">*</span>
                 </Label>
                 <Input
-                  id="maxElectricMeter"
+                  id="max_dong_ho_dien"
                   type="number"
-                  {...register("maxElectricMeter", { valueAsNumber: true })}
+                  {...register("max_dong_ho_dien", { valueAsNumber: true })}
                   placeholder="VD: 999999"
                   className="text-base h-12"
                   min="9999"
                   max="9999999"
                 />
-                {errors.maxElectricMeter && (
+                {errors.max_dong_ho_dien && (
                   <p className="text-sm text-red-500">
-                    {errors.maxElectricMeter.message}
+                    {errors.max_dong_ho_dien.message}
                   </p>
                 )}
                 <p className="text-sm text-gray-500">
@@ -267,22 +271,25 @@ export default function PropertyInfoForm() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="maxWaterMeter" className="text-sm sm:text-base">
+                <Label
+                  htmlFor="max_dong_ho_nuoc"
+                  className="text-sm sm:text-base"
+                >
                   Max chỉ số đồng hồ nước{" "}
                   <span className="text-red-500">*</span>
                 </Label>
                 <Input
-                  id="maxWaterMeter"
+                  id="max_dong_ho_nuoc"
                   type="number"
-                  {...register("maxWaterMeter", { valueAsNumber: true })}
+                  {...register("max_dong_ho_nuoc", { valueAsNumber: true })}
                   placeholder="VD: 99999"
                   className="text-base h-12"
                   min="9999"
                   max="9999999"
                 />
-                {errors.maxWaterMeter && (
+                {errors.max_dong_ho_nuoc && (
                   <p className="text-sm text-red-500">
-                    {errors.maxWaterMeter.message}
+                    {errors.max_dong_ho_nuoc.message}
                   </p>
                 )}
                 <p className="text-sm text-gray-500">

@@ -18,23 +18,23 @@ export async function GET(request) {
     }
 
     const { searchParams } = new URL(request.url);
-    const roomId = searchParams.get('roomId');
-    const month = searchParams.get('month') ? parseInt(searchParams.get('month')) : null;
-    const year = searchParams.get('year') ? parseInt(searchParams.get('year')) : null;
-    const isPaid = searchParams.get('isPaid');
+    const phong_id = searchParams.get('phong_id') || searchParams.get('roomId');
+    const thang = searchParams.get('thang') ? parseInt(searchParams.get('thang')) : (searchParams.get('month') ? parseInt(searchParams.get('month')) : null);
+    const nam = searchParams.get('nam') ? parseInt(searchParams.get('nam')) : (searchParams.get('year') ? parseInt(searchParams.get('year')) : null);
+    const isPaid = searchParams.get('da_thanh_toan') || searchParams.get('isPaid');
     const isPartial = isPaid === 'partial';
-    const status = searchParams.get('status'); // Hỗ trợ status=unpaid
+    const status = searchParams.get('trang_thai') || searchParams.get('status'); // Hỗ trợ status=unpaid
 
     // Xây dựng filter
     const where = {};
-    if (roomId) {
-      where.roomId = roomId;
-      
+    if (phong_id) {
+      where.phong_id = phong_id;
+
       // Validate property access for room if Property Owner
       if (!isSuperAdmin(session)) {
-        const hasAccess = await validateResourceOwnership(session.user.id, roomId, 'room');
+        const hasAccess = await validateResourceOwnership(session.user.id, phong_id, 'room');
         if (!hasAccess) {
-          logAuthorizationViolation(request, session, `No access to room ${roomId}`, roomId, 'room');
+          logAuthorizationViolation(request, session, `No access to room ${phong_id}`, phong_id, 'room');
           return NextResponse.json(
             { error: 'Forbidden: No access to this room' },
             { status: 403 }
@@ -45,40 +45,40 @@ export async function GET(request) {
       // If no roomId specified, filter by userId for Property Owners
       if (!isSuperAdmin(session)) {
         // Filter trực tiếp theo userId (tối ưu hơn filter qua room.userId)
-        where.userId = session.user.id;
+        where.nguoi_dung_id = session.user.id;
       }
     }
-    
-    if (month) where.month = month;
-    if (year) where.year = year;
-    
+
+    if (thang) where.thang = thang;
+    if (nam) where.nam = nam;
+
     // Xử lý filter isPaid: 'true', 'false', 'partial', hoặc null
     // Nếu status=unpaid, không filter ở đây, sẽ filter sau để bao gồm cả thanh toán một phần
     if (status !== 'unpaid') {
       if (isPaid === 'true') {
-        where.isPaid = true;
+        where.da_thanh_toan = true;
       } else if (isPaid === 'false') {
-        where.isPaid = false;
+        where.da_thanh_toan = false;
       }
     }
     // Nếu là 'partial', không thêm filter vào where, sẽ filter sau
 
-    const bills = await prisma.bill.findMany({
+    const bills = await prisma.bIL_HOA_DON.findMany({
       where,
       include: {
-        room: {
+        phong: {
           select: {
             id: true,
-            code: true,
-            name: true,
+            ma_phong: true,
+            ten_phong: true,
           }
         },
-        billFees: true,
+        phi_hoa_don: true,
       },
       orderBy: [
-        { year: 'desc' },
-        { month: 'desc' },
-        { createdAt: 'desc' },
+        { nam: 'desc' },
+        { thang: 'desc' },
+        { ngay_tao: 'desc' },
       ],
     });
 
@@ -87,30 +87,30 @@ export async function GET(request) {
     if (status === 'unpaid' || isPaid === 'false') {
       // Filter hóa đơn chưa thanh toán (bao gồm cả thanh toán một phần)
       filteredBills = bills.filter(bill => {
-        const totalCost = Number(bill.totalCost || 0);
-        const paidAmount = bill.paidAmount ? Number(bill.paidAmount) : 0;
+        const totalCost = Number(bill.tong_tien || 0);
+        const paidAmount = bill.so_tien_da_tra ? Number(bill.so_tien_da_tra) : 0;
         const remainingDebt = totalCost - paidAmount;
-        
+
         // Chưa thanh toán hoặc thanh toán một phần (còn nợ)
         return remainingDebt > 0;
       });
     } else if (isPartial) {
       // Filter thanh toán một phần
       filteredBills = bills.filter(bill => {
-        const totalCost = Number(bill.totalCost || 0);
-        const paidAmount = bill.paidAmount ? Number(bill.paidAmount) : 0;
-        return bill.isPaid && paidAmount > 0 && paidAmount < totalCost;
+        const totalCost = Number(bill.tong_tien || 0);
+        const paidAmount = bill.so_tien_da_tra ? Number(bill.so_tien_da_tra) : 0;
+        return bill.da_thanh_toan && paidAmount > 0 && paidAmount < totalCost;
       });
     } else if (isPaid === 'true') {
       // Filter chỉ thanh toán đầy đủ (không bao gồm thanh toán một phần)
       filteredBills = bills.filter(bill => {
-        if (!bill.isPaid) return false;
-        const totalCost = Number(bill.totalCost || 0);
+        if (!bill.da_thanh_toan) return false;
+        const totalCost = Number(bill.tong_tien || 0);
         // Nếu không có paidAmount (null), coi là đã thanh toán đầy đủ (hóa đơn cũ)
-        if (bill.paidAmount === null || bill.paidAmount === undefined) {
+        if (bill.so_tien_da_tra === null || bill.so_tien_da_tra === undefined) {
           return true;
         }
-        const paidAmount = Number(bill.paidAmount);
+        const paidAmount = Number(bill.so_tien_da_tra);
         // Đã thanh toán đầy đủ: paidAmount >= totalCost
         return paidAmount >= totalCost;
       });
@@ -139,12 +139,12 @@ export async function POST(request) {
     const validatedData = createBillSchema.parse(body);
 
     // Kiểm tra phòng có tồn tại không
-    const room = await prisma.room.findUnique({
-      where: { id: validatedData.roomId },
+    const room = await prisma.pRP_PHONG.findUnique({
+      where: { id: validatedData.phong_id },
       include: {
-        tenant: {
+        nguoi_thue: {
           include: {
-            occupants: true,
+            nguoi_o: true,
           }
         }
       }
@@ -159,9 +159,9 @@ export async function POST(request) {
 
     // Validate property access for room
     if (!isSuperAdmin(session)) {
-      const hasAccess = await validateResourceOwnership(session.user.id, validatedData.roomId, 'room');
+      const hasAccess = await validateResourceOwnership(session.user.id, validatedData.phong_id, 'room');
       if (!hasAccess) {
-        logAuthorizationViolation(request, session, `No access to room ${validatedData.roomId}`, validatedData.roomId, 'room');
+        logAuthorizationViolation(request, session, `No access to room ${validatedData.phong_id}`, validatedData.phong_id, 'room');
         return NextResponse.json(
           { error: 'Forbidden: No access to this room' },
           { status: 403 }
@@ -170,32 +170,32 @@ export async function POST(request) {
     }
 
     // Kiểm tra hóa đơn đã tồn tại chưa
-    const existingBill = await prisma.bill.findUnique({
+    const existingBill = await prisma.bIL_HOA_DON.findUnique({
       where: {
-        roomId_month_year: {
-          roomId: validatedData.roomId,
-          month: validatedData.month,
-          year: validatedData.year,
+        phong_id_thang_nam: {
+          phong_id: validatedData.phong_id,
+          thang: validatedData.thang,
+          nam: validatedData.nam,
         }
       }
     });
 
     if (existingBill) {
       return NextResponse.json(
-        { error: `Hóa đơn tháng ${validatedData.month}/${validatedData.year} đã tồn tại cho phòng này` },
+        { error: `Hóa đơn tháng ${validatedData.thang}/${validatedData.nam} đã tồn tại cho phòng này` },
         { status: 400 }
       );
     }
 
     // Lấy PropertyInfo để có max meter chung
-    const user = await prisma.user.findUnique({
-      where: { id: room.userId },
+    const user = await prisma.uSR_NGUOI_DUNG.findUnique({
+      where: { id: room.nguoi_dung_id },
       include: {
-        propertyInfo: true
+        thong_tin_nha_tro: true
       }
     });
 
-    if (!user || !user.propertyInfo) {
+    if (!user || !user.thong_tin_nha_tro) {
       return NextResponse.json(
         { error: 'Không tìm thấy thông tin property' },
         { status: 400 }
@@ -204,96 +204,97 @@ export async function POST(request) {
 
     // Create propertyInfo-like object for compatibility
     const propertyInfo = {
-      maxElectricMeter: room.maxElectricMeter || user.propertyInfo.maxElectricMeter || 999999,
-      maxWaterMeter: room.maxWaterMeter || user.propertyInfo.maxWaterMeter || 99999,
+      max_dong_ho_dien: room.max_dong_ho_dien || user.thong_tin_nha_tro.max_dong_ho_dien || 999999,
+      max_dong_ho_nuoc: room.max_dong_ho_nuoc || user.thong_tin_nha_tro.max_dong_ho_nuoc || 99999,
     };
 
     // Lấy utility rate (riêng hoặc chung)
-    const utilityRate = await getUtilityRateForRoom(validatedData.roomId);
+    const utilityRate = await getUtilityRateForRoom(validatedData.phong_id);
 
     // Lấy các phí phát sinh từ RoomFee (phí được gán cho phòng)
-    const roomFees = await prisma.roomFee.findMany({
+    const roomFees = await prisma.bIL_PHI_PHONG.findMany({
       where: {
-        roomId: validatedData.roomId,
-        isActive: true,
+        phong_id: validatedData.phong_id,
+        trang_thai: true,
       },
       include: {
-        feeType: true,
+        loai_phi: true,
       }
     });
 
     // Chuyển RoomFee thành BillFee format
     const billFees = roomFees.map(roomFee => ({
-      name: roomFee.feeType.name,
-      amount: roomFee.amount,
-      feeTypeId: roomFee.feeTypeId,
+      ten_phi: roomFee.loai_phi.ten_phi,
+      so_tien: roomFee.so_tien,
+      loai_phi_id: roomFee.loai_phi_id,
     }));
 
     // Tính số người ở
-    const occupantCount = room.tenant 
-      ? 1 + (room.tenant.occupants?.length || 0) 
+    const occupantCount = room.nguoi_thue
+      ? 1 + (room.nguoi_thue.nguoi_o?.length || 0)
       : 1;
 
     // Tính toán hóa đơn
     const calculation = await calculateBill({
-      roomId: validatedData.roomId,
-      oldElectricReading: validatedData.oldElectricReading,
-      newElectricReading: validatedData.newElectricReading,
-      oldWaterReading: validatedData.oldWaterReading,
-      newWaterReading: validatedData.newWaterReading,
+      phong_id: validatedData.phong_id,
+      chi_so_dien_cu: validatedData.chi_so_dien_cu,
+      chi_so_dien_moi: validatedData.chi_so_dien_moi,
+      chi_so_nuoc_cu: validatedData.chi_so_nuoc_cu,
+      chi_so_nuoc_moi: validatedData.chi_so_nuoc_moi,
       room,
       propertyInfo,
       utilityRate,
-      tieredRates: utilityRate.tieredRates || [],
+      bac_thang_gia: utilityRate.bac_thang_gia || [],
       occupantCount,
       billFees,
     });
 
     // Tạo hóa đơn
-    const bill = await prisma.bill.create({
+    const bill = await prisma.bIL_HOA_DON.create({
       data: {
-        roomId: validatedData.roomId,
-        userId: room.userId, // Lưu userId từ room để tối ưu query
-        month: validatedData.month,
-        year: validatedData.year,
-        oldElectricReading: validatedData.oldElectricReading,
-        newElectricReading: validatedData.newElectricReading,
-        electricityUsage: calculation.electricityUsage,
-        electricityRollover: calculation.electricityRollover,
-        oldWaterReading: validatedData.oldWaterReading,
-        newWaterReading: validatedData.newWaterReading,
-        waterUsage: calculation.waterUsage,
-        waterRollover: calculation.waterRollover,
-        electricMeterPhotoUrl: validatedData.electricMeterPhotoUrl,
-        waterMeterPhotoUrl: validatedData.waterMeterPhotoUrl,
-        roomPrice: calculation.roomPrice,
-        electricityCost: calculation.electricityCost,
-        waterCost: calculation.waterCost,
-        totalCost: calculation.totalCost,
-        totalCostText: calculation.totalCostText,
-        notes: validatedData.notes,
+        phong_id: validatedData.phong_id,
+        nguoi_dung_id: room.nguoi_dung_id, // Lưu userId từ room để tối ưu query
+        thang: validatedData.thang,
+        nam: validatedData.nam,
+        chi_so_dien_cu: validatedData.chi_so_dien_cu,
+        chi_so_dien_moi: validatedData.chi_so_dien_moi,
+        tieu_thu_dien: calculation.electricityUsage,
+        dien_vuot_nguong: calculation.electricityRollover,
+        chi_so_nuoc_cu: validatedData.chi_so_nuoc_cu,
+        chi_so_nuoc_moi: validatedData.chi_so_nuoc_moi,
+        tieu_thu_nuoc: calculation.waterUsage,
+        nuoc_vuot_nguong: calculation.waterRollover,
+        anh_dong_ho_dien: validatedData.url_anh_dong_ho_dien,
+        anh_dong_ho_nuoc: validatedData.url_anh_dong_ho_nuoc,
+        gia_phong: calculation.roomPrice,
+        tien_dien: calculation.electricityCost,
+        tien_nuoc: calculation.waterCost,
+        tong_tien: calculation.totalCost,
+        tong_tien_chu: calculation.totalCostText,
+        ghi_chu: validatedData.ghi_chu,
         // Lưu thông tin tenant (snapshot tại thời điểm tạo hóa đơn)
-        tenantName: room.tenant?.fullName || null,
-        tenantPhone: room.tenant?.phone || null,
-        tenantDateOfBirth: room.tenant?.dateOfBirth || null,
-        tenantIdCard: room.tenant?.idCard || null,
-        billFees: {
+        ten_nguoi_thue: room.nguoi_thue?.ho_ten || null,
+        sdt_nguoi_thue: room.nguoi_thue?.dien_thoai || null,
+        ngay_sinh_nguoi_thue: room.nguoi_thue?.ngay_sinh || null,
+        can_cuoc_nguoi_thue: room.nguoi_thue?.can_cuoc || null,
+        don_gia_snapshot: utilityRate, // Lưu snapshot đơn giá
+        phi_hoa_don: {
           create: billFees.map(fee => ({
-            name: fee.name,
-            amount: fee.amount,
-            feeTypeId: fee.feeTypeId,
+            ten_phi: fee.ten_phi,
+            so_tien: fee.so_tien,
+            loai_phi_id: fee.loai_phi_id,
           }))
         }
       },
       include: {
-        room: {
+        phong: {
           select: {
             id: true,
-            code: true,
-            name: true,
+            ma_phong: true,
+            ten_phong: true,
           }
         },
-        billFees: true,
+        phi_hoa_don: true,
       }
     });
 
@@ -301,16 +302,16 @@ export async function POST(request) {
     const billSnapshot = BillHistoryService.createBillSnapshot(bill);
     await BillHistoryService.createHistory({
       billId: bill.id,
-      action: 'CREATE',
+      action: 'TAO_MOI',
       changedBy: session.user.id,
       newData: billSnapshot,
-      description: `Tạo mới hóa đơn tháng ${bill.month}/${bill.year} cho phòng ${bill.room.code}`,
+      description: `Tạo mới hóa đơn tháng ${bill.thang}/${bill.nam} cho phòng ${bill.phong.ma_phong}`,
     });
 
     return NextResponse.json(bill, { status: 201 });
   } catch (error) {
     console.error('Error creating bill:', error);
-    
+
     if (error.name === 'ZodError') {
       return NextResponse.json(
         { error: 'Dữ liệu không hợp lệ', details: error.errors },

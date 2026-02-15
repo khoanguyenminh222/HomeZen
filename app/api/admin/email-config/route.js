@@ -19,7 +19,7 @@ export async function GET(request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (session.user.role !== 'SUPER_ADMIN') {
+    if (session.user.vai_tro !== 'SIEU_QUAN_TRI') {
       logAuthorizationViolation(
         request,
         session,
@@ -68,7 +68,7 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (session.user.role !== 'SUPER_ADMIN') {
+    if (session.user.vai_tro !== 'SIEU_QUAN_TRI') {
       logAuthorizationViolation(
         request,
         session,
@@ -94,7 +94,7 @@ export async function POST(request) {
     );
   } catch (error) {
     console.error('Create email config error:', error);
-    
+
     if (error.name === 'ZodError') {
       return NextResponse.json(
         {
@@ -125,7 +125,7 @@ export async function PUT(request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (session.user.role !== 'SUPER_ADMIN') {
+    if (session.user.vai_tro !== 'SIEU_QUAN_TRI') {
       logAuthorizationViolation(
         request,
         session,
@@ -157,7 +157,7 @@ export async function PUT(request) {
     );
   } catch (error) {
     console.error('Update email config error:', error);
-    
+
     if (error.name === 'ZodError') {
       return NextResponse.json(
         {

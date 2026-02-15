@@ -23,7 +23,11 @@ import {
   ChevronDown,
   ChevronUp,
   ChevronsDownUp,
-  ChevronsUpDown
+  ChevronsUpDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight
 } from 'lucide-react';
 import { Loading } from '@/components/ui/loading';
 import { cn } from '@/lib/utils';
@@ -31,37 +35,37 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
 const actionConfig = {
-  CREATE: {
+  TAO_MOI: {
     label: 'Tạo mới',
     icon: Plus,
     color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
   },
-  UPDATE: {
+  CAP_NHAT: {
     label: 'Cập nhật',
     icon: Edit,
     color: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
   },
-  DELETE: {
+  XOA: {
     label: 'Xóa',
     icon: Trash2,
     color: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
   },
-  STATUS_CHANGE: {
+  THAY_DOI_TRANG_THAI: {
     label: 'Thay đổi trạng thái',
     icon: CheckCircle2,
     color: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
   },
-  FEE_ADD: {
+  THEM_PHI: {
     label: 'Thêm phí',
     icon: DollarSign,
     color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300',
   },
-  FEE_REMOVE: {
+  XOA_PHI: {
     label: 'Xóa phí',
     icon: DollarSign,
     color: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300',
   },
-  FEE_UPDATE: {
+  CAP_NHAT_PHI: {
     label: 'Cập nhật phí',
     icon: DollarSign,
     color: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-300',
@@ -82,20 +86,29 @@ export default function BillHistoryPage() {
     month: 'all',
     year: '',
   });
+
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
+  const [pagination, setPagination] = useState({
+    total: 0,
+    page: 1,
+    limit: 20,
+    totalPages: 0
+  });
   const [total, setTotal] = useState(0);
   const [expandedGroups, setExpandedGroups] = useState(new Set());
-
-  // Get current year and month for default values
-  const currentYear = new Date().getFullYear();
-  const currentMonth = new Date().getMonth() + 1;
 
   useEffect(() => {
     fetchRooms();
   }, []);
 
   useEffect(() => {
-    fetchHistories();
+    setPage(1); // Reset to first page on filter change
   }, [filters]);
+
+  useEffect(() => {
+    fetchHistories();
+  }, [filters, page, limit]);
 
   const fetchRooms = async () => {
     try {
@@ -113,6 +126,10 @@ export default function BillHistoryPage() {
       setLoading(true);
       setError(null);
       const params = new URLSearchParams();
+      params.append('page', page);
+      params.append('limit', limit);
+      params.append('skip', (page - 1) * limit);
+
       if (filters.action && filters.action !== 'all') {
         params.append('action', filters.action);
       }
@@ -130,7 +147,13 @@ export default function BillHistoryPage() {
       if (!response.ok) throw new Error('Failed to fetch history');
       const data = await response.json();
       setHistories(data.data || []);
-      setTotal(data.total || 0);
+
+      if (data.pagination) {
+        setPagination(data.pagination);
+        setTotal(data.pagination.total);
+      } else {
+        setTotal(data.total || 0);
+      }
     } catch (err) {
       console.error('Error fetching bill histories:', err);
       setError('Không thể tải lịch sử thay đổi');
@@ -140,57 +163,53 @@ export default function BillHistoryPage() {
   };
 
   const getBillInfo = (history) => {
-    if (history.bill) {
+    if (history.hoa_don) {
       return {
         exists: true,
-        month: history.bill.month,
-        year: history.bill.year,
-        roomCode: history.bill.room?.code || 'N/A',
-        roomName: history.bill.room?.name || 'N/A',
-        billId: history.bill.id,
+        month: history.hoa_don.thang,
+        year: history.hoa_don.nam,
+        roomCode: history.hoa_don.phong?.ma_phong || 'N/A',
+        roomName: history.hoa_don.phong?.ten_phong || 'N/A',
+        billId: history.hoa_don.id,
       };
     }
 
-    // Nếu bill đã bị xóa, lấy thông tin từ oldData hoặc newData
-    const billId = history.billId || history.originalBillId;
+    const billId = history.hoa_don_id || history.hoa_don_goc_id;
 
-    // Ưu tiên oldData (cho DELETE action)
-    if (history.oldData) {
-      const oldData = typeof history.oldData === 'string'
-        ? JSON.parse(history.oldData)
-        : history.oldData;
+    if (history.du_lieu_cu) {
+      const oldData = typeof history.du_lieu_cu === 'string'
+        ? JSON.parse(history.du_lieu_cu)
+        : history.du_lieu_cu;
 
-      if (oldData.month || oldData.year || oldData.room) {
+      if (oldData.thang || oldData.nam || oldData.phong) {
         return {
           exists: false,
-          month: oldData.month || 'N/A',
-          year: oldData.year || 'N/A',
-          roomCode: oldData.room?.code || 'Đã xóa',
-          roomName: oldData.room?.name || 'Đã xóa',
+          month: oldData.thang || 'N/A',
+          year: oldData.nam || 'N/A',
+          roomCode: oldData.phong?.ma_phong || 'Đã xóa',
+          roomName: oldData.phong?.ten_phong || 'Đã xóa',
           billId: billId,
         };
       }
     }
 
-    // Fallback: sử dụng newData (cho CREATE action)
-    if (history.newData) {
-      const newData = typeof history.newData === 'string'
-        ? JSON.parse(history.newData)
-        : history.newData;
+    if (history.du_lieu_moi) {
+      const newData = typeof history.du_lieu_moi === 'string'
+        ? JSON.parse(history.du_lieu_moi)
+        : history.du_lieu_moi;
 
-      if (newData.month || newData.year || newData.room) {
+      if (newData.thang || newData.nam || newData.phong) {
         return {
           exists: false,
-          month: newData.month || 'N/A',
-          year: newData.year || 'N/A',
-          roomCode: newData.room?.code || 'Đã xóa',
-          roomName: newData.room?.name || 'Đã xóa',
+          month: newData.thang || 'N/A',
+          year: newData.nam || 'N/A',
+          roomCode: newData.phong?.ma_phong || 'Đã xóa',
+          roomName: newData.phong?.ten_phong || 'Đã xóa',
           billId: billId,
         };
       }
     }
 
-    // Fallback cuối cùng
     return {
       exists: false,
       month: 'N/A',
@@ -201,11 +220,10 @@ export default function BillHistoryPage() {
     };
   };
 
-  // 1. Group histories by bill (billId hoặc originalBillId)
   const groupedHistories = useMemo(() => {
-    return histories.reduce((acc, history) => {
+    const groups = histories.reduce((acc, history) => {
       const billInfo = getBillInfo(history);
-      const key = history.originalBillId || billInfo.billId || 'unknown';
+      const key = history.hoa_don_goc_id || billInfo.billId || 'unknown';
 
       if (!acc[key]) {
         acc[key] = {
@@ -218,30 +236,25 @@ export default function BillHistoryPage() {
       acc[key].histories.push(history);
       return acc;
     }, {});
+
+    return Object.values(groups).map(group => ({
+      ...group,
+      latestDate: Math.max(...group.histories.map(h => new Date(h.ngay_tao).getTime())),
+    })).sort((a, b) => b.latestDate - a.latestDate);
   }, [histories]);
 
-  // 2. Convert to array and sort
-  const groupedArray = useMemo(() => {
-    return Object.values(groupedHistories).map(group => ({
-      ...group,
-      latestDate: Math.max(...group.histories.map(h => new Date(h.createdAt).getTime())),
-    })).sort((a, b) => b.latestDate - a.latestDate);
+  const allKeys = useMemo(() => {
+    return groupedHistories.map((group, index) => group.key || `deleted-${index}`);
   }, [groupedHistories]);
 
-  // 3. Stable keys for all groups
-  const allKeys = useMemo(() => {
-    return groupedArray.map((group, index) => group.key || `deleted-${index}`);
-  }, [groupedArray]);
-
-  // Initialize: expand first 3 groups by default when histories change
   useEffect(() => {
-    if (groupedArray.length > 0) {
+    if (groupedHistories.length > 0) {
       const firstThree = allKeys.slice(0, 3);
       setExpandedGroups(new Set(firstThree));
     } else {
       setExpandedGroups(new Set());
     }
-  }, [groupedArray, allKeys]);
+  }, [groupedHistories, allKeys]);
 
   const toggleGroup = (groupKey) => {
     setExpandedGroups(prev => {
@@ -255,36 +268,17 @@ export default function BillHistoryPage() {
     });
   };
 
-  const expandAll = () => {
-    setExpandedGroups(new Set(allKeys));
-  };
+  const expandAll = () => setExpandedGroups(new Set(allKeys));
+  const collapseAll = () => setExpandedGroups(new Set());
 
-  const collapseAll = () => {
-    // Thu gọn tất cả thực sự (không để lại 3 cái)
-    setExpandedGroups(new Set());
-  };
-
-  const toggleAll = () => {
-    // Kiểm tra trạng thái thực tế: tất cả groups có đang expanded không
-    const isAllExpanded = allKeys.length > 0 && allKeys.every(key => expandedGroups.has(key));
-
-    if (isAllExpanded) {
-      collapseAll();
-    } else {
-      expandAll();
-    }
-  };
-
-  if (loading) {
+  if (loading && histories.length === 0) {
     return (
-      <div className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-6">
+      <div className="container mx-auto p-4 md:p-6">
         <Card>
-          <CardHeader className="pb-3 sm:pb-4">
-            <CardTitle className="flex items-center gap-2 text-base sm:text-lg md:text-xl">
-              <div className="p-1.5 sm:p-2 bg-primary/10 rounded-lg shrink-0">
-                <History className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-              </div>
-              <span className="wrap-break-word">Lịch Sử Thay Đổi Hóa Đơn</span>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <History className="h-5 w-5 text-primary" />
+              Lịch Sử Thay Đổi Hóa Đơn
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -295,350 +289,150 @@ export default function BillHistoryPage() {
     );
   }
 
-  if (error) {
-    return (
-      <div className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-6">
-        <Card>
-          <CardHeader className="pb-3 sm:pb-4">
-            <CardTitle className="flex items-center gap-2 text-base sm:text-lg md:text-xl">
-              <div className="p-1.5 sm:p-2 bg-primary/10 rounded-lg shrink-0">
-                <History className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-              </div>
-              <span className="wrap-break-word">Lịch Sử Thay Đổi Hóa Đơn</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center py-6 sm:py-8">
-              <p className="text-sm sm:text-base text-destructive">{error}</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   return (
-    <div className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-6">
+    <div className="container mx-auto p-4 md:p-6 space-y-6">
       <Card>
-        <CardHeader className="pb-3 sm:pb-4 md:pb-6">
-          <CardTitle className="flex flex-wrap items-center gap-2 text-base sm:text-lg md:text-xl">
-            <div className="p-1.5 sm:p-2 bg-primary/10 rounded-lg shrink-0">
-              <History className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+        <CardHeader>
+          <CardTitle className="flex flex-wrap items-center gap-2">
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <History className="h-5 w-5 text-primary" />
             </div>
-            <span className="wrap-break-word flex-1 min-w-0">Lịch Sử Thay Đổi Hóa Đơn</span>
-            <Badge variant="secondary" className="text-xs sm:text-sm shrink-0">
-              {total}
-            </Badge>
+            <span className="flex-1">Lịch Sử Thay Đổi Hóa Đơn</span>
+            <Badge variant="secondary">{total}</Badge>
           </CardTitle>
         </CardHeader>
-        <CardContent className="pt-0">
-          {/* Filters and Controls */}
-          <div className="mb-4 sm:mb-6 space-y-3 sm:space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 md:gap-4">
-              <Select
-                value={filters.action}
-                onValueChange={(value) => setFilters({ ...filters, action: value })}
-              >
-                <SelectTrigger className="h-11 sm:h-11 text-sm sm:text-base touch-manipulation">
-                  <Filter className="h-4 w-4 mr-2 shrink-0" />
-                  <SelectValue placeholder="Lọc theo hành động" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tất cả hành động</SelectItem>
-                  <SelectItem value="CREATE">Tạo mới</SelectItem>
-                  <SelectItem value="UPDATE">Cập nhật</SelectItem>
-                  <SelectItem value="DELETE">Xóa</SelectItem>
-                  <SelectItem value="STATUS_CHANGE">Thay đổi trạng thái</SelectItem>
-                  <SelectItem value="FEE_ADD">Thêm phí</SelectItem>
-                  <SelectItem value="FEE_REMOVE">Xóa phí</SelectItem>
-                  <SelectItem value="FEE_UPDATE">Cập nhật phí</SelectItem>
-                </SelectContent>
-              </Select>
+        <CardContent className="space-y-6">
+          {/* Filters */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Select value={filters.action} onValueChange={(val) => setFilters(f => ({ ...f, action: val }))}>
+              <SelectTrigger><SelectValue placeholder="Hành động" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả hành động</SelectItem>
+                <SelectItem value="TAO_MOI">Tạo mới</SelectItem>
+                <SelectItem value="CAP_NHAT">Cập nhật</SelectItem>
+                <SelectItem value="XOA">Xóa</SelectItem>
+                <SelectItem value="THAY_DOI_TRANG_THAI">Thay đổi trạng thái</SelectItem>
+                <SelectItem value="THEM_PHI">Thêm phí</SelectItem>
+                <SelectItem value="XOA_PHI">Xóa phí</SelectItem>
+                <SelectItem value="CAP_NHAT_PHI">Cập nhật phí</SelectItem>
+              </SelectContent>
+            </Select>
 
-              <Select
-                value={filters.roomId}
-                onValueChange={(value) => setFilters({ ...filters, roomId: value })}
-              >
-                <SelectTrigger className="h-11 sm:h-11 text-sm sm:text-base touch-manipulation">
-                  <Home className="h-4 w-4 mr-2 shrink-0" />
-                  <SelectValue placeholder="Lọc theo phòng" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tất cả phòng</SelectItem>
-                  {rooms.map((room) => (
-                    <SelectItem key={room.id} value={room.id}>
-                      {room.code} - {room.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <Select value={filters.roomId} onValueChange={(val) => setFilters(f => ({ ...f, roomId: val }))}>
+              <SelectTrigger><SelectValue placeholder="Phòng" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả phòng</SelectItem>
+                {rooms.map(r => <SelectItem key={r.id} value={r.id}>{r.ma_phong}</SelectItem>)}
+              </SelectContent>
+            </Select>
 
-              <Select
-                value={filters.month}
-                onValueChange={(value) => setFilters({ ...filters, month: value })}
-              >
-                <SelectTrigger className="h-11 sm:h-11 text-sm sm:text-base touch-manipulation">
-                  <Calendar className="h-4 w-4 mr-2 shrink-0" />
-                  <SelectValue placeholder="Lọc theo tháng" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tất cả tháng</SelectItem>
-                  {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
-                    <SelectItem key={month} value={String(month)}>
-                      Tháng {month}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <Select value={filters.month} onValueChange={(val) => setFilters(f => ({ ...f, month: val }))}>
+              <SelectTrigger><SelectValue placeholder="Tháng" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả tháng</SelectItem>
+                {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
+                  <SelectItem key={m} value={String(m)}>Tháng {m}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-              <div className="flex gap-2">
-                <Input
-                  type="number"
-                  placeholder="Năm (VD: 2024)"
-                  value={filters.year}
-                  onChange={(e) => setFilters({ ...filters, year: e.target.value })}
-                  className="h-11 sm:h-11 text-sm sm:text-base touch-manipulation"
-                  min="2000"
-                  max="2100"
-                />
-                {filters.year && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setFilters({ ...filters, year: '' })}
-                    className="h-11 sm:h-11 px-3 min-w-touch touch-manipulation"
-                    aria-label="Xóa năm"
-                  >
-                    ×
-                  </Button>
-                )}
-              </div>
+            <Input
+              type="number"
+              placeholder="Năm"
+              value={filters.year}
+              onChange={(e) => setFilters(f => ({ ...f, year: e.target.value }))}
+            />
+          </div>
+
+          <div className="flex justify-between items-center">
+            <div className="text-sm text-muted-foreground">
+              Hiển thị {groupedHistories.length} hóa đơn trong trang này
             </div>
-
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 sm:gap-3 md:gap-4">
-              {groupedArray.length > 0 && (
-                <div className="text-xs sm:text-sm text-muted-foreground">
-                  Hiển thị {expandedGroups.size}/{groupedArray.length} hóa đơn
-                </div>
-              )}
-              {groupedArray.length > 0 && (() => {
-                const isAllExpanded = allKeys.length > 0 && allKeys.every(key => expandedGroups.has(key));
-
-                return (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={isAllExpanded ? collapseAll : expandAll}
-                    className="h-11 sm:h-11 text-sm sm:text-base shrink-0 w-full sm:w-auto sm:ml-auto touch-manipulation"
-                  >
-                    {isAllExpanded ? (
-                      <>
-                        <ChevronsUpDown className="h-4 w-4 mr-2 shrink-0" />
-                        <span>Thu gọn tất cả</span>
-                      </>
-                    ) : (
-                      <>
-                        <ChevronsDownUp className="h-4 w-4 mr-2 shrink-0" />
-                        <span>Mở rộng tất cả</span>
-                      </>
-                    )}
-                  </Button>
-                );
-              })()}
-            </div>
+            <Button variant="outline" size="sm" onClick={() => (expandedGroups.size === allKeys.length ? collapseAll() : expandAll())}>
+              {expandedGroups.size === allKeys.length ? 'Thu gọn tất cả' : 'Mở rộng tất cả'}
+            </Button>
           </div>
 
           {/* History List */}
           {histories.length === 0 ? (
-            <div className="text-center py-8 sm:py-12">
-              <History className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-3 sm:mb-4 text-muted-foreground opacity-50" />
-              <p className="text-sm sm:text-base text-muted-foreground">Chưa có lịch sử thay đổi nào</p>
+            <div className="text-center py-12 text-muted-foreground italic">
+              Không tìm thấy thay đổi nào.
             </div>
           ) : (
-            <div className="space-y-3 sm:space-y-4 md:space-y-6">
-              {groupedArray.map((group, groupIndex) => {
-                const { billInfo, histories: groupHistories } = group;
-                const groupKey = allKeys[groupIndex];
+            <div className="space-y-4">
+              {groupedHistories.map((group, idx) => {
+                const groupKey = allKeys[idx];
                 const isExpanded = expandedGroups.has(groupKey);
-
                 return (
-                  <div key={groupKey} className="border border-border/50 rounded-lg overflow-hidden bg-card">
-                    {/* Bill Header - Clickable to expand/collapse */}
+                  <div key={groupKey} className="border rounded-lg overflow-hidden bg-card">
                     <button
                       onClick={() => toggleGroup(groupKey)}
-                      className="w-full bg-muted/50 hover:bg-muted/70 active:bg-muted/80 transition-colors p-3.5 sm:p-4 md:p-5 touch-manipulation"
+                      className="w-full flex items-center justify-between p-4 bg-muted/30 hover:bg-muted/50 transition-colors"
                     >
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 sm:gap-3">
-                        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-                          {isExpanded ? (
-                            <ChevronUp className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground shrink-0" />
-                          ) : (
-                            <ChevronDown className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground shrink-0" />
-                          )}
-                          <div className="flex items-center gap-1.5 sm:gap-2">
-                            <Home className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0" />
-                            <span className="font-semibold text-sm sm:text-base md:text-lg text-foreground wrap-break-word">
-                              Phòng {billInfo.roomCode}
-                            </span>
-                            {billInfo.roomName && billInfo.roomName !== 'Đã xóa' && (
-                              <span className="text-xs sm:text-sm text-muted-foreground wrap-break-word hidden sm:inline">
-                                ({billInfo.roomName})
-                              </span>
-                            )}
+                      <div className="flex items-center gap-4">
+                        {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                        <div className="text-left">
+                          <div className="font-semibold">
+                            Phòng {group.billInfo.roomCode} - Tháng {group.billInfo.month}/{group.billInfo.year}
                           </div>
-                          <div className="flex items-center gap-1.5 sm:gap-2">
-                            <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0" />
-                            <span className="font-medium text-xs sm:text-sm md:text-base text-foreground whitespace-nowrap">
-                              Tháng {billInfo.month}/{billInfo.year}
-                            </span>
-                          </div>
-                          {/* Badges - cùng hàng khi đủ width */}
-                          <div className="flex items-center gap-2 flex-wrap">
-                            {!billInfo.exists && (
-                              <Badge variant="destructive" className="text-[10px] sm:text-xs shrink-0">
-                                Hóa đơn đã xóa
-                              </Badge>
-                            )}
-                            <Badge variant="secondary" className="text-[10px] sm:text-xs shrink-0">
-                              {groupHistories.length} thay đổi
-                            </Badge>
+                          <div className="text-xs text-muted-foreground">
+                            {group.histories.length} thay đổi • Lần cuối: {formatDateTime(group.latestDate)}
                           </div>
                         </div>
-                        {billInfo.exists && group.billId && (
-                          <div className="flex items-center justify-start sm:justify-end">
-                            <Link
-                              href={`/bills/${group.billId}`}
-                              onClick={(e) => e.stopPropagation()}
-                              className="text-xs sm:text-sm text-primary hover:underline font-medium inline-flex items-center gap-1 touch-manipulation"
-                            >
-                              Xem hóa đơn
-                              <span className="hidden sm:inline">→</span>
-                            </Link>
-                          </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        {!group.billInfo.exists && <Badge variant="destructive">Đã xóa</Badge>}
+                        {group.billInfo.exists && (
+                          <Link
+                            href={`/bills/${group.billId}`}
+                            onClick={e => e.stopPropagation()}
+                            className="text-xs text-primary hover:underline font-medium"
+                          >
+                            Chi tiết →
+                          </Link>
                         )}
                       </div>
                     </button>
 
-                    {/* Histories for this bill - Collapsible */}
                     {isExpanded && (
-                      <div className="p-3 sm:p-4 md:p-6">
-                        <div className="space-y-4 sm:space-y-6">
-                          {groupHistories.map((history, index) => {
-                            const config = actionConfig[history.action] || {
-                              label: history.action,
-                              icon: FileText,
-                              color: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300',
-                            };
-                            const Icon = config.icon;
-                            const billInfo = getBillInfo(history);
-
-                            return (
-                              <div
-                                key={history.id}
-                                className={cn(
-                                  'relative pl-6 sm:pl-8 pb-6 sm:pb-8',
-                                  'border-l-2 transition-colors',
-                                  index !== groupHistories.length - 1 
-                                    ? 'border-border/50' 
-                                    : 'border-transparent'
-                                )}
-                              >
-                                {/* Timeline dot */}
-                                <div className="absolute left-0 top-1.5 sm:top-2">
-                                  <div className={cn(
-                                    'w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 border-background shadow-sm',
-                                    'flex items-center justify-center',
-                                    config.color.includes('green') && 'bg-green-500 border-green-600 dark:bg-green-600 dark:border-green-500',
-                                    config.color.includes('blue') && 'bg-blue-500 border-blue-600 dark:bg-blue-600 dark:border-blue-500',
-                                    config.color.includes('red') && 'bg-red-500 border-red-600 dark:bg-red-600 dark:border-red-500',
-                                    config.color.includes('purple') && 'bg-purple-500 border-purple-600 dark:bg-purple-600 dark:border-purple-500',
-                                    config.color.includes('emerald') && 'bg-emerald-500 border-emerald-600 dark:bg-emerald-600 dark:border-emerald-500',
-                                    config.color.includes('orange') && 'bg-orange-500 border-orange-600 dark:bg-orange-600 dark:border-orange-500',
-                                    config.color.includes('cyan') && 'bg-cyan-500 border-cyan-600 dark:bg-cyan-600 dark:border-cyan-500',
-                                    !config.color.includes('green') && !config.color.includes('blue') && !config.color.includes('red') && 
-                                    !config.color.includes('purple') && !config.color.includes('emerald') && !config.color.includes('orange') && 
-                                    !config.color.includes('cyan') && 'bg-gray-500 border-gray-600 dark:bg-gray-600 dark:border-gray-500'
-                                  )}>
-                                    <Icon className="h-2 w-2 sm:h-2.5 sm:w-2.5 text-white" />
-                                  </div>
-                                </div>
-
-                                {/* Content */}
-                                <div className="space-y-3 sm:space-y-4">
-                                  {/* Header */}
-                                  <div className="flex flex-col gap-2 sm:gap-3">
-                                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-3">
-                                      <div className="flex items-start gap-2 sm:gap-3 flex-wrap">
-                                        <Badge 
-                                          variant="outline" 
-                                          className={cn(
-                                            'text-xs sm:text-sm font-medium px-2 sm:px-3 py-1',
-                                            'border-2 shrink-0',
-                                            config.color
-                                          )}
-                                        >
-                                          <Icon className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1.5" />
-                                          {config.label}
-                                        </Badge>
-                                        <div className="flex items-center gap-1.5 sm:gap-2 text-xs text-muted-foreground shrink-0 bg-muted/50 px-2 sm:px-3 py-1 rounded-md">
-                                          <Clock className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                                          <span className="whitespace-nowrap">{formatDateTime(history.createdAt)}</span>
-                                        </div>
-                                      </div>
-                                    </div>
-                                    {history.description && (
-                                      <div className="text-xs sm:text-sm text-muted-foreground wrap-break-word leading-relaxed">
-                                        {history.description}
-                                      </div>
-                                    )}
-                                  </div>
-
-                                  {/* User info */}
-                                  {history.user && (
-                                    <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground bg-muted/30 px-2 sm:px-3 py-1.5 rounded-md w-fit max-w-full">
-                                      <User className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0" />
-                                      <span className="font-medium shrink-0">Bởi:</span>
-                                      <span className="text-foreground wrap-break-word">{history.user.username}</span>
-                                    </div>
-                                  )}
-
-                                  {/* Changes detail */}
-                                  {history.changes && history.changes.fields && (
-                                    <div className="mt-3 sm:mt-4 p-3 sm:p-4 bg-muted/30 dark:bg-muted/20 rounded-lg sm:rounded-xl border border-border/50 space-y-2 sm:space-y-3">
-                                      <div className="text-xs sm:text-sm font-semibold text-foreground mb-2 sm:mb-3">
-                                        Chi tiết thay đổi:
-                                      </div>
-                                      {Object.entries(history.changes.fields).map(([field, change]) => (
-                                        <div 
-                                          key={field} 
-                                          className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-3 p-2 sm:p-3 bg-background/50 rounded-md hover:bg-background/80 transition-colors"
-                                        >
-                                          <span className="font-semibold text-xs sm:text-sm text-foreground min-w-[120px] sm:min-w-[140px] shrink-0">
-                                            {getFieldLabel(field)}:
-                                          </span>
-                                          <div className="flex-1 space-y-1.5 sm:space-y-2 min-w-0">
-                                            {change.old !== undefined && change.old !== null && (
-                                              <div className="flex items-start gap-2 text-xs sm:text-sm">
-                                                <span className="font-medium text-red-600 dark:text-red-400 shrink-0">Cũ:</span>
-                                                <span className="text-red-600 dark:text-red-400 wrap-break-word">{formatFieldValue(field, change.old)}</span>
-                                              </div>
-                                            )}
-                                            {change.new !== undefined && change.new !== null && (
-                                              <div className="flex items-start gap-2 text-xs sm:text-sm">
-                                                <span className="font-medium text-green-600 dark:text-green-400 shrink-0">Mới:</span>
-                                                <span className="text-green-600 dark:text-green-400 wrap-break-word">{formatFieldValue(field, change.new)}</span>
-                                              </div>
-                                            )}
-                                          </div>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  )}
-                                </div>
+                      <div className="divide-y border-t bg-background/50">
+                        {group.histories.map(history => (
+                          <div key={history.id} className="p-4 space-y-3">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <Badge className={actionConfig[history.hanh_dong]?.color}>
+                                  {actionConfig[history.hanh_dong]?.label || history.hanh_dong}
+                                </Badge>
+                                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                  <Clock className="h-3 w-3" /> {formatDateTime(history.ngay_tao)}
+                                </span>
                               </div>
-                            );
-                          })}
-                        </div>
+                              <span className="text-xs font-medium flex items-center gap-1">
+                                <User className="h-3 w-3" /> {history.nguoi_dung?.tai_khoan || 'unknown'}
+                              </span>
+                            </div>
+
+                            {history.thay_doi?.fields && (
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
+                                {Object.entries(history.thay_doi.fields).map(([field, change]) => (
+                                  <div key={field} className="text-xs p-2 bg-muted/20 rounded border border-border/50">
+                                    <div className="font-semibold mb-1">{getFieldLabel(field)}</div>
+                                    <div className="grid grid-cols-2 gap-2">
+                                      <div className="text-red-500 line-through truncate">{formatFieldValue(field, change.old)}</div>
+                                      <div className="text-green-600 font-medium truncate">→ {formatFieldValue(field, change.new)}</div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {history.mo_ta && (
+                              <p className="text-xs text-muted-foreground bg-muted/10 p-2 rounded italic">
+                                {history.mo_ta}
+                              </p>
+                            )}
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>
@@ -646,65 +440,59 @@ export default function BillHistoryPage() {
               })}
             </div>
           )}
+
+          {/* Pagination */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 pt-6 border-t border-dashed">
+            <div className="text-sm text-muted-foreground order-2 sm:order-1">
+              Hiển thị {histories.length > 0 ? (page - 1) * limit + 1 : 0} - {Math.min(page * limit, total)} trong tổng số {total} thay đổi
+            </div>
+
+            <div className="flex items-center gap-6 order-1 sm:order-2">
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-medium whitespace-nowrap">Số dòng:</p>
+                <Select value={String(limit)} onValueChange={(v) => { setLimit(Number(v)); setPage(1); }}>
+                  <SelectTrigger className="h-8 w-[70px]"><SelectValue placeholder={limit} /></SelectTrigger>
+                  <SelectContent side="top">
+                    {[10, 20, 50, 100].map(s => <SelectItem key={s} value={String(s)}>{s}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <div className="flex w-[100px] items-center justify-center text-sm font-medium">
+                  Trang {page} / {pagination.totalPages || 1}
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button variant="outline" className="h-8 w-8 p-0" onClick={() => setPage(1)} disabled={page === 1}><ChevronsLeft className="h-4 w-4" /></Button>
+                  <Button variant="outline" className="h-8 w-8 p-0" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}><ChevronLeft className="h-4 w-4" /></Button>
+                  <Button variant="outline" className="h-8 w-8 p-0" onClick={() => setPage(p => Math.min(pagination.totalPages, p + 1))} disabled={page === pagination.totalPages || pagination.totalPages === 0}><ChevronRight className="h-4 w-4" /></Button>
+                  <Button variant="outline" className="h-8 w-8 p-0" onClick={() => setPage(pagination.totalPages)} disabled={page === pagination.totalPages || pagination.totalPages === 0}><ChevronsRight className="h-4 w-4" /></Button>
+                </div>
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
   );
 }
 
-/**
- * Lấy label cho field
- */
 function getFieldLabel(field) {
   const labels = {
-    month: 'Tháng',
-    year: 'Năm',
-    oldElectricReading: 'Chỉ số điện cũ',
-    newElectricReading: 'Chỉ số điện mới',
-    electricityUsage: 'Lượng điện tiêu thụ',
-    oldWaterReading: 'Chỉ số nước cũ',
-    newWaterReading: 'Chỉ số nước mới',
-    waterUsage: 'Lượng nước tiêu thụ',
-    roomPrice: 'Giá phòng',
-    electricityCost: 'Tiền điện',
-    waterCost: 'Tiền nước',
-    totalCost: 'Tổng tiền',
-    isPaid: 'Trạng thái thanh toán',
-    paidAmount: 'Số tiền đã thanh toán',
-    paidDate: 'Ngày thanh toán',
-    notes: 'Ghi chú',
-    billFees: 'Phí phát sinh',
+    thang: 'Tháng', nam: 'Năm', chi_so_dien_cu: 'Số điện cũ', chi_so_dien_moi: 'Số điện mới',
+    tieu_thu_dien: 'Điện tiêu thụ', chi_so_nuoc_cu: 'Số nước cũ', chi_so_nuoc_moi: 'Số nước mới',
+    tieu_thu_nuoc: 'Nước tiêu thụ', gia_phong: 'Giá phòng', tien_dien: 'Tiền điện',
+    tien_nuoc: 'Tiền nước', tong_tien: 'Tổng tiền', da_thanh_toan: 'Thanh toán',
+    so_tien_da_tra: 'Tiền đã trả', ngay_thanh_toan: 'Ngày trả', ghi_chu: 'Ghi chú'
   };
   return labels[field] || field;
 }
 
-/**
- * Format giá trị field để hiển thị
- */
 function formatFieldValue(field, value) {
-  if (value === null || value === undefined) return 'N/A';
-  
-  if (Array.isArray(value)) {
-    return value.length > 0 
-      ? value.map(v => `${v.name || v.id}: ${v.amount ? Number(v.amount).toLocaleString('vi-VN') + ' VNĐ' : ''}`).join(', ')
-      : 'Không có';
+  if (value === null || value === undefined) return '-';
+  if (typeof value === 'boolean') return value ? 'Đã xong' : 'Chưa xong';
+  if (field.includes('tien') || field.includes('gia') || field.includes('so_tien')) {
+    return Number(value).toLocaleString('vi-VN') + ' đ';
   }
-
-  if (typeof value === 'boolean') {
-    return value ? 'Có' : 'Không';
-  }
-
-  if (field.includes('Cost') || field.includes('Price') || field.includes('Amount')) {
-    return Number(value).toLocaleString('vi-VN') + ' VNĐ';
-  }
-
-  if (field === 'isPaid') {
-    return value ? 'Đã thanh toán' : 'Chưa thanh toán';
-  }
-
-  if (field === 'paidDate' || (typeof value === 'string' && value.match(/^\d{4}-\d{2}-\d{2}/))) {
-    return formatDate(value);
-  }
-
   return String(value);
 }

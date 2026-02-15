@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requireSuperAdmin } from '@/lib/middleware/authorization';
+import { requireSuperAdmin, requireAuth } from '@/lib/middleware/authorization';
 import { getTemplateManagerService } from '@/lib/services/template-manager.service';
 import { auth } from '@/app/api/auth/[...nextauth]/route';
 import { handleErrorResponse } from '@/lib/utils/report-errors';
@@ -14,7 +14,12 @@ async function listTemplatesHandler(request) {
         const limit = parseInt(searchParams.get('limit')) || 10;
         const search = searchParams.get('search') || '';
 
-        const result = await templateManager.listTemplates({ page, limit, search });
+        // Check permissions
+        const session = await auth();
+        const userRole = session?.user?.vai_tro;
+        const userId = session?.user?.id;
+
+        const result = await templateManager.listTemplates({ page, limit, search, userRole, userId });
         return NextResponse.json({ success: true, ...result });
     } catch (error) {
         return handleErrorResponse(error, 'Error listing templates');
@@ -26,31 +31,28 @@ async function createTemplateHandler(request) {
     try {
         const session = await auth();
         const formData = await request.formData();
-        const html = formData.get('html');
-        const name = formData.get('name');
-        const description = formData.get('description');
-        const procedureId = formData.get('procedureId');
-        const category = formData.get('category');
+        const noi_dung = formData.get('html');
+        const ten = formData.get('name');
+        const mo_ta = formData.get('description');
+        const thu_tuc_id = formData.get('procedureId');
+        const danh_muc = formData.get('category');
         const css = formData.get('css');
         const js = formData.get('js');
-        const orientation = formData.get('orientation');
-        const designerStateRaw = formData.get('designerState');
+        const huong_giay = formData.get('orientation');
+        const anh_xa_tham_so_raw = formData.get('parameterMapping');
+        let anh_xa_tham_so = [];
+        try {
+            if (anh_xa_tham_so_raw) anh_xa_tham_so = JSON.parse(anh_xa_tham_so_raw);
+        } catch (e) {
+            console.error('Error parsing parameterMapping', e);
+        }
 
-        if (!html || !name || !procedureId) {
+        if (!noi_dung || !ten || !thu_tuc_id) {
             return NextResponse.json({ success: false, message: 'Missing required fields (html, name, procedureId)' }, { status: 400 });
         }
 
-        let designerState = null;
-        if (designerStateRaw) {
-            try {
-                designerState = typeof designerStateRaw === 'string' ? JSON.parse(designerStateRaw) : designerStateRaw;
-            } catch (e) {
-                console.error('Error parsing designerState:', e);
-            }
-        }
-
         const template = await templateManager.createTemplate(
-            { name, description, procedureId, category, designerState, css, js, orientation, html },
+            { ten, mo_ta, thu_tuc_id, danh_muc, css, js, huong_giay, noi_dung, anh_xa_tham_so },
             session?.user?.id
         );
 
@@ -60,5 +62,5 @@ async function createTemplateHandler(request) {
     }
 }
 
-export const GET = requireSuperAdmin(listTemplatesHandler);
+export const GET = requireAuth(listTemplatesHandler);
 export const POST = requireSuperAdmin(createTemplateHandler);

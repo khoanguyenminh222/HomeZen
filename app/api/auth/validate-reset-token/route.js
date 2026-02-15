@@ -17,15 +17,15 @@ export async function GET(request) {
     }
 
     // Tìm token trong database
-    const resetToken = await prisma.passwordResetToken.findUnique({
+    const resetToken = await prisma.uSR_TOKEN_DAT_LAI_MAT_KHAU.findUnique({
       where: {
         token: token,
       },
       include: {
-        user: {
+        nguoi_dung: {
           select: {
             id: true,
-            isActive: true,
+            trang_thai: true,
           },
         },
       },
@@ -39,7 +39,7 @@ export async function GET(request) {
     }
 
     // Kiểm tra token đã được sử dụng chưa
-    if (resetToken.used) {
+    if (resetToken.da_su_dung) {
       return NextResponse.json(
         { valid: false, error: 'Token đã được sử dụng' },
         { status: 200 }
@@ -47,7 +47,7 @@ export async function GET(request) {
     }
 
     // Kiểm tra token đã hết hạn chưa
-    if (new Date() > resetToken.expiresAt) {
+    if (new Date() > resetToken.het_han_luc) {
       return NextResponse.json(
         { valid: false, error: 'Token đã hết hạn' },
         { status: 200 }
@@ -55,7 +55,7 @@ export async function GET(request) {
     }
 
     // Kiểm tra user có active không
-    if (!resetToken.user.isActive) {
+    if (!resetToken.nguoi_dung.trang_thai) {
       return NextResponse.json(
         { valid: false, error: 'Tài khoản đã bị vô hiệu hóa' },
         { status: 200 }

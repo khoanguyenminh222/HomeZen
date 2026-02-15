@@ -21,9 +21,9 @@ async function createProcedureHandler(request) {
   try {
     const session = await auth();
     const body = await request.json();
-    const { sql, metadata } = body;
+    const { sql, thong_tin_bo_sung } = body;
 
-    const procedure = await procedureManager.createProcedure(sql, metadata, session?.user?.id);
+    const procedure = await procedureManager.createProcedure(sql, thong_tin_bo_sung, session?.user?.id);
     return NextResponse.json({ success: true, data: procedure }, { status: 201 });
   } catch (error) {
     return handleErrorResponse(error, 'Error creating procedure');

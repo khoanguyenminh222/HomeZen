@@ -19,7 +19,7 @@ export async function GET(request) {
 
     const { searchParams } = new URL(request.url);
     const type = searchParams.get('type'); // EMAIL hoặc TELEGRAM
-    const status = searchParams.get('status'); // PENDING, SENT, FAILED, RETRY
+    const status = searchParams.get('status'); // CHO_XU_LY, DA_GUI, THAT_BAI, THU_LAI
     const limit = parseInt(searchParams.get('limit') || '50');
     const offset = parseInt(searchParams.get('offset') || '0');
 

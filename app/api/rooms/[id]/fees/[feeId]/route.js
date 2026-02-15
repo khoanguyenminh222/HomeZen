@@ -16,7 +16,7 @@ export async function PUT(request, { params }) {
     const validatedData = updateRoomFeeSchema.parse(body);
 
     // Kiểm tra phòng có tồn tại không
-    const room = await prisma.room.findUnique({
+    const room = await prisma.pRP_PHONG.findUnique({
       where: { id: roomId }
     });
 
@@ -28,32 +28,32 @@ export async function PUT(request, { params }) {
     }
 
     // Kiểm tra phí có tồn tại và thuộc về phòng này không
-    const roomFee = await prisma.roomFee.findUnique({
+    const roomFee = await prisma.bIL_PHI_PHONG.findUnique({
       where: { id: feeId }
     });
 
-    if (!roomFee || roomFee.roomId !== roomId) {
+    if (!roomFee || roomFee.phong_id !== roomId) {
       return NextResponse.json(
         { error: 'Không tìm thấy phí của phòng' },
         { status: 404 }
       );
     }
 
-    const updated = await prisma.roomFee.update({
+    const updated = await prisma.bIL_PHI_PHONG.update({
       where: { id: feeId },
       data: validatedData,
       include: {
-        feeType: true
+        loai_phi: true
       }
     });
 
     return NextResponse.json({
       ...updated,
-      amount: Number(updated.amount),
+      so_tien: Number(updated.so_tien),
     });
   } catch (error) {
     console.error('Error updating room fee:', error);
-    
+
     if (error.name === 'ZodError') {
       return NextResponse.json(
         { error: 'Dữ liệu không hợp lệ', details: error.errors },
@@ -79,7 +79,7 @@ export async function DELETE(request, { params }) {
     const { id: roomId, feeId } = await params;
 
     // Kiểm tra phòng có tồn tại không
-    const room = await prisma.room.findUnique({
+    const room = await prisma.pRP_PHONG.findUnique({
       where: { id: roomId }
     });
 
@@ -91,18 +91,18 @@ export async function DELETE(request, { params }) {
     }
 
     // Kiểm tra phí có tồn tại và thuộc về phòng này không
-    const roomFee = await prisma.roomFee.findUnique({
+    const roomFee = await prisma.bIL_PHI_PHONG.findUnique({
       where: { id: feeId }
     });
 
-    if (!roomFee || roomFee.roomId !== roomId) {
+    if (!roomFee || roomFee.phong_id !== roomId) {
       return NextResponse.json(
         { error: 'Không tìm thấy phí của phòng' },
         { status: 404 }
       );
     }
 
-    await prisma.roomFee.delete({
+    await prisma.bIL_PHI_PHONG.delete({
       where: { id: feeId }
     });
 

@@ -35,26 +35,37 @@ export const GET = requireSuperAdmin(getHandler);
 async function postHandler(request) {
   try {
     const body = await request.json();
-    const { username, password, propertyName, propertyAddress, phone, ownerName, email, logoUrl, maxElectricMeter, maxWaterMeter } = body;
+    const {
+      tai_khoan,
+      mat_khau,
+      ten,
+      dia_chi,
+      dien_thoai,
+      ten_chu_nha,
+      email,
+      logo_url,
+      max_dong_ho_dien,
+      max_dong_ho_nuoc
+    } = body;
 
-    if (!username || !password || !propertyName || !propertyAddress) {
+    if (!tai_khoan || !mat_khau || !ten || !dia_chi) {
       return NextResponse.json(
-        { error: 'Username, password, propertyName, and propertyAddress are required' },
+        { error: 'tai_khoan, mat_khau, ten, and dia_chi are required' },
         { status: 400 }
       );
     }
 
     const propertyOwner = await SuperAdminService.createPropertyOwner({
-      username,
-      password,
-      propertyName,
-      propertyAddress,
-      phone,
-      ownerName,
+      tai_khoan: tai_khoan,
+      mat_khau,
+      ten,
+      dia_chi,
+      dien_thoai,
+      ten_chu_nha,
       email,
-      logoUrl,
-      maxElectricMeter,
-      maxWaterMeter,
+      logo_url,
+      max_dong_ho_dien,
+      max_dong_ho_nuoc,
     });
 
     return NextResponse.json(

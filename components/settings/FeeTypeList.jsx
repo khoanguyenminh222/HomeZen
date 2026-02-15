@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Plus, Edit, Trash2 } from 'lucide-react';
-import FeeTypeForm from './FeeTypeForm';
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Edit, Trash2 } from "lucide-react";
+import FeeTypeForm from "./FeeTypeForm";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,9 +16,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
-import { useToast } from '@/hooks/use-toast';
-import { Loading } from '@/components/ui/loading';
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
+import { Loading } from "@/components/ui/loading";
 
 /**
  * FeeTypeList - Danh sách loại phí
@@ -39,16 +39,18 @@ export default function FeeTypeList() {
   const fetchFeeTypes = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/settings/fee-types?includeInactive=true');
-      if (!response.ok) throw new Error('Failed to fetch');
+      const response = await fetch(
+        "/api/settings/fee-types?includeInactive=true",
+      );
+      if (!response.ok) throw new Error("Failed to fetch");
       const data = await response.json();
       setFeeTypes(data);
     } catch (error) {
-      console.error('Error fetching fee types:', error);
+      console.error("Error fetching fee types:", error);
       toast({
-        title: 'Lỗi',
-        description: 'Không thể tải danh sách loại phí',
-        variant: 'destructive',
+        title: "Lỗi",
+        description: "Không thể tải danh sách loại phí",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -74,30 +76,30 @@ export default function FeeTypeList() {
   const handleDelete = async (feeTypeId) => {
     try {
       const response = await fetch(`/api/settings/fee-types/${feeTypeId}`, {
-        method: 'DELETE',
+        method: "DELETE",
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to delete');
+        throw new Error(error.error || "Failed to delete");
       }
 
       toast({
-        title: 'Thành công',
-        description: 'Đã xóa loại phí',
-        variant: 'success',
+        title: "Thành công",
+        description: "Đã xóa loại phí",
+        variant: "success",
       });
       fetchFeeTypes();
-      setDeleteDialogOpen(prev => ({
+      setDeleteDialogOpen((prev) => ({
         ...prev,
-        [feeTypeId]: false
+        [feeTypeId]: false,
       }));
     } catch (error) {
-      console.error('Error deleting fee type:', error);
+      console.error("Error deleting fee type:", error);
       toast({
-        title: 'Lỗi',
-        description: error.message || 'Không thể xóa loại phí',
-        variant: 'destructive',
+        title: "Lỗi",
+        description: error.message || "Không thể xóa loại phí",
+        variant: "destructive",
       });
     }
   };
@@ -128,20 +130,26 @@ export default function FeeTypeList() {
                 >
                   <div className="flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="font-medium">{feeType.name}</p>
-                      {feeType.isActive ? (
-                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                      <p className="font-medium">{feeType.ten_phi}</p>
+                      {feeType.trang_thai ? (
+                        <Badge
+                          variant="outline"
+                          className="bg-green-50 text-green-700 border-green-200"
+                        >
                           Đang hoạt động
                         </Badge>
                       ) : (
-                        <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
+                        <Badge
+                          variant="outline"
+                          className="bg-gray-50 text-gray-700 border-gray-200"
+                        >
                           Tạm ngưng
                         </Badge>
                       )}
                     </div>
-                    {feeType.description && (
+                    {feeType.mo_ta && (
                       <p className="text-sm text-muted-foreground mt-1">
-                        {feeType.description}
+                        {feeType.mo_ta}
                       </p>
                     )}
                   </div>
@@ -157,9 +165,9 @@ export default function FeeTypeList() {
                     <AlertDialog
                       open={deleteDialogOpen[feeType.id] || false}
                       onOpenChange={(open) => {
-                        setDeleteDialogOpen(prev => ({
+                        setDeleteDialogOpen((prev) => ({
                           ...prev,
-                          [feeType.id]: open
+                          [feeType.id]: open,
                         }));
                       }}
                     >
@@ -174,31 +182,35 @@ export default function FeeTypeList() {
                       </AlertDialogTrigger>
                       <AlertDialogContent
                         onOverlayClick={() => {
-                          setDeleteDialogOpen(prev => ({
+                          setDeleteDialogOpen((prev) => ({
                             ...prev,
-                            [feeType.id]: false
+                            [feeType.id]: false,
                           }));
                         }}
                         onInteractOutside={(e) => {
-                          setDeleteDialogOpen(prev => ({
+                          setDeleteDialogOpen((prev) => ({
                             ...prev,
-                            [feeType.id]: false
+                            [feeType.id]: false,
                           }));
                         }}
                       >
                         <AlertDialogHeader>
                           <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Bạn có chắc chắn muốn xóa loại phí "{feeType.name}"?
-                            {feeType._count?.roomFees > 0 && (
+                            Bạn có chắc chắn muốn xóa loại phí "
+                            {feeType.ten_phi}"?
+                            {feeType._count?.phi_phong > 0 && (
                               <span className="block mt-2 text-destructive">
-                                Cảnh báo: Loại phí này đang được sử dụng bởi {feeType._count.roomFees} phòng.
+                                Cảnh báo: Loại phí này đang được sử dụng bởi{" "}
+                                {feeType._count.phi_phong} phòng.
                               </span>
                             )}
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                          <AlertDialogCancel className="dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200">Hủy</AlertDialogCancel>
+                          <AlertDialogCancel className="dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200">
+                            Hủy
+                          </AlertDialogCancel>
                           <AlertDialogAction
                             onClick={() => handleDelete(feeType.id)}
                             variant="destructive"

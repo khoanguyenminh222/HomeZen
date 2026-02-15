@@ -16,7 +16,7 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (session.user.role !== 'SUPER_ADMIN') {
+    if (session.user.vai_tro !== 'SIEU_QUAN_TRI') {
       logAuthorizationViolation(
         request,
         session,
@@ -31,12 +31,12 @@ export async function POST(request) {
     const body = await request.json();
     const validatedConfig = telegramBotTokenSchema.parse(body);
 
-    const botInfo = await TelegramBotConfigService.testBotToken(validatedConfig.botToken);
+    const botInfo = await TelegramBotConfigService.testBotToken(validatedConfig.bot_token);
 
     if (botInfo) {
       return NextResponse.json(
-        { 
-          success: true, 
+        {
+          success: true,
           message: 'Bot token hợp lệ',
           botInfo: {
             username: botInfo.username,
@@ -54,7 +54,7 @@ export async function POST(request) {
     }
   } catch (error) {
     console.error('Test telegram bot config error:', error);
-    
+
     if (error.name === 'ZodError') {
       return NextResponse.json(
         {

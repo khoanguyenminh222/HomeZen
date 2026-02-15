@@ -68,9 +68,9 @@ export default function TenantDetailPage() {
       setTenant(data);
 
       // Fetch debt info if tenant has a room
-      if (data.roomId) {
+      if (data.phong_id) {
         try {
-          const debtResponse = await fetch(`/api/rooms/${data.roomId}/debt`);
+          const debtResponse = await fetch(`/api/rooms/${data.phong_id}/debt`);
           if (debtResponse.ok) {
             const debtData = await debtResponse.json();
             setDebtInfo(debtData);
@@ -171,8 +171,8 @@ export default function TenantDetailPage() {
             variant: 'destructive'
           });
           // Refresh debt info
-          if (tenant?.roomId) {
-            const debtResponse = await fetch(`/api/rooms/${tenant.roomId}/debt`);
+          if (tenant?.phong_id) {
+            const debtResponse = await fetch(`/api/rooms/${tenant.phong_id}/debt`);
             if (debtResponse.ok) {
               const debtData = await debtResponse.json();
               setDebtInfo(debtData);
@@ -255,8 +255,8 @@ export default function TenantDetailPage() {
         </Button>
         <div className="flex-1 w-full">
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-            <h1 className="text-xl sm:text-2xl font-bold wrap-break-word">{tenant.fullName}</h1>
-            {tenant.room ? (
+            <h1 className="text-xl sm:text-2xl font-bold wrap-break-word">{tenant.ho_ten}</h1>
+            {tenant.phong ? (
               <Badge className="bg-emerald-100 text-emerald-700 border-none w-fit">Đang thuê</Badge>
             ) : (
               <Badge variant="secondary" className="bg-slate-100 text-slate-500 border-none w-fit">Chưa thuê</Badge>
@@ -301,7 +301,7 @@ export default function TenantDetailPage() {
                   <Phone className="h-4 w-4 text-muted-foreground" />
                   <div>
                     <p className="text-sm text-muted-foreground">Số điện thoại</p>
-                    <p className="font-medium">{tenant.phone}</p>
+                    <p className="font-medium">{tenant.dien_thoai}</p>
                   </div>
                 </div>
 
@@ -309,7 +309,7 @@ export default function TenantDetailPage() {
                   <CreditCard className="h-4 w-4 text-muted-foreground" />
                   <div>
                     <p className="text-sm text-muted-foreground">CMND/CCCD</p>
-                    <p className="font-medium">{tenant.idCard || 'Chưa có'}</p>
+                    <p className="font-medium">{tenant.can_cuoc || 'Chưa có'}</p>
                   </div>
                 </div>
 
@@ -317,7 +317,7 @@ export default function TenantDetailPage() {
                   <Calendar className="h-4 w-4 text-muted-foreground" />
                   <div>
                     <p className="text-sm text-muted-foreground">Ngày sinh</p>
-                    <p className="font-medium">{formatDate(tenant.dateOfBirth)}</p>
+                    <p className="font-medium">{formatDate(tenant.ngay_sinh)}</p>
                   </div>
                 </div>
 
@@ -325,7 +325,7 @@ export default function TenantDetailPage() {
                   <MapPin className="h-4 w-4 text-muted-foreground" />
                   <div>
                     <p className="text-sm text-muted-foreground">Quê quán</p>
-                    <p className="font-medium">{tenant.hometown || 'Chưa có'}</p>
+                    <p className="font-medium">{tenant.que_quan || 'Chưa có'}</p>
                   </div>
                 </div>
               </div>
@@ -337,10 +337,10 @@ export default function TenantDetailPage() {
             <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                 <Users className="h-5 w-5" />
-                <span className="wrap-break-word">Danh sách người ở ({tenant.occupants?.length || 0} người)</span>
+                <span className="wrap-break-word">Danh sách người ở ({tenant.nguoi_o?.length || 0} người)</span>
               </CardTitle>
-              <Dialog 
-                open={isOccupantDialogOpen} 
+              <Dialog
+                open={isOccupantDialogOpen}
                 onOpenChange={(open) => {
                   setIsOccupantDialogOpen(open);
                   if (!open) {
@@ -371,21 +371,21 @@ export default function TenantDetailPage() {
               </Dialog>
             </CardHeader>
             <CardContent>
-              {tenant.occupants?.length > 0 ? (
+              {tenant.nguoi_o?.length > 0 ? (
                 <div className="space-y-3">
-                  {tenant.occupants.map((occupant) => (
+                  {tenant.nguoi_o.map((occupant) => (
                     <div key={occupant.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 border rounded-lg">
                       <div className="flex-1 w-full">
                         <div className="flex flex-wrap items-center gap-2 mb-1">
-                          <p className="font-medium wrap-break-word">{occupant.fullName}</p>
-                          <Badge variant={occupant.residenceType === 'PERMANENT' ? 'default' : 'secondary'} className="w-fit">
-                            {occupant.residenceType === 'PERMANENT' ? 'Thường trú' : 'Tạm trú'}
+                          <p className="font-medium wrap-break-word">{occupant.ho_ten}</p>
+                          <Badge variant={occupant.loai_cu_tru === 'THUONG_TRU' ? 'default' : 'secondary'} className="w-fit">
+                            {occupant.loai_cu_tru === 'THUONG_TRU' ? 'Thường trú' : 'Tạm trú'}
                           </Badge>
                         </div>
                         <div className="text-sm text-muted-foreground space-y-1">
-                          {occupant.relationship && <p>Quan hệ: {occupant.relationship}</p>}
-                          {occupant.idCard && <p>CMND/CCCD: {occupant.idCard}</p>}
-                          {occupant.dateOfBirth && <p>Ngày sinh: {formatDate(occupant.dateOfBirth)}</p>}
+                          {occupant.moi_quan_he && <p>Quan hệ: {occupant.moi_quan_he}</p>}
+                          {occupant.can_cuoc && <p>CMND/CCCD: {occupant.can_cuoc}</p>}
+                          {occupant.ngay_sinh && <p>Ngày sinh: {formatDate(occupant.ngay_sinh)}</p>}
                         </div>
                       </div>
                       <div className="flex gap-2 w-full sm:w-auto">
@@ -401,7 +401,7 @@ export default function TenantDetailPage() {
                           <Edit className="h-3 w-3 sm:mr-0" />
                           <span className="sm:hidden ml-1">Sửa</span>
                         </Button>
-                        <AlertDialog 
+                        <AlertDialog
                           open={deleteOccupantDialogOpen[occupant.id] || false}
                           onOpenChange={(open) => {
                             setDeleteOccupantDialogOpen(prev => ({
@@ -433,7 +433,7 @@ export default function TenantDetailPage() {
                             <AlertDialogHeader>
                               <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
                               <AlertDialogDescription>
-                                Bạn có chắc chắn muốn xóa người ở &ldquo;{occupant.fullName}&rdquo;?
+                                Bạn có chắc chắn muốn xóa người ở &ldquo;{occupant.ho_ten}&rdquo;?
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
@@ -476,19 +476,19 @@ export default function TenantDetailPage() {
             <CardContent className="space-y-3">
               <div>
                 <p className="text-sm text-muted-foreground">Mã phòng</p>
-                <p className="font-semibold text-lg">{tenant.room?.code}</p>
+                <p className="font-semibold text-lg">{tenant.phong?.ma_phong}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Tên phòng</p>
-                <p className="font-medium">{tenant.room?.name}</p>
+                <p className="font-medium">{tenant.phong?.ten_phong}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Giá phòng</p>
-                <p className="font-medium">{formatCurrency(tenant.room?.price)}</p>
+                <p className="font-medium">{formatCurrency(tenant.phong?.gia_phong)}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Ngày vào ở</p>
-                <p className="font-medium">{formatDate(tenant.moveInDate)}</p>
+                <p className="font-medium">{formatDate(tenant.ngay_vao_o)}</p>
               </div>
             </CardContent>
           </Card>
@@ -504,20 +504,20 @@ export default function TenantDetailPage() {
             <CardContent className="space-y-3">
               <div>
                 <p className="text-sm text-muted-foreground">Số tiền cọc</p>
-                <p className="font-semibold text-lg">{formatCurrency(tenant.deposit)}</p>
+                <p className="font-semibold text-lg">{formatCurrency(tenant.tien_coc)}</p>
               </div>
 
-              {tenant.depositReturns?.length > 0 && (
+              {tenant.hoan_tra_coc?.length > 0 && (
                 <div>
                   <p className="text-sm text-muted-foreground mb-2">Lịch sử hoàn trả</p>
                   <div className="space-y-2">
-                    {tenant.depositReturns.map((dr) => (
+                    {tenant.hoan_tra_coc.map((dr) => (
                       <div key={dr.id} className="text-sm p-2 bg-muted rounded">
-                        <p className="font-medium">{formatCurrency(dr.amount)}</p>
+                        <p className="font-medium">{formatCurrency(dr.so_tien)}</p>
                         <p className="text-muted-foreground">
-                          {formatDate(dr.returnDate)} - {dr.method === 'FULL_RETURN' ? 'Hoàn trả đầy đủ' : 'Trừ vào hóa đơn cuối'}
+                          {formatDate(dr.ngay_hoan_tra)} - {dr.phuong_thuc === 'HOAN_TRA_DAY_DU' ? 'Hoàn trả đầy đủ' : 'Trừ vào hóa đơn cuối'}
                         </p>
-                        {dr.notes && <p className="text-muted-foreground">{dr.notes}</p>}
+                        {dr.ghi_chu && <p className="text-muted-foreground">{dr.ghi_chu}</p>}
                       </div>
                     ))}
                   </div>
@@ -526,8 +526,7 @@ export default function TenantDetailPage() {
             </CardContent>
           </Card>
 
-          {/* Contract */}
-          {tenant.contractFileUrl && (
+          {tenant.url_hop_dong && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
@@ -539,7 +538,7 @@ export default function TenantDetailPage() {
                 <Button
                   variant="outline"
                   className="w-full"
-                  onClick={() => window.open(tenant.contractFileUrl, '_blank')}
+                  onClick={() => window.open(tenant.url_hop_dong, '_blank')}
                 >
                   <FileText className="h-4 w-4 mr-2" />
                   Xem hợp đồng
@@ -554,11 +553,11 @@ export default function TenantDetailPage() {
               <CardTitle className="text-lg sm:text-xl">Thao tác</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {tenant.room ? (
+              {tenant.phong ? (
                 <>
                   <Button
                     className="w-full bg-blue-600 hover:bg-blue-700 text-white border-none shadow-sm"
-                    onClick={() => router.push(`/bills/create?roomId=${tenant.room?.id}`)}
+                    onClick={() => router.push(`/bills/create?roomId=${tenant.phong?.id}`)}
                   >
                     Tạo hóa đơn
                   </Button>
@@ -581,8 +580,8 @@ export default function TenantDetailPage() {
 
                   <Dialog open={isReturnDialogOpen} onOpenChange={setIsReturnDialogOpen}>
                     <DialogTrigger asChild>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         className="w-full border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
                       >
                         Trả phòng

@@ -41,8 +41,8 @@ export default function RoomsPage() {
       setFilteredRooms(data);
 
       // Calculate stats (Requirements: 2.10)
-      const empty = data.filter(r => r.status === 'EMPTY').length;
-      const occupied = data.filter(r => r.status === 'OCCUPIED').length;
+      const empty = data.filter(r => r.trang_thai === 'TRONG').length;
+      const occupied = data.filter(r => r.trang_thai === 'DA_THUE').length;
       setStats({ empty, occupied });
     } catch (error) {
       console.error('Error fetching rooms:', error);
@@ -106,15 +106,15 @@ export default function RoomsPage() {
     let filtered = [...rooms];
 
     if (filters.status) {
-      filtered = filtered.filter(room => room.status === filters.status);
+      filtered = filtered.filter(room => room.trang_thai === filters.status);
     }
 
     if (filters.search) {
       const searchLower = filters.search.toLowerCase();
       filtered = filtered.filter(
         room =>
-          room.code.toLowerCase().includes(searchLower) ||
-          room.name.toLowerCase().includes(searchLower)
+          room.ma_phong.toLowerCase().includes(searchLower) ||
+          room.ten_phong.toLowerCase().includes(searchLower)
       );
     }
 

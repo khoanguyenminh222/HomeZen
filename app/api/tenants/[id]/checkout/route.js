@@ -16,10 +16,10 @@ export async function POST(request, { params }) {
         const body = await request.json().catch(() => ({}));
 
         // Kiểm tra người thuê có tồn tại không
-        const tenant = await prisma.tenant.findUnique({
+        const tenant = await prisma.tNT_NGUOI_THUE_CHINH.findUnique({
             where: { id },
             include: {
-                room: true
+                phong: true
             }
         });
 
@@ -30,7 +30,7 @@ export async function POST(request, { params }) {
             );
         }
 
-        if (!tenant.roomId) {
+        if (!tenant.phong_id) {
             return NextResponse.json(
                 { error: 'Người thuê này hiện không ở phòng nào' },
                 { status: 400 }
@@ -38,39 +38,39 @@ export async function POST(request, { params }) {
         }
 
         // Kiểm tra phòng còn nợ không
-        let totalDebt = await calculateTotalDebt(tenant.roomId);
-        
-        // Nếu có depositReturn và method là DEDUCT_FROM_LAST_BILL, tính toán lại nợ sau khi trừ tiền cọc
+        let totalDebt = await calculateTotalDebt(tenant.phong_id);
+
+        // Nếu có depositReturn và loai_hoan_tra là TRU_VAO_HOA_DON_CUOI, tính toán lại nợ sau khi trừ tiền cọc
         if (body.depositReturn) {
             const depositData = depositReturnSchema.parse(body.depositReturn);
-            
-            if (depositData.method === 'DEDUCT_FROM_LAST_BILL') {
+
+            if (depositData.loai_hoan_tra === 'TRU_VAO_HOA_DON_CUOI') {
                 // Lấy tất cả các hóa đơn còn nợ, sắp xếp từ mới đến cũ
-                const unpaidBills = await prisma.bill.findMany({
+                const unpaidBills = await prisma.bIL_HOA_DON.findMany({
                     where: {
-                        roomId: tenant.roomId
+                        phong_id: tenant.phong_id
                     },
                     orderBy: [
-                        { year: 'desc' },
-                        { month: 'desc' }
+                        { nam: 'desc' },
+                        { thang: 'desc' }
                     ],
                     select: {
                         id: true,
-                        totalCost: true,
-                        paidAmount: true,
+                        tong_tien: true,
+                        so_tien_da_tra: true,
                     }
                 });
 
                 // Tính toán lại tổng nợ sau khi trừ tiền cọc vào các hóa đơn còn nợ
-                let remainingDeposit = depositData.amount;
-                
+                let remainingDeposit = depositData.so_tien;
+
                 for (const bill of unpaidBills) {
                     if (remainingDeposit <= 0) break;
-                    
-                    const totalCost = Number(bill.totalCost);
-                    const paidAmount = bill.paidAmount ? Number(bill.paidAmount) : 0;
+
+                    const totalCost = Number(bill.tong_tien);
+                    const paidAmount = bill.so_tien_da_tra ? Number(bill.so_tien_da_tra) : 0;
                     const billRemainingDebt = Math.max(0, totalCost - paidAmount);
-                    
+
                     if (billRemainingDebt > 0) {
                         // Số tiền cọc được áp dụng vào hóa đơn này
                         const appliedAmount = Math.min(remainingDeposit, billRemainingDebt);
@@ -84,7 +84,7 @@ export async function POST(request, { params }) {
         // Kiểm tra nợ sau khi tính toán
         if (totalDebt > 0) {
             return NextResponse.json(
-                { 
+                {
                     error: 'Không thể trả phòng khi còn nợ',
                     debtAmount: totalDebt,
                     message: `Phòng này còn nợ ${totalDebt.toLocaleString('vi-VN')} VNĐ. Vui lòng thanh toán hết nợ trước khi trả phòng.`
@@ -100,104 +100,103 @@ export async function POST(request, { params }) {
                 const depositData = depositReturnSchema.parse(body.depositReturn);
 
                 // Nếu phương thức là "Trừ vào hóa đơn cuối", áp dụng vào các hóa đơn còn nợ (từ mới đến cũ)
-                if (depositData.method === 'DEDUCT_FROM_LAST_BILL') {
+                if (depositData.loai_hoan_tra === 'TRU_VAO_HOA_DON_CUOI') {
                     // Lấy tất cả các hóa đơn còn nợ, sắp xếp từ mới đến cũ
-                    const unpaidBills = await tx.bill.findMany({
+                    const unpaidBills = await tx.bIL_HOA_DON.findMany({
                         where: {
-                            roomId: tenant.roomId
+                            phong_id: tenant.phong_id
                         },
                         orderBy: [
-                            { year: 'desc' },
-                            { month: 'desc' }
+                            { nam: 'desc' },
+                            { thang: 'desc' }
                         ],
                         select: {
                             id: true,
-                            totalCost: true,
-                            paidAmount: true,
-                            paidDate: true,
+                            tong_tien: true,
+                            so_tien_da_tra: true,
+                            ngay_thanh_toan: true,
                         }
                     });
 
                     // Áp dụng tiền cọc vào các hóa đơn còn nợ theo thứ tự từ mới đến cũ
-                    let remainingDeposit = depositData.amount;
+                    let remainingDeposit = depositData.so_tien;
                     let totalAppliedToBills = 0;
-                    
+
                     for (const bill of unpaidBills) {
                         if (remainingDeposit <= 0) break;
-                        
-                        const totalCost = Number(bill.totalCost);
-                        const currentPaidAmount = bill.paidAmount ? Number(bill.paidAmount) : 0;
+
+                        const totalCost = Number(bill.tong_tien);
+                        const currentPaidAmount = bill.so_tien_da_tra ? Number(bill.so_tien_da_tra) : 0;
                         const billRemainingDebt = Math.max(0, totalCost - currentPaidAmount);
-                        
+
                         if (billRemainingDebt > 0) {
                             // Số tiền cọc được áp dụng vào hóa đơn này
                             const appliedAmount = Math.min(remainingDeposit, billRemainingDebt);
                             const newPaidAmount = currentPaidAmount + appliedAmount;
-                            
-                            // Cập nhật paidAmount của hóa đơn
-                            await tx.bill.update({
+
+                            // Cập nhật so_tien_da_thanh_toan của hóa đơn
+                            await tx.bIL_HOA_DON.update({
                                 where: { id: bill.id },
                                 data: {
-                                    paidAmount: newPaidAmount,
-                                    // Nếu số tiền đã thanh toán >= tổng tiền, đánh dấu là đã thanh toán
-                                    isPaid: newPaidAmount >= totalCost,
-                                    paidDate: newPaidAmount >= totalCost 
-                                        ? (bill.paidDate || new Date())
-                                        : bill.paidDate
+                                    so_tien_da_tra: newPaidAmount,
+                                    da_thanh_toan: newPaidAmount >= totalCost,
+                                    ngay_thanh_toan: newPaidAmount >= totalCost
+                                        ? (bill.ngay_thanh_toan || new Date())
+                                        : bill.ngay_thanh_toan
                                 }
                             });
-                            
+
                             remainingDeposit -= appliedAmount;
                             totalAppliedToBills += appliedAmount;
                         }
                     }
-                    
+
                     // Tạo record hoàn trả cho phần đã trừ vào nợ (nếu có)
                     if (totalAppliedToBills > 0) {
-                        await tx.depositReturn.create({
+                        await tx.tNT_LICH_SU_HOAN_TRA_COC.create({
                             data: {
-                                amount: totalAppliedToBills,
-                                method: 'DEDUCT_FROM_LAST_BILL',
-                                notes: depositData.notes || `Đã trừ ${totalAppliedToBills} vào các hóa đơn còn nợ`,
-                                tenantId: tenant.id
+                                so_tien: totalAppliedToBills,
+                                phuong_thuc: 'TRU_VAO_HOA_DON_CUOI',
+                                ghi_chu: depositData.ghi_chu || `Đã trừ ${totalAppliedToBills} vào các hóa đơn còn nợ`,
+                                nguoi_thue_id: tenant.id
                             }
                         });
                     }
-                    
+
                     // Nếu còn dư tiền cọc sau khi trừ vào nợ, tạo record hoàn trả cho phần dư
                     if (remainingDeposit > 0) {
-                        await tx.depositReturn.create({
+                        await tx.tNT_LICH_SU_HOAN_TRA_COC.create({
                             data: {
-                                amount: remainingDeposit,
-                                method: 'FULL_RETURN',
-                                notes: `Phần dư tiền cọc sau khi trừ vào các hóa đơn còn nợ. Tổng tiền cọc: ${depositData.amount}, đã trừ vào nợ: ${totalAppliedToBills}`,
-                                tenantId: tenant.id
+                                so_tien: remainingDeposit,
+                                phuong_thuc: 'HOAN_TRA_DAY_DU',
+                                ghi_chu: `Phần dư tiền cọc sau khi trừ vào các hóa đơn còn nợ. Tổng tiền cọc: ${depositData.so_tien}, đã trừ vào nợ: ${totalAppliedToBills}`,
+                                nguoi_thue_id: tenant.id
                             }
                         });
                     }
                 } else {
-                    // Nếu là FULL_RETURN, tạo record như bình thường
-                    await tx.depositReturn.create({
+                    // Nếu là HOAN_TRA_DAY_DU, tạo record như bình thường
+                    await tx.tNT_LICH_SU_HOAN_TRA_COC.create({
                         data: {
-                            amount: depositData.amount,
-                            method: depositData.method,
-                            notes: depositData.notes || null,
-                            tenantId: tenant.id
+                            so_tien: depositData.so_tien,
+                            phuong_thuc: depositData.loai_hoan_tra,
+                            ghi_chu: depositData.ghi_chu || null,
+                            nguoi_thue_id: tenant.id
                         }
                     });
                 }
             }
 
-            // 2. Cập nhật trạng thái phòng thành EMPTY
-            await tx.room.update({
-                where: { id: tenant.roomId },
-                data: { status: 'EMPTY' }
+            // 2. Cập nhật trạng thái phòng thành TRONG
+            await tx.pRP_PHONG.update({
+                where: { id: tenant.phong_id },
+                data: { trang_thai: 'TRONG' }
             });
 
-            // 3. Unlink người thuê khỏi phòng (set roomId = null)
-            await tx.tenant.update({
+            // 3. Unlink người thuê khỏi phòng (set phong_id = null)
+            await tx.tNT_NGUOI_THUE_CHINH.update({
                 where: { id },
-                data: { roomId: null }
+                data: { phong_id: null }
             });
 
             return { success: true };

@@ -23,33 +23,33 @@ export async function GET(request) {
 
     // Build where clause
     const where = {};
-    
+
     // Validate and apply status filter
-    if (statusParam && (statusParam === 'EMPTY' || statusParam === 'OCCUPIED')) {
-      where.status = statusParam;
+    if (statusParam && (statusParam === 'TRONG' || statusParam === 'DA_THUE')) {
+      where.trang_thai = statusParam;
     }
-    
+
     // Apply search filter
     if (searchParam && searchParam.trim()) {
       where.OR = [
-        { code: { contains: searchParam.trim(), mode: 'insensitive' } },
-        { name: { contains: searchParam.trim(), mode: 'insensitive' } },
+        { ma_phong: { contains: searchParam.trim(), mode: 'insensitive' } },
+        { ten_phong: { contains: searchParam.trim(), mode: 'insensitive' } },
       ];
     }
 
     // Add user filter for Property Owners
     const queryOptions = await addUserFilter({
       where,
-      orderBy: { code: 'asc' },
+      orderBy: { ma_phong: 'asc' },
     }, session.user.id);
 
     // Fetch rooms
-    const rooms = await prisma.room.findMany(queryOptions);
+    const rooms = await prisma.pRP_PHONG.findMany(queryOptions);
 
     // Convert Decimal to number for JSON serialization
     const roomsWithNumbers = rooms.map(room => ({
       ...room,
-      price: Number(room.price),
+      gia_phong: Number(room.gia_phong),
     }));
 
     return NextResponse.json(roomsWithNumbers);
@@ -80,35 +80,36 @@ export async function POST(request) {
     const validatedData = createRoomSchema.parse(body);
 
     // For Property Owners, automatically set userId (remove propertyId if present)
-    const dataToCreate = { ...validatedData };
+    let dataToCreate = { ...validatedData };
     if (!isSuperAdmin(session)) {
       // Property owners can only create rooms for their own property
       // First verify the user exists in the database
-      const userExists = await prisma.user.findUnique({
+      const userExists = await prisma.uSR_NGUOI_DUNG.findUnique({
         where: { id: session.user.id }
       });
-      
+
       if (!userExists) {
-        logAuthorizationViolation(request, session.user.id, 'User not found in database');
+        logAuthorizationViolation(request, session, 'User not found in database');
         return NextResponse.json({ error: 'User not found' }, { status: 401 });
       }
-      
-      dataToCreate.userId = session.user.id;
-      delete dataToCreate.propertyId; // Remove propertyId if schema allows it
+
+      dataToCreate.nguoi_dung_id = session.user.id;
+      // remove propertyId if present
+      const { propertyId, ...rest } = dataToCreate;
+      dataToCreate = rest;
     } else {
       // Super Admin can specify userId or leave it null
-      if (dataToCreate.propertyId) {
-        // If propertyId is provided, we need to find the userId
-        // But in new model, we use userId directly
-        delete dataToCreate.propertyId;
-      }
-      
+      // But in new model, we use userId directly
+      const { propertyId, ...rest } = dataToCreate;
+      dataToCreate = rest;
+
+
       // If userId is specified for Super Admin, verify it exists
-      if (dataToCreate.userId) {
-        const userExists = await prisma.user.findUnique({
-          where: { id: dataToCreate.userId }
+      if (dataToCreate.nguoi_dung_id) {
+        const userExists = await prisma.uSR_NGUOI_DUNG.findUnique({
+          where: { id: dataToCreate.nguoi_dung_id }
         });
-        
+
         if (!userExists) {
           return NextResponse.json(
             { error: 'Specified user not found' },
@@ -119,10 +120,10 @@ export async function POST(request) {
     }
 
     // Check if room code already exists within the same property owner (Requirements: 2.2)
-    const existingRoom = await prisma.room.findFirst({
-      where: { 
-        code: validatedData.code,
-        userId: dataToCreate.userId || null
+    const existingRoom = await prisma.pRP_PHONG.findFirst({
+      where: {
+        ma_phong: validatedData.ma_phong,
+        nguoi_dung_id: dataToCreate.nguoi_dung_id || null,
       },
     });
 
@@ -134,20 +135,29 @@ export async function POST(request) {
     }
 
     // Create room
-    const room = await prisma.room.create({
-      data: dataToCreate,
+    const room = await prisma.pRP_PHONG.create({
+      data: {
+        ma_phong: validatedData.ma_phong,
+        ten_phong: validatedData.ten_phong,
+        gia_phong: validatedData.gia_phong,
+        trang_thai: validatedData.trang_thai,
+        ngay_chot_so: validatedData.ngay_chot_so,
+        max_dong_ho_dien: validatedData.max_dong_ho_dien,
+        max_dong_ho_nuoc: validatedData.max_dong_ho_nuoc,
+        nguoi_dung_id: dataToCreate.nguoi_dung_id,
+      },
     });
 
     // Convert Decimal to number
     const roomWithNumber = {
       ...room,
-      price: Number(room.price),
+      gia_phong: Number(room.gia_phong),
     };
 
     return NextResponse.json(roomWithNumber, { status: 201 });
   } catch (error) {
     console.error('Error creating room:', error);
-    
+
     if (error.name === 'ZodError') {
       return NextResponse.json(
         { error: 'Dữ liệu không hợp lệ', details: error.errors },

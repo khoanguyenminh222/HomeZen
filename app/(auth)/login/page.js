@@ -17,7 +17,7 @@ import { useWebsiteConfig } from '@/contexts/WebsiteConfigContext';
 
 // Validation schema
 const loginSchema = z.object({
-  username: z.string().min(1, 'Vui lòng nhập tên đăng nhập'),
+  tai_khoan: z.string().min(1, 'Vui lòng nhập tên đăng nhập'),
   password: z.string().min(1, 'Vui lòng nhập mật khẩu'),
 });
 
@@ -54,7 +54,7 @@ export default function LoginPage() {
 
   // Auto focus vào input username khi vào trang
   useEffect(() => {
-    setFocus('username');
+    setFocus('tai_khoan');
   }, [setFocus]);
 
   // Auto focus vào input username khi có lỗi
@@ -62,7 +62,7 @@ export default function LoginPage() {
     if (error && !isLoading) {
       // Delay nhỏ để đảm bảo error message đã được render
       const timer = setTimeout(() => {
-        setFocus('username');
+        setFocus('tai_khoan');
       }, 150);
       return () => clearTimeout(timer);
     }
@@ -80,7 +80,7 @@ export default function LoginPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          username: data.username,
+          tai_khoan: data.tai_khoan,
           password: data.password,
         }),
       });
@@ -100,7 +100,7 @@ export default function LoginPage() {
 
       // Bước 2: Nếu validation thành công, gọi NextAuth signIn
       const result = await signIn('credentials', {
-        username: data.username,
+        tai_khoan: data.tai_khoan,
         password: data.password,
         redirect: false,
       });
@@ -115,10 +115,12 @@ export default function LoginPage() {
       } else if (result?.ok) {
         // Role-based redirect
         // Lấy role từ validateResult (API đã trả về role)
-        const role = validateResult.role;
-        
-        if (role === 'SUPER_ADMIN') {
+        const vai_tro = validateResult.vai_tro;
+
+        if (vai_tro === 'SIEU_QUAN_TRI') {
           router.push('/admin');
+        } else if (vai_tro === 'CHU_NHA_TRO') {
+          router.push('/');
         } else {
           router.push('/');
         }
@@ -162,19 +164,19 @@ export default function LoginPage() {
               Secure Login System
             </div>
             <h1 className="text-5xl font-black tracking-tighter leading-tight text-foreground">
-              {config?.heroTitle || 'Chào Mừng Đến Với'} <br />
-              <span className="text-primary italic text-2xl">{config?.brandName || 'HomeZen'}</span>
+              {config?.tieu_de_hero || 'Chào Mừng Đến Với'} <br />
+              <span className="text-primary italic text-2xl">{config?.ten_thuong_hieu || 'HomeZen'}</span>
             </h1>
             <p className="text-muted-foreground text-lg leading-relaxed">
-              {config?.heroSubtitle || 'Giải pháp quản lý nhà trọ thảnh thơi và hiệu quả nhất. Đăng nhập để bắt đầu hành trình của bạn.'}
+              {config?.phu_de_hero || 'Giải pháp quản lý nhà trọ thảnh thơi và hiệu quả nhất. Đăng nhập để bắt đầu hành trình của bạn.'}
             </p>
           </div>
 
           <div className="relative w-full aspect-square max-w-sm mx-auto">
             <div className="absolute inset-0 bg-primary/20 rounded-full blur-3xl scale-75 animate-pulse" />
             <OptimizedImage
-              src={config?.heroImageUrl || '/images/home-zen-master-removebg-preview.png'}
-              alt={`${config?.brandName || 'HomeZen'} Master Visual`}
+              src={config?.anh_hero_url || '/images/home-zen-master-removebg-preview.png'}
+              alt={`${config?.ten_thuong_hieu || 'HomeZen'} Master Visual`}
               fill
               className="object-contain drop-shadow-2xl"
               priority
@@ -183,13 +185,13 @@ export default function LoginPage() {
 
           <div className="pt-8 flex justify-center gap-8">
             <div className="text-center">
-              <p className="text-2xl font-bold">{config?.stat1Value || '1k+'}</p>
-              <p className="text-xs text-muted-foreground uppercase tracking-widest">{config?.stat1Label || 'Tin cậy'}</p>
+              <p className="text-2xl font-bold">{config?.gia_tri_thong_ke_1 || '1k+'}</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-widest">{config?.ten_thong_ke_1 || 'Tin cậy'}</p>
             </div>
             <div className="h-10 w-px bg-border" />
             <div className="text-center">
-              <p className="text-2xl font-bold">{config?.stat2Value || '99%'}</p>
-              <p className="text-xs text-muted-foreground uppercase tracking-widest">{config?.stat2Label || 'Hài lòng'}</p>
+              <p className="text-2xl font-bold">{config?.gia_tri_thong_ke_2 || '99%'}</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-widest">{config?.ten_thong_ke_2 || 'Hài lòng'}</p>
             </div>
           </div>
         </div>
@@ -201,13 +203,13 @@ export default function LoginPage() {
           <div className="lg:hidden text-center space-y-2 mb-10">
             <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-primary/20 overflow-hidden relative">
               <OptimizedImage
-                src={config?.logoUrl || '/images/home-zen-logo.png'}
-                alt={`${config?.brandName || 'HomeZen'} Logo`}
+                src={config?.logo_url || '/images/home-zen-logo.png'}
+                alt={`${config?.ten_thuong_hieu || 'HomeZen'} Logo`}
                 fill
                 className="object-contain p-3"
               />
             </div>
-            <h2 className="text-3xl font-black text-foreground tracing-tight">{config?.brandName || 'HomeZen'}</h2>
+            <h2 className="text-3xl font-black text-foreground tracing-tight">{config?.ten_thuong_hieu || 'HomeZen'}</h2>
             <p className="text-muted-foreground">Đăng nhập vào hệ thống quản lý</p>
           </div>
 
@@ -230,10 +232,10 @@ export default function LoginPage() {
                     <User className="size-5" />
                   </div>
                   <Input
-                    id="username"
+                    id="tai_khoan"
                     type="text"
                     placeholder="Nhập tên đăng nhập"
-                    {...register('username')}
+                    {...register('tai_khoan')}
                     disabled={isLoading}
                     className="h-14 pl-12 bg-muted/20 border-border/50 focus:border-primary/50 focus:ring-primary/20 rounded-2xl transition-all"
                   />
@@ -309,7 +311,7 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          {(config?.contactEmail || config?.contactPhone) && (
+          {(config?.email_lien_he || config?.sdt_lien_he) && (
             <>
               <div className="pt-6 relative">
                 <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-px bg-border/50" />
@@ -323,22 +325,22 @@ export default function LoginPage() {
                   Chưa có tài khoản? Liên hệ với chúng tôi:
                 </p>
                 <div className="flex flex-col gap-2">
-                  {config.contactEmail && (
+                  {config.email_lien_he && (
                     <a
-                      href={`mailto:${config.contactEmail}`}
+                      href={`mailto:${config.email_lien_he}`}
                       className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-primary bg-primary/5 hover:bg-primary/10 border border-primary/20 rounded-xl transition-all group"
                     >
                       <Mail className="h-4 w-4 group-hover:scale-110 transition-transform" />
-                      <span className="truncate">{config.contactEmail}</span>
+                      <span className="truncate">{config.email_lien_he}</span>
                     </a>
                   )}
-                  {config.contactPhone && (
+                  {config.sdt_lien_he && (
                     <a
-                      href={`tel:${config.contactPhone}`}
+                      href={`tel:${config.sdt_lien_he}`}
                       className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-primary bg-primary/5 hover:bg-primary/10 border border-primary/20 rounded-xl transition-all group"
                     >
                       <Phone className="h-4 w-4 group-hover:scale-110 transition-transform" />
-                      <span>{config.contactPhone}</span>
+                      <span>{config.sdt_lien_he}</span>
                     </a>
                   )}
                 </div>
@@ -347,7 +349,7 @@ export default function LoginPage() {
           )}
 
           <p className="text-[10px] text-center text-muted-foreground/50 pt-8 uppercase tracking-tighter">
-            {config?.footerText || 'HomeZen — Boarding House Management v1.0'}
+            {config?.tieu_de_footer || 'HomeZen — Boarding House Management v1.0'}
           </p>
         </div>
       </div>

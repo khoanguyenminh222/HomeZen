@@ -34,31 +34,31 @@ export async function GET(request) {
             const month = date.getMonth() + 1; // 1-12
             const year = date.getFullYear();
 
-            const billWhere = { month, year };
+            const billWhere = { thang: month, nam: year };
             if (targetUserId) {
-                billWhere.room = { userId: targetUserId };
+                billWhere.phong = { nguoi_dung_id: targetUserId };
             }
 
             // Lấy tất cả hóa đơn của tháng này
-            const bills = await prisma.bill.findMany({
+            const bills = await prisma.bIL_HOA_DON.findMany({
                 where: billWhere,
                 select: {
-                    totalCost: true,
-                    isPaid: true,
-                    paidAmount: true,
+                    tong_tien: true,
+                    da_thanh_toan: true,
+                    so_tien_da_tra: true,
                 }
             });
 
             // Tính doanh thu (chỉ tính hóa đơn đã thanh toán)
-            const paidBills = bills.filter(bill => bill.isPaid);
+            const paidBills = bills.filter(bill => bill.da_thanh_toan);
             const totalRevenue = paidBills.reduce((sum, bill) => {
-                const paidAmount = bill.paidAmount ? Number(bill.paidAmount) : Number(bill.totalCost);
+                const paidAmount = bill.so_tien_da_tra ? Number(bill.so_tien_da_tra) : Number(bill.tong_tien);
                 return sum + paidAmount;
             }, 0);
 
             // Đếm số hóa đơn
             const paidBillsCount = paidBills.length;
-            const unpaidBillsCount = bills.filter(bill => !bill.isPaid).length;
+            const unpaidBillsCount = bills.filter(bill => !bill.da_thanh_toan).length;
 
             revenueData.push({
                 month,

@@ -1,16 +1,19 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { createFeeTypeSchema, updateFeeTypeSchema } from '@/lib/validations/feeType';
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  createFeeTypeSchema,
+  updateFeeTypeSchema,
+} from "@/lib/validations/feeType";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -19,13 +22,13 @@ import {
   FormLabel,
   FormMessage,
   FormDescription,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
-import { Loader2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 /**
  * FeeTypeForm - Form tạo/sửa loại phí
@@ -39,9 +42,9 @@ export default function FeeTypeForm({ open, onClose, feeType, onSuccess }) {
   const form = useForm({
     resolver: zodResolver(isEdit ? updateFeeTypeSchema : createFeeTypeSchema),
     defaultValues: {
-      name: '',
-      description: '',
-      isActive: true,
+      ten_phi: "",
+      mo_ta: "",
+      trang_thai: true,
     },
   });
 
@@ -49,15 +52,15 @@ export default function FeeTypeForm({ open, onClose, feeType, onSuccess }) {
     if (open) {
       if (feeType) {
         form.reset({
-          name: feeType.name || '',
-          description: feeType.description || '',
-          isActive: feeType.isActive ?? true,
+          ten_phi: feeType.ten_phi || "",
+          mo_ta: feeType.mo_ta || "",
+          trang_thai: feeType.trang_thai ?? true,
         });
       } else {
         form.reset({
-          name: '',
-          description: '',
-          isActive: true,
+          ten_phi: "",
+          mo_ta: "",
+          trang_thai: true,
         });
       }
     }
@@ -71,37 +74,39 @@ export default function FeeTypeForm({ open, onClose, feeType, onSuccess }) {
 
       if (isEdit) {
         url = `/api/settings/fee-types/${feeType.id}`;
-        method = 'PUT';
+        method = "PUT";
       } else {
-        url = '/api/settings/fee-types';
-        method = 'POST';
+        url = "/api/settings/fee-types";
+        method = "POST";
       }
 
       const response = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Có lỗi xảy ra');
+        throw new Error(errorData.error || "Có lỗi xảy ra");
       }
 
       const result = await response.json();
       toast({
-        title: 'Thành công',
-        description: isEdit ? 'Cập nhật loại phí thành công' : 'Tạo loại phí thành công',
-        variant: 'success',
+        title: "Thành công",
+        description: isEdit
+          ? "Cập nhật loại phí thành công"
+          : "Tạo loại phí thành công",
+        variant: "success",
       });
       onSuccess?.(result);
       onClose();
     } catch (error) {
-      console.error('Error submitting fee type:', error);
+      console.error("Error submitting fee type:", error);
       toast({
-        title: 'Lỗi',
-        description: error.message || 'Không thể lưu loại phí',
-        variant: 'destructive',
+        title: "Lỗi",
+        description: error.message || "Không thể lưu loại phí",
+        variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
@@ -112,14 +117,16 @@ export default function FeeTypeForm({ open, onClose, feeType, onSuccess }) {
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>{isEdit ? 'Sửa Loại Phí' : 'Tạo Loại Phí Mới'}</DialogTitle>
+          <DialogTitle>
+            {isEdit ? "Sửa Loại Phí" : "Tạo Loại Phí Mới"}
+          </DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="name"
+              name="ten_phi"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Tên loại phí *</FormLabel>
@@ -136,14 +143,14 @@ export default function FeeTypeForm({ open, onClose, feeType, onSuccess }) {
 
             <FormField
               control={form.control}
-              name="description"
+              name="mo_ta"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Mô tả</FormLabel>
                   <FormControl>
                     <Textarea
                       {...field}
-                      value={field.value || ''}
+                      value={field.value || ""}
                       placeholder="Mô tả về loại phí này (tùy chọn)"
                       rows={3}
                     />
@@ -155,7 +162,7 @@ export default function FeeTypeForm({ open, onClose, feeType, onSuccess }) {
 
             <FormField
               control={form.control}
-              name="isActive"
+              name="trang_thai"
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
                   <div className="space-y-0.5">
@@ -175,12 +182,19 @@ export default function FeeTypeForm({ open, onClose, feeType, onSuccess }) {
             />
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                disabled={isSubmitting}
+              >
                 Hủy
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isEdit ? 'Cập nhật' : 'Tạo'}
+                {isSubmitting && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
+                {isEdit ? "Cập nhật" : "Tạo"}
               </Button>
             </DialogFooter>
           </form>

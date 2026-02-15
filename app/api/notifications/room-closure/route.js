@@ -18,20 +18,20 @@ export async function POST(request) {
     }
 
     const body = await request.json();
-    const { daysBefore = 1 } = body;
+    const { so_ngay_truoc = 1 } = body;
 
-    // Super Admin có thể test cho tất cả, Property Owner chỉ test cho phòng của mình
-    const userId = session.user.role === 'SUPER_ADMIN' ? null : session.user.id;
+    // SIEU_QUAN_TRI có thể test cho tất cả, CHU_NHA_TRO chỉ test cho phòng của mình
+    const nguoi_dung_id = session.user.vai_tro === 'SIEU_QUAN_TRI' ? null : session.user.id;
 
     const result = await RoomClosureNotificationService.checkAndNotifyRoomClosures(
-      parseInt(daysBefore),
-      userId
+      parseInt(so_ngay_truoc),
+      nguoi_dung_id
     );
 
     return NextResponse.json(
       {
         success: true,
-        message: `Đã kiểm tra và gửi thông báo cho ${result.totalUsers} chủ trọ`,
+        message: `Đã kiểm tra và gửi thông báo cho ${result.tong_so_chu_tro} chủ trọ`,
         data: result,
       },
       { status: 200 }

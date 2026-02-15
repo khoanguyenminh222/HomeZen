@@ -15,35 +15,34 @@ export async function GET(request) {
 
         // Xây dựng where clause
         const where = {
-            deletedAt: { not: null }
+            ngay_xoa: { not: null }
         };
 
         if (search) {
             where.OR = [
-                { fullName: { contains: search, mode: 'insensitive' } },
-                { phone: { contains: search } }
+                { ho_ten: { contains: search, mode: 'insensitive' } },
+                { dien_thoai: { contains: search } }
             ];
         }
 
-        const tenants = await prisma.tenant.findMany({
+        const tenants = await prisma.tNT_NGUOI_THUE_CHINH.findMany({
             where,
             include: {
-                // Room won't be assigned, but we might have roomId stored in deleted metadata if we wanted (not in schema yet)
-                // For now just get original fields
+                // Toà nhà có thể có ích nếu muốn hiện thêm info
                 _count: {
                     select: {
-                        occupants: true
+                        nguoi_o: true
                     }
                 }
             },
             orderBy: {
-                deletedAt: 'desc'
+                ngay_xoa: 'desc'
             }
         });
 
         const transformedTenants = tenants.map(tenant => ({
             ...tenant,
-            deposit: tenant.deposit ? parseFloat(tenant.deposit) : null
+            tien_coc: tenant.tien_coc ? parseFloat(tenant.tien_coc) : null
         }));
 
         return NextResponse.json(transformedTenants);

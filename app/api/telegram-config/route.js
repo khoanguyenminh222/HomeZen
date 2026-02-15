@@ -19,7 +19,7 @@ export async function GET(request) {
     }
 
     // Chỉ property owner mới có thể cấu hình telegram
-    if (session.user.role !== 'PROPERTY_OWNER') {
+    if (session.user.vai_tro !== 'CHU_NHA_TRO') {
       logAuthorizationViolation(
         request,
         session,
@@ -39,8 +39,8 @@ export async function GET(request) {
       // Lấy config đã decrypt để hiển thị trong form
       config = await TelegramConfigurationService.getDecryptedByUser(session.user.id);
       if (config) {
-        // Xóa botToken trước khi trả về (không cần thiết cho frontend)
-        const { botToken, ...configWithoutBotToken } = config;
+        // Xóa bot_token trước khi trả về (không cần thiết cho frontend)
+        const { bot_token, ...configWithoutBotToken } = config;
         config = configWithoutBotToken;
       }
     } else {
@@ -49,8 +49,8 @@ export async function GET(request) {
 
     // Lấy botUsername từ global config để hiển thị cho property owner
     const botConfig = await TelegramBotConfigService.get();
-    if (botConfig && botConfig.botUsername) {
-      config = { ...config, botUsername: botConfig.botUsername };
+    if (botConfig && botConfig.ten_bot) {
+      config = { ...config, ten_bot: botConfig.ten_bot };
     }
 
     return NextResponse.json(
@@ -80,7 +80,7 @@ export async function POST(request) {
     }
 
     // Chỉ property owner mới có thể cấu hình telegram
-    if (session.user.role !== 'PROPERTY_OWNER') {
+    if (session.user.vai_tro !== 'CHU_NHA_TRO') {
       logAuthorizationViolation(
         request,
         session,
@@ -106,7 +106,7 @@ export async function POST(request) {
     );
   } catch (error) {
     console.error('Create/Update telegram config error:', error);
-    
+
     if (error.name === 'ZodError') {
       return NextResponse.json(
         {
@@ -138,7 +138,7 @@ export async function PUT(request) {
     }
 
     // Chỉ property owner mới có thể cấu hình telegram
-    if (session.user.role !== 'PROPERTY_OWNER') {
+    if (session.user.vai_tro !== 'CHU_NHA_TRO') {
       logAuthorizationViolation(
         request,
         session,
@@ -156,7 +156,7 @@ export async function PUT(request) {
     // Merge với dữ liệu hiện tại nếu có
     const existing = await TelegramConfigurationService.getDecryptedByUser(session.user.id);
     const mergedData = existing
-      ? { ...existing, ...validatedData, userId: session.user.id }
+      ? { ...existing, ...validatedData, nguoi_dung_id: session.user.id }
       : { ...validatedData };
 
     const config = await TelegramConfigurationService.upsert(
@@ -170,7 +170,7 @@ export async function PUT(request) {
     );
   } catch (error) {
     console.error('Update telegram config error:', error);
-    
+
     if (error.name === 'ZodError') {
       return NextResponse.json(
         {
@@ -202,7 +202,7 @@ export async function DELETE(request) {
     }
 
     // Chỉ property owner mới có thể cấu hình telegram
-    if (session.user.role !== 'PROPERTY_OWNER') {
+    if (session.user.vai_tro !== 'CHU_NHA_TRO') {
       logAuthorizationViolation(
         request,
         session,

@@ -9,612 +9,587 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Model User cho xác thực và property owner
-model User {
+// Model USR_NGUOI_DUNG cho xác thực và property owner
+model USR_NGUOI_DUNG {
   id        String   @id @default(cuid())
-  username  String   @unique
-  password  String // bcrypt hashed
-  role      UserRole @default(PROPERTY_OWNER)
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  tai_khoan  String   @unique
+  mat_khau  String // bcrypt hashed
+  vai_tro      VaiTro @default(CHU_NHA_TRO)
+  trang_thai  Boolean  @default(true)
+  ngay_tao DateTime @default(now())
+  ngay_cap_nhat DateTime @updatedAt
 
   // Quan hệ - one-to-one với PropertyInfo
-  propertyInfo PropertyInfo?
+  thong_tin_nha_tro PRP_THONG_TIN_NHA_TRO?
 
   // Quan hệ - direct ownership (one-to-many)
-  rooms                 Room[]
-  feeTypes              FeeType[]
-  utilityRates          UtilityRate[]
-  tenants               Tenant[]
-  bills                 Bill[]
-  billHistories         BillHistory[]
-  passwordResetTokens   PasswordResetToken[]
-  telegramConfiguration TelegramConfiguration?
-  notificationLogs      NotificationLog[]
+  phong                 PRP_PHONG[]
+  loai_phi              BIL_LOAI_PHI[]
+  don_gia_dien_nuoc     PRP_DON_GIA_DIEN_NUOC[]
+  nguoi_thue            TNT_NGUOI_THUE_CHINH[]
+  hoa_don               BIL_HOA_DON[]
+  lich_su_hoa_don       BIL_LICH_SU_THAY_DOI[]
+  token_dat_lai_mk      USR_TOKEN_DAT_LAI_MAT_KHAU[]
+  cau_hinh_telegram     CFG_TELEGRAM_NGUOI_DUNG?
+  lich_su_thong_bao     NTF_LICH_SU_THONG_BAO[]
 
-  @@index([role])
-  @@index([isActive])
+  @@index([vai_tro])
+  @@index([trang_thai])
 }
 
 // Thông tin nhà trọ (one-to-one với User)
-model PropertyInfo {
+model PRP_THONG_TIN_NHA_TRO {
   id               String   @id @default(cuid())
-  userId           String   @unique // Foreign key to User (property owner)
-  name             String
-  address          String
-  phone            String
-  ownerName        String
+  nguoi_dung_id    String   @unique // Foreign key to User (property owner)
+  ten              String
+  dia_chi          String
+  dien_thoai       String
+  ten_chu_nha      String
   email            String?
-  logoUrl          String? // Cloudinary URL
-  maxElectricMeter Int      @default(999999) // Giá trị tối đa đồng hồ điện (6 chữ số)
-  maxWaterMeter    Int      @default(99999) // Giá trị tối đa đồng hồ nước (5 chữ số)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  logo_url         String? // Cloudinary URL
+  max_dong_ho_dien Int      @default(999999) // Giá trị tối đa đồng hồ điện (6 chữ số)
+  max_dong_ho_nuoc Int      @default(99999) // Giá trị tối đa đồng hồ nước (5 chữ số)
+  ngay_tao         DateTime @default(now())
+  ngay_cap_nhat    DateTime @updatedAt
 
   // Quan hệ
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nguoi_dung USR_NGUOI_DUNG @relation(fields: [nguoi_dung_id], references: [id], onDelete: Cascade)
 
-  @@index([userId])
-  @@index([name])
+  @@index([nguoi_dung_id])
+  @@index([ten])
 }
 
 // Model Phòng
-model Room {
-  id               String     @id @default(cuid())
-  code             String // Mã phòng (A101, A102, etc.)
-  name             String
-  price            Decimal    @db.Decimal(10, 0)
-  status           RoomStatus @default(EMPTY)
-  meterReadingDay  Int? // Ngày chốt số hàng tháng (1-31)
-  maxElectricMeter Int? // Override giá trị max đồng hồ điện cho phòng này (null = dùng chung)
-  maxWaterMeter    Int? // Override giá trị max đồng hồ nước cho phòng này (null = dùng chung)
-  userId           String? // Foreign key to User (property owner) - nullable for migration
-  createdAt        DateTime   @default(now())
-  updatedAt        DateTime   @updatedAt
+model PRP_PHONG {
+  id                   String     @id @default(cuid())
+  ma_phong             String // Mã phòng (A101, A102, etc.)
+  ten_phong            String
+  gia_phong            Decimal    @db.Decimal(10, 0)
+  trang_thai           TrangThaiPhong @default(TRONG)
+  ngay_chot_so         Int? // Ngày chốt số hàng tháng (1-31)
+  max_dong_ho_dien     Int? // Override giá trị max đồng hồ điện cho phòng này (null = dùng chung)
+  max_dong_ho_nuoc     Int? // Override giá trị max đồng hồ nước cho phòng này (null = dùng chung)
+  nguoi_dung_id        String? // Foreign key to User (property owner) - nullable for migration
+  ngay_tao             DateTime   @default(now())
+  ngay_cap_nhat        DateTime   @updatedAt
 
   // Quan hệ
-  user         User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tenant       Tenant?
-  utilityRates UtilityRate?
-  bills        Bill[]
-  roomFees     RoomFee[]
+  nguoi_dung   USR_NGUOI_DUNG?           @relation(fields: [nguoi_dung_id], references: [id], onDelete: Cascade)
+  nguoi_thue   TNT_NGUOI_THUE_CHINH?
+  don_gia      PRP_DON_GIA_DIEN_NUOC?
+  hoa_don      BIL_HOA_DON[]
+  phi_phong    BIL_PHI_PHONG[]
 
-  @@unique([userId, code]) // Mã phòng unique trong từng property owner (userId có thể null trong migration)
-  @@index([status])
-  @@index([code])
-  @@index([userId])
+  @@unique([nguoi_dung_id, ma_phong]) // Mã phòng unique trong từng property owner (userId có thể null trong migration)
+  @@index([trang_thai])
+  @@index([ma_phong])
+  @@index([nguoi_dung_id])
 }
 
-enum RoomStatus {
-  EMPTY // Phòng trống
-  OCCUPIED // Đã thuê
+enum TrangThaiPhong {
+  TRONG // Phòng trống
+  DA_THUE // Đã thuê
 }
 
-enum WaterPricingMethod {
-  METER // Theo đồng hồ
-  PERSON // Theo số người
+enum PhuongThucTinhNuoc {
+  DONG_HO // Theo đồng hồ
+  THEO_NGUOI // Theo số người
 }
 
-enum ResidenceType {
-  TEMPORARY // Tạm trú
-  PERMANENT // Thường trú
+enum LoaiCuTru {
+  TAM_TRU // Tạm trú
+  THUONG_TRU // Thường trú
 }
 
-enum DepositReturnMethod {
-  FULL_RETURN // Hoàn trả đầy đủ
-  DEDUCT_FROM_LAST_BILL // Trừ vào hóa đơn cuối
+enum PhuongThucHoanTraCoc {
+  HOAN_TRA_DAY_DU // Hoàn trả đầy đủ
+  TRU_VAO_HOA_DON_CUOI // Trừ vào hóa đơn cuối
 }
 
-enum UserRole {
-  SUPER_ADMIN // Quản trị viên hệ thống
-  PROPERTY_OWNER // Chủ nhà trọ
+enum VaiTro {
+  SIEU_QUAN_TRI // Quản trị viên hệ thống
+  CHU_NHA_TRO // Chủ nhà trọ
 }
 
 // Đơn giá điện nước (chung và riêng từng phòng)
-model UtilityRate {
-  id                  String             @id @default(cuid())
-  electricityPrice    Decimal?           @db.Decimal(10, 0) // VNĐ/kWh
-  waterPrice          Decimal?           @db.Decimal(10, 0) // VNĐ/m³
-  waterPricingMethod  WaterPricingMethod @default(METER)
-  waterPricePerPerson Decimal?           @db.Decimal(10, 0) // VNĐ/người/tháng
-  useTieredPricing    Boolean            @default(false)
-  isGlobal            Boolean            @default(false)
-  userId              String? // Foreign key to User (property owner) - nullable for migration
-  createdAt           DateTime           @default(now())
-  updatedAt           DateTime           @updatedAt
+model PRP_DON_GIA_DIEN_NUOC {
+  id                      String             @id @default(cuid())
+  gia_dien                Decimal?           @db.Decimal(10, 0) // VNĐ/kWh
+  gia_nuoc                Decimal?           @db.Decimal(10, 0) // VNĐ/m³
+  phuong_thuc_tinh_nuoc   PhuongThucTinhNuoc @default(DONG_HO)
+  gia_nuoc_theo_nguoi     Decimal?           @db.Decimal(10, 0) // VNĐ/người/tháng
+  su_dung_bac_thang       Boolean            @default(false)
+  la_chung                Boolean            @default(false)
+  nguoi_dung_id           String? // Foreign key to User (property owner) - nullable for migration
+  ngay_tao                DateTime           @default(now())
+  ngay_cap_nhat           DateTime           @updatedAt
 
   // Quan hệ
-  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nguoi_dung  USR_NGUOI_DUNG?   @relation(fields: [nguoi_dung_id], references: [id], onDelete: Cascade)
   // Quan hệ (cho đơn giá riêng từng phòng)
-  roomId String? @unique
-  room   Room?   @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  phong_id    String? @unique
+  phong       PRP_PHONG?   @relation(fields: [phong_id], references: [id], onDelete: Cascade)
 
   // Bậc thang giá điện
-  tieredRates TieredElectricityRate[]
+  bac_thang_gia PRP_BAC_THANG_GIA_DIEN[]
 
-  @@index([isGlobal])
-  @@index([roomId])
-  @@index([userId])
+  @@index([la_chung])
+  @@index([phong_id])
+  @@index([nguoi_dung_id])
 }
 
 // Bậc thang giá điện
-model TieredElectricityRate {
-  id        String   @id @default(cuid())
-  minUsage  Int // kWh
-  maxUsage  Int? // kWh (null = không giới hạn)
-  price     Decimal  @db.Decimal(10, 0)
-  createdAt DateTime @default(now())
+model PRP_BAC_THANG_GIA_DIEN {
+  id            String   @id @default(cuid())
+  muc_tieu_thu_min  Int // kWh
+  muc_tieu_thu_max  Int? // kWh (null = không giới hạn)
+  gia           Decimal  @db.Decimal(10, 0)
+  ngay_tao      DateTime @default(now())
 
   // Quan hệ
-  utilityRateId String
-  utilityRate   UtilityRate @relation(fields: [utilityRateId], references: [id], onDelete: Cascade)
+  don_gia_id String
+  don_gia    PRP_DON_GIA_DIEN_NUOC @relation(fields: [don_gia_id], references: [id], onDelete: Cascade)
 
-  @@index([utilityRateId])
+  @@index([don_gia_id])
 }
 
 // Model Người thuê chính
-model Tenant {
-  id              String    @id @default(cuid())
-  fullName        String
-  phone           String
-  idCard          String?
-  dateOfBirth     DateTime?
-  hometown        String?
-  moveInDate      DateTime?
-  deposit         Decimal?  @db.Decimal(10, 0)
-  contractFileUrl String? // Cloudinary URL
-  userId          String? // Foreign key to User (property owner) - nullable for migration
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  deletedAt       DateTime?
-  deletedBy       String?
-  deleteReason    String?
+model TNT_NGUOI_THUE_CHINH {
+  id                      String    @id @default(cuid())
+  ho_ten                  String
+  dien_thoai              String
+  can_cuoc                String?
+  ngay_sinh               DateTime?
+  que_quan                String?
+  ngay_vao_o              DateTime?
+  tien_coc                Decimal?  @db.Decimal(10, 0)
+  url_hop_dong            String? // Cloudinary URL
+  nguoi_dung_id           String? // Foreign key to User (property owner) - nullable for migration
+  ngay_tao                DateTime  @default(now())
+  ngay_cap_nhat           DateTime  @updatedAt
+  ngay_xoa                DateTime?
+  nguoi_xoa               String?
+  ly_do_xoa               String?
 
   // Thông tin bổ sung
-  gender              String? // Giới tính
-  occupation          String? // Nghề nghiệp
-  ethnicity           String? // Dân tộc
-  nationality         String? // Quốc tịch
-  permanentAddress    String? // Địa chỉ thường trú
-  temporaryAddress    String? // Địa chỉ tạm trú (phòng trọ)
-  insuranceCardNumber String? // Số thẻ bảo hiểm
-  issueDate           DateTime? // Ngày cấp
-  placeOfIssue        String? // Nơi cấp
+  gioi_tinh               String? // Giới tính
+  nghe_nghiep             String? // Nghề nghiệp
+  dan_toc                 String? // Dân tộc
+  quoc_tich               String? // Quốc tịch
+  dia_chi_thuong_tru      String? // Địa chỉ thường trú
+  dia_chi_tam_tru         String? // Địa chỉ tạm trú (phòng trọ)
+  so_the_bao_hiem         String? // Số thẻ bảo hiểm
+  ngay_cap                DateTime? // Ngày cấp
+  noi_cap                 String? // Nơi cấp
 
   // Quan hệ
-  roomId         String?         @unique
-  room           Room?           @relation(fields: [roomId], references: [id])
-  user           User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  occupants      Occupant[]
-  depositReturns DepositReturn[]
+  phong_id                String?         @unique
+  phong                   PRP_PHONG?           @relation(fields: [phong_id], references: [id])
+  nguoi_dung              USR_NGUOI_DUNG?           @relation(fields: [nguoi_dung_id], references: [id], onDelete: Cascade)
+  nguoi_o                 TNT_NGUOI_O[]
+  hoan_tra_coc            TNT_LICH_SU_HOAN_TRA_COC[]
 
-  @@index([deletedAt])
-  @@index([roomId])
-  @@index([phone])
-  @@index([userId])
+  @@index([ngay_xoa])
+  @@index([phong_id])
+  @@index([dien_thoai])
+  @@index([nguoi_dung_id])
 }
 
 // Model Người ở
-model Occupant {
-  id            String        @id @default(cuid())
-  fullName      String
-  idCard        String?
-  dateOfBirth   DateTime?
-  hometown      String?
-  relationship  String? // Quan hệ với người thuê chính
-  residenceType ResidenceType @default(TEMPORARY)
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+model TNT_NGUOI_O {
+  id                      String        @id @default(cuid())
+  ho_ten                  String
+  can_cuoc                String?
+  ngay_sinh               DateTime?
+  que_quan                String?
+  moi_quan_he             String? // Quan hệ với người thuê chính
+  loai_cu_tru             LoaiCuTru @default(TAM_TRU)
+  ngay_tao                DateTime      @default(now())
+  ngay_cap_nhat           DateTime      @updatedAt
 
   // Thông tin bổ sung
-  phone               String? // Điện thoại
-  gender              String? // Giới tính
-  occupation          String? // Nghề nghiệp
-  ethnicity           String? // Dân tộc
-  nationality         String? // Quốc tịch
-  permanentAddress    String? // Địa chỉ thường trú
-  temporaryAddress    String? // Địa chỉ tạm trú (phòng trọ)
-  insuranceCardNumber String? // Số thẻ bảo hiểm
-  issueDate           DateTime? // Ngày cấp
-  placeOfIssue        String? // Nơi cấp
+  dien_thoai              String? // Điện thoại
+  gioi_tinh               String? // Giới tính
+  nghe_nghiep             String? // Nghề nghiệp
+  dan_toc                 String? // Dân tộc
+  quoc_tich               String? // Quốc tịch
+  dia_chi_thuong_tru      String? // Địa chỉ thường trú
+  dia_chi_tam_tru         String? // Địa chỉ tạm trú (phòng trọ)
+  so_the_bao_hiem         String? // Số thẻ bảo hiểm
+  ngay_cap                DateTime? // Ngày cấp
+  noi_cap                 String? // Nơi cấp
 
   // Quan hệ
-  tenantId String
-  tenant   Tenant @relation(fields: [tenantId], references: [id])
+  nguoi_thue_id String
+  nguoi_thue    TNT_NGUOI_THUE_CHINH @relation(fields: [nguoi_thue_id], references: [id])
 
-  @@index([tenantId])
+  @@index([nguoi_thue_id])
 }
 
 // Lịch sử hoàn trả cọc
-model DepositReturn {
-  id         String              @id @default(cuid())
-  amount     Decimal             @db.Decimal(10, 0)
-  returnDate DateTime            @default(now())
-  method     DepositReturnMethod
-  notes      String?
-  createdAt  DateTime            @default(now())
+model TNT_LICH_SU_HOAN_TRA_COC {
+  id                String              @id @default(cuid())
+  so_tien           Decimal             @db.Decimal(10, 0)
+  ngay_hoan_tra     DateTime            @default(now())
+  phuong_thuc       PhuongThucHoanTraCoc
+  ghi_chu           String?
+  ngay_tao          DateTime            @default(now())
 
   // Quan hệ
-  tenantId String
-  tenant   Tenant @relation(fields: [tenantId], references: [id])
+  nguoi_thue_id String
+  nguoi_thue    TNT_NGUOI_THUE_CHINH @relation(fields: [nguoi_thue_id], references: [id])
 
-  @@index([tenantId])
+  @@index([nguoi_thue_id])
 }
 
 // Model Hóa đơn
-model Bill {
+model BIL_HOA_DON {
   id    String @id @default(cuid())
-  month Int // 1-12
-  year  Int
+  thang Int // 1-12
+  nam   Int
 
   // Chỉ số đồng hồ
-  oldElectricReading  Int
-  newElectricReading  Int
-  electricityUsage    Int
-  electricityRollover Boolean @default(false)
+  chi_so_dien_cu          Int
+  chi_so_dien_moi         Int
+  tieu_thu_dien           Int
+  dien_vuot_nguong        Boolean @default(false)
 
-  oldWaterReading Int
-  newWaterReading Int
-  waterUsage      Int
-  waterRollover   Boolean @default(false)
+  chi_so_nuoc_cu          Int
+  chi_so_nuoc_moi         Int
+  tieu_thu_nuoc           Int
+  nuoc_vuot_nguong        Boolean @default(false)
 
   // Ảnh đồng hồ (Cloudinary URLs)
-  electricMeterPhotoUrl String?
-  waterMeterPhotoUrl    String?
+  anh_dong_ho_dien        String?
+  anh_dong_ho_nuoc        String?
 
   // Chi phí
-  roomPrice       Decimal @db.Decimal(10, 0)
-  electricityCost Decimal @db.Decimal(10, 0)
-  waterCost       Decimal @db.Decimal(10, 0)
-  totalCost       Decimal @db.Decimal(10, 0)
-  totalCostText   String // Số tiền bằng chữ
+  gia_phong               Decimal @db.Decimal(10, 0)
+  tien_dien               Decimal @db.Decimal(10, 0)
+  tien_nuoc               Decimal @db.Decimal(10, 0)
+  tong_tien               Decimal @db.Decimal(10, 0)
+  tong_tien_chu           String // Số tiền bằng chữ
 
   // Trạng thái
-  isPaid     Boolean   @default(false)
-  paidAmount Decimal?  @db.Decimal(10, 0) // Số tiền đã thanh toán (null = chưa thanh toán, < totalCost = thanh toán một phần)
-  paidDate   DateTime?
-  notes      String?
+  da_thanh_toan           Boolean   @default(false)
+  so_tien_da_tra          Decimal?  @db.Decimal(10, 0) // Số tiền đã thanh toán (null = chưa thanh toán, < totalCost = thanh toán một phần)
+  ngay_thanh_toan         DateTime?
+  ghi_chu                 String?
 
   // Thông tin người thuê (snapshot tại thời điểm tạo hóa đơn, không dùng foreign key)
-  tenantName        String?
-  tenantPhone       String?
-  tenantDateOfBirth DateTime?
-  tenantIdCard      String?
+  ten_nguoi_thue          String?
+  sdt_nguoi_thue          String?
+  ngay_sinh_nguoi_thue    DateTime?
+  can_cuoc_nguoi_thue     String?
 
-  userId    String? // Foreign key to User (property owner) - nullable for migration
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  nguoi_dung_id           String? // Foreign key to User (property owner) - nullable for migration
+  ngay_tao                DateTime @default(now())
+  ngay_cap_nhat           DateTime @updatedAt
+  don_gia_snapshot        Json? // Bản sao đơn giá tại thời điểm tạo/cập nhật hóa đơn
 
   // Quan hệ
-  roomId    String
-  room      Room          @relation(fields: [roomId], references: [id])
-  user      User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  billFees  BillFee[]
-  histories BillHistory[]
+  phong_id              String
+  phong                 PRP_PHONG          @relation(fields: [phong_id], references: [id])
+  nguoi_dung            USR_NGUOI_DUNG?         @relation(fields: [nguoi_dung_id], references: [id], onDelete: Cascade)
+  phi_hoa_don           BIL_PHI_HOA_DON[]
+  lich_su               BIL_LICH_SU_THAY_DOI[]
 
-  @@unique([roomId, month, year])
-  @@index([roomId])
-  @@index([userId])
-  @@index([isPaid])
-  @@index([month, year])
+  @@unique([phong_id, thang, nam])
+  @@index([phong_id])
+  @@index([nguoi_dung_id])
+  @@index([da_thanh_toan])
+  @@index([thang, nam])
 }
 
 // Loại phí (Wifi, rác, gửi xe, v.v.)
-model FeeType {
-  id          String   @id @default(cuid())
-  name        String // Wifi, Tiền rác, Tiền gửi xe, etc.
-  description String? // Mô tả phí
-  isActive    Boolean  @default(true) // Có hiển thị trong danh sách không
-  userId      String? // Foreign key to User (property owner) - nullable for migration
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+model BIL_LOAI_PHI {
+  id                String   @id @default(cuid())
+  ten_phi           String // Wifi, Tiền rác, Tiền gửi xe, etc.
+  mo_ta             String? // Mô tả phí
+  trang_thai        Boolean  @default(true) // Có hiển thị trong danh sách không
+  nguoi_dung_id     String? // Foreign key to User (property owner) - nullable for migration
+  ngay_tao          DateTime @default(now())
+  ngay_cap_nhat     DateTime @updatedAt
 
   // Quan hệ
-  user     User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  roomFees RoomFee[]
+  nguoi_dung        USR_NGUOI_DUNG?     @relation(fields: [nguoi_dung_id], references: [id], onDelete: Cascade)
+  phi_phong         BIL_PHI_PHONG[]
 
-  @@unique([userId, name]) // Tên phí unique trong từng property owner (userId có thể null trong migration)
-  @@index([isActive])
-  @@index([userId])
+  @@unique([nguoi_dung_id, ten_phi]) // Tên phí unique trong từng property owner (userId có thể null trong migration)
+  @@index([trang_thai])
+  @@index([nguoi_dung_id])
 }
 
-// Phí được gán cho từng phòng
-model RoomFee {
-  id        String   @id @default(cuid())
-  amount    Decimal  @db.Decimal(10, 0) // Số tiền cho phòng này
-  isActive  Boolean  @default(true) // Có áp dụng cho phòng này không
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+// Phí được gán for từng phòng
+model BIL_PHI_PHONG {
+  id                String   @id @default(cuid())
+  so_tien           Decimal  @db.Decimal(10, 0) // Số tiền for phòng này
+  trang_thai        Boolean  @default(true) // Có áp dụng for phòng này không
+  ngay_tao          DateTime @default(now())
+  ngay_cap_nhat     DateTime @updatedAt
 
   // Quan hệ
-  roomId    String
-  room      Room    @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  feeTypeId String
-  feeType   FeeType @relation(fields: [feeTypeId], references: [id], onDelete: Cascade)
+  phong_id          String
+  phong             PRP_PHONG    @relation(fields: [phong_id], references: [id], onDelete: Cascade)
+  loai_phi_id       String
+  loai_phi          BIL_LOAI_PHI @relation(fields: [loai_phi_id], references: [id], onDelete: Cascade)
 
-  @@unique([roomId, feeTypeId]) // Mỗi phòng chỉ có 1 mức phí cho 1 loại phí
-  @@index([roomId])
-  @@index([feeTypeId])
-  @@index([isActive])
+  @@unique([phong_id, loai_phi_id]) // Mỗi phòng chỉ có 1 mức phí for 1 loại phí
+  @@index([phong_id])
+  @@index([loai_phi_id])
+  @@index([trang_thai])
 }
 
 // Phí thực tế trong hóa đơn (snapshot tại thời điểm tạo bill)
-model BillFee {
-  id        String   @id @default(cuid())
-  name      String // Tên phí (snapshot từ FeeType tại thời điểm tạo)
-  amount    Decimal  @db.Decimal(10, 0) // Số tiền thực tế (snapshot)
-  feeTypeId String? // ID tham chiếu (chỉ để biết nguồn gốc, không dùng relation)
-  createdAt DateTime @default(now())
+model BIL_PHI_HOA_DON {
+  id                String   @id @default(cuid())
+  ten_phi           String // Tên phí (snapshot từ BIL_LOAI_PHI tại thời điểm tạo)
+  so_tien           Decimal  @db.Decimal(10, 0) // Số tiền thực tế (snapshot)
+  loai_phi_id       String? // ID tham chiếu (chỉ để biết nguồn gốc, không dùng relation)
+  ngay_tao          DateTime @default(now())
 
   // Quan hệ
-  billId String
-  bill   Bill   @relation(fields: [billId], references: [id], onDelete: Cascade)
+  hoa_don_id        String
+  hoa_don           BIL_HOA_DON   @relation(fields: [hoa_don_id], references: [id], onDelete: Cascade)
 
-  @@index([billId])
+  @@index([hoa_don_id])
 }
 
 // Model Lịch sử thay đổi hóa đơn
-model BillHistory {
-  id             String            @id @default(cuid())
-  billId         String? // Nullable để giữ lại lịch sử khi bill bị xóa (có thể bị set null do foreign key)
-  originalBillId String? // Lưu billId gốc để query sau khi bill bị xóa (không bị ảnh hưởng bởi foreign key)
-  action         BillHistoryAction
-  changedBy      String? // User ID người thực hiện thay đổi (nullable nếu system)
-  oldData        Json? // Snapshot dữ liệu cũ (JSON)
-  newData        Json? // Snapshot dữ liệu mới (JSON)
-  changes        Json? // Mô tả chi tiết các thay đổi (JSON)
-  description    String? // Mô tả thay đổi bằng text
-  createdAt      DateTime          @default(now())
+model BIL_LICH_SU_THAY_DOI {
+  id                     String            @id @default(cuid())
+  hoa_don_id             String? // Nullable để giữ lại lịch sử khi bill bị xóa
+  hoa_don_goc_id         String? // Lưu billId gốc để query sau khi bill bị xóa
+  hanh_dong              HanhDongLichSuHoaDon
+  nguoi_thay_doi         String? // User ID người thực hiện thay đổi
+  du_lieu_cu             Json? // Snapshot dữ liệu cũ (JSON)
+  du_lieu_moi            Json? // Snapshot dữ liệu mới (JSON)
+  thay_doi               Json? // Mô tả chi tiết các thay đổi (JSON)
+  mo_ta                  String? // Mô tả thay đổi bằng text
+  ngay_tao               DateTime          @default(now())
 
   // Quan hệ
   // SetNull để giữ lại lịch sử ngay cả khi hóa đơn bị xóa
-  bill Bill? @relation(fields: [billId], references: [id], onDelete: SetNull)
-  user User? @relation(fields: [changedBy], references: [id], onDelete: SetNull)
+  hoa_don BIL_HOA_DON? @relation(fields: [hoa_don_id], references: [id], onDelete: SetNull)
+  nguoi_dung USR_NGUOI_DUNG? @relation(fields: [nguoi_thay_doi], references: [id], onDelete: SetNull)
 
-  @@index([originalBillId])
-  @@index([billId])
-  @@index([action])
-  @@index([changedBy])
-  @@index([createdAt])
+  @@index([hoa_don_goc_id])
+  @@index([hoa_don_id])
+  @@index([hanh_dong])
+  @@index([nguoi_thay_doi])
+  @@index([ngay_tao])
 }
 
-enum BillHistoryAction {
-  CREATE // Tạo mới hóa đơn
-  UPDATE // Cập nhật hóa đơn
-  DELETE // Xóa hóa đơn
-  STATUS_CHANGE // Thay đổi trạng thái thanh toán
-  FEE_ADD // Thêm phí phát sinh
-  FEE_REMOVE // Xóa phí phát sinh
-  FEE_UPDATE // Cập nhật phí phát sinh
+enum HanhDongLichSuHoaDon {
+  TAO_MOI // Tạo mới hóa đơn
+  CAP_NHAT // Cập nhật hóa đơn
+  XOA // Xóa hóa đơn
+  THAY_DOI_TRANG_THAI // Thay đổi trạng thái thanh toán
+  THEM_PHI // Thêm phí phát sinh
+  XOA_PHI // Xóa phí phát sinh
+  CAP_NHAT_PHI // Cập nhật phí phát sinh
 }
 
 // Model Token đặt lại mật khẩu
-model PasswordResetToken {
-  id        String   @id @default(cuid())
-  token     String   @unique
-  userId    String
-  expiresAt DateTime
-  used      Boolean  @default(false)
-  createdAt DateTime @default(now())
+model USR_TOKEN_DAT_LAI_MAT_KHAU {
+  id                String   @id @default(cuid())
+  token             String   @unique
+  nguoi_dung_id     String
+  het_han_luc       DateTime
+  da_su_dung        Boolean  @default(false)
+  ngay_tao          DateTime @default(now())
 
   // Quan hệ
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nguoi_dung USR_NGUOI_DUNG @relation(fields: [nguoi_dung_id], references: [id], onDelete: Cascade)
 
   @@index([token])
-  @@index([userId])
-  @@index([expiresAt])
-  @@index([used])
+  @@index([nguoi_dung_id])
+  @@index([het_han_luc])
+  @@index([da_su_dung])
 }
 
 // Model Cấu hình Email (Super Admin only)
-model EmailConfiguration {
-  id           String   @id @default(cuid())
-  smtpHost     String // Encrypted
-  smtpPort     Int
-  smtpUser     String // Encrypted
-  smtpPassword String // Encrypted
-  fromName     String?
-  useTLS       Boolean  @default(true)
-  useSSL       Boolean  @default(false)
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  createdBy    String // Super Admin ID
-
-  @@map("email_configurations")
+model CFG_EMAIL {
+  id                String   @id @default(cuid())
+  smtp_host         String // Encrypted
+  smtp_port         Int
+  smtp_user         String // Encrypted
+  smtp_password     String // Encrypted
+  ten_nguoi_gui     String?
+  su_dung_tls       Boolean  @default(true)
+  su_dung_ssl       Boolean  @default(false)
+  trang_thai        Boolean  @default(true)
+  ngay_tao          DateTime @default(now())
+  ngay_cap_nhat     DateTime @updatedAt
+  nguoi_tao         String // Super Admin ID
 }
 
 // Model Cấu hình Telegram Bot Global (Super Admin only)
-model TelegramBotConfig {
-  id          String   @id @default(cuid())
-  botToken    String // Encrypted
-  botUsername String? // Username của bot (VD: @BotHomeZen_bot)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  createdBy   String // Super Admin ID
-
-  @@map("telegram_bot_configs")
+model CFG_TELEGRAM_BOT {
+  id                String   @id @default(cuid())
+  bot_token         String // Encrypted
+  ten_bot           String? // Username của bot (VD: @BotHomeZen_bot)
+  trang_thai        Boolean  @default(true)
+  ngay_tao          DateTime @default(now())
+  ngay_cap_nhat     DateTime @updatedAt
+  nguoi_tao         String // Super Admin ID
 }
 
-// Model Cấu hình Telegram (Property Owner - chỉ lưu chatId)
-model TelegramConfiguration {
-  id        String   @id @default(cuid())
-  userId    String   @unique // Foreign key to User (property owner)
-  chatId    String // Encrypted
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+// Model Cấu hình Telegram NGUOI_DUNG (Property Owner - chỉ lưu chatId)
+model CFG_TELEGRAM_NGUOI_DUNG {
+  id                String   @id @default(cuid())
+  nguoi_dung_id     String   @unique // Foreign key to User (property owner)
+  chat_id           String // Encrypted
+  trang_thai        Boolean  @default(true)
+  ngay_tao          DateTime @default(now())
+  ngay_cap_nhat     DateTime @updatedAt
 
   // Quan hệ
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nguoi_dung USR_NGUOI_DUNG @relation(fields: [nguoi_dung_id], references: [id], onDelete: Cascade)
 
-  @@index([userId])
-  @@map("telegram_configurations")
+  @@index([nguoi_dung_id])
 }
 
 // Model Lịch sử thông báo
-model NotificationLog {
-  id           String             @id @default(cuid())
-  type         NotificationType
-  recipient    String
-  subject      String?
-  message      String
-  status       NotificationStatus
-  errorMessage String?
-  retryCount   Int                @default(0)
-  sentAt       DateTime?
-  createdAt    DateTime           @default(now())
-  userId       String? // Foreign key to User (property owner)
+model NTF_LICH_SU_THONG_BAO {
+  id                String             @id @default(cuid())
+  loai              LoaiThongBao
+  nguoi_nhan        String
+  tieu_de           String?
+  noi_dung          String
+  trang_thai        TrangThaiThongBao
+  thong_bao_loi     String?
+  so_lan_thu_lai    Int                @default(0)
+  thoi_gian_gui     DateTime?
+  ngay_tao          DateTime           @default(now())
+  nguoi_dung_id     String? // Foreign key to User (property owner)
 
   // Quan hệ
-  user User? @relation(fields: [userId], references: [id])
+  nguoi_dung USR_NGUOI_DUNG? @relation(fields: [nguoi_dung_id], references: [id])
 
-  @@index([userId])
-  @@index([type])
-  @@index([status])
-  @@index([createdAt])
-  @@map("notification_logs")
+  @@index([nguoi_dung_id])
+  @@index([loai])
+  @@index([trang_thai])
+  @@index([ngay_tao])
 }
 
-enum NotificationType {
+enum LoaiThongBao {
   EMAIL
   TELEGRAM
 }
 
-enum NotificationStatus {
-  PENDING
-  SENT
-  FAILED
-  RETRY
+enum TrangThaiThongBao {
+  CHO_XU_LY // PENDING
+  DA_GUI // SENT
+  THAT_BAI // FAILED
+  THU_LAI // RETRY
 }
 
 // Model Cấu hình Website (Super Admin only)
-model WebsiteConfiguration {
+model CFG_WEBSITE {
   id String @id @default(cuid())
 
   // Hình ảnh (Cloudinary URLs)
-  logoUrl       String? // Logo chính
-  faviconUrl    String? // Favicon
-  heroImageUrl  String? // Hình ảnh hero
-  errorImageUrl String? // Hình ảnh error page
+  logo_url          String? // Logo chính
+  favicon_url       String? // Favicon
+  anh_hero_url      String? // Hình ảnh hero
+  anh_loi_url       String? // Hình ảnh error page
 
   // Nội dung văn bản
-  websiteTitle       String @default("HomeZen - Ứng dụng quản lý nhà trọ")
-  websiteDescription String @default("Quản lý phòng trọ, người thuê, hóa đơn điện nước dễ dàng và hiện đại")
-  brandName          String @default("HomeZen")
-  heroTitle          String @default("Chào Mừng Đến Với HomeZen")
-  heroSubtitle       String @default("Quản lý nhà trọ thảnh thơi")
-  footerText         String @default("HomeZen — Boarding House Management v1.0")
+  tieu_de_website   String @default("HomeZen - Ứng dụng quản lý nhà trọ")
+  mo_ta_website     String @default("Quản lý phòng trọ, người thuê, hóa đơn điện nước dễ dàng và hiện đại")
+  ten_thuong_hieu   String @default("HomeZen")
+  tieu_de_hero      String @default("Chào Mừng Đến Với HomeZen")
+  phu_de_hero       String @default("Quản lý nhà trọ thảnh thơi")
+  tieu_de_footer    String @default("HomeZen — Boarding House Management v1.0")
 
   // Thống kê (Statistics)
-  stat1Value String @default("1k+")
-  stat1Label String @default("Tin cậy")
-  stat2Value String @default("99%")
-  stat2Label String @default("Hài lòng")
+  gia_tri_thong_ke_1 String @default("1k+")
+  ten_thong_ke_1    String @default("Tin cậy")
+  gia_tri_thong_ke_2 String @default("99%")
+  ten_thong_ke_2    String @default("Hài lòng")
 
   // Thông tin liên hệ
-  contactEmail String? // Email liên hệ hỗ trợ
-  contactPhone String? // Số điện thoại liên hệ hỗ trợ
+  email_lien_he     String? // Email liên hệ hỗ trợ
+  sdt_lien_he       String? // Số điện thoại liên hệ hỗ trợ
 
   // Metadata
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  createdBy String // Super Admin ID
-  updatedBy String? // Last updated by
+  trang_thai        Boolean  @default(true)
+  ngay_tao          DateTime @default(now())
+  ngay_cap_nhat     DateTime @updatedAt
+  nguoi_tao         String // Super Admin ID
+  nguoi_cap_nhat    String? // Last updated by
 
-  @@index([isActive])
-  @@map("website_configurations")
+  @@index([trang_thai])
 }
 
 // Model Nhật ký Bảo mật (Security Logs)
-model SecurityLog {
-  id        String   @id @default(cuid())
-  timestamp DateTime @default(now())
-  type      String // UNAUTHORIZED_ACCESS, AUTH_FAILURE, AUTHORIZATION_VIOLATION, MASTER_PASS_USE
-  userId    String? // ID của user liên quan (nếu có)
-  username  String? // Username liên quan
-  role      String? // Role của user
+model USR_NHAT_KY_BAO_MAT {
+  id                String   @id @default(cuid())
+  thoi_gian         DateTime @default(now())
+  loai              String // UNAUTHORIZED_ACCESS, AUTH_FAILURE, AUTHORIZATION_VIOLATION, MASTER_PASS_USE, LOGIN_SUCCESS
+  nguoi_dung_id     String? // ID của user liên quan (nếu có)
+  tai_khoan         String? // Username liên quan
+  vai_tro           String? // Role của user
   endpoint  String? // API endpoint hoặc page path
-  method    String? // HTTP method
-  ip        String? // Địa chỉ IP
-  reason    String? // Lý do (ví dụ: "Sử dụng Siêu mật khẩu")
-  metadata  Json? // Thông tin bổ sung (User Agent, Browser, v.v.)
+  phuong_thuc       String? // HTTP method
+  dia_chi_ip        String? // Địa chỉ IP
+  ly_do             String? // Lý do (ví dụ: "Sử dụng Siêu mật khẩu")
+  thong_tin_bo_sung Json? // Thông tin bổ sung (User Agent, Browser, v.v.)
 
-  @@index([timestamp])
-  @@index([type])
-  @@index([userId])
-  @@map("security_logs")
+  @@index([thoi_gian])
+  @@index([loai])
+  @@index([nguoi_dung_id])
 }
 
 // ==== Advanced Reporting System Models ====
 
-model ReportProcedure {
-  id            String   @id @default(cuid())
-  name          String   @unique
-  description   String?
-  sqlDefinition String
-  parameters    Json     @default("[]")
-  returnType    String   @default("table")
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  createdBy     String?
-  version       Int      @default(1)
-
-  templates ReportTemplate[]
-  schedules ReportSchedule[]
-  history   ReportProcedureHistory[]
-}
-
-model ReportProcedureHistory {
-  id            String   @id @default(cuid())
-  procedureId   String
-  sqlDefinition String   @db.Text
-  version       Int
-  metaData      Json? // Lưu tên, mô tả tại thời điểm đó
-  changedBy     String?
-  createdAt     DateTime @default(now())
-
-  procedure ReportProcedure @relation(fields: [procedureId], references: [id], onDelete: Cascade)
-}
-
-model ReportTemplate {
+model RPT_THU_TUC {
   id                String   @id @default(cuid())
-  name              String
-  description       String?
-  procedureId       String
-  placeholders      Json     @default("[]")
-  parameterMappings Json     @default("[]")
-  content           String?  @db.Text // Nội dung HTML/Handlebars của template
-  css               String? // CSS code for the template
-  js                String? // JS code/helpers for the template
-  orientation       String   @default("portrait") // portrait or landscape
-  category          String?
-  isActive          Boolean  @default(true)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  createdBy         String?
+  ten               String   @unique
+  mo_ta             String?
+  dinh_nghia_sql    String
+  tham_so           Json     @default("[]")
+  kieu_tra_ve       String   @default("table")
+  trang_thai        Boolean  @default(true)
+  ngay_tao          DateTime @default(now())
+  ngay_cap_nhat     DateTime @updatedAt
+  nguoi_tao         String?
+  phien_ban         Int      @default(1)
 
-  procedure ReportProcedure  @relation(fields: [procedureId], references: [id])
-  schedules ReportSchedule[]
+  mau_bao_cao       RPT_MAU_BAO_CAO[]
+  lich_su_thu_tuc   RPT_LICH_SU_THU_TUC[]
 }
 
-model ReportSchedule {
-  id             String    @id @default(cuid())
-  templateId     String
-  name           String
-  cronExpression String
-  parameters     Json      @default("{}")
-  procedureId    String?
-  isActive       Boolean   @default(true)
-  lastRunAt      DateTime?
-  nextRunAt      DateTime?
-  createdAt      DateTime  @default(now())
-  createdBy      String
+model RPT_LICH_SU_THU_TUC {
+  id                String   @id @default(cuid())
+  thu_tuc_id        String
+  dinh_nghia_sql    String   @db.Text
+  phien_ban         Int
+  thong_tin_bo_sung Json? // Lưu tên, mô tả tại thời điểm đó
+  nguoi_thay_doi    String?
+  ngay_tao          DateTime @default(now())
 
-  template  ReportTemplate   @relation(fields: [templateId], references: [id])
-  procedure ReportProcedure? @relation(fields: [procedureId], references: [id])
+  thu_tuc RPT_THU_TUC @relation(fields: [thu_tuc_id], references: [id], onDelete: Cascade)
+}
+
+model RPT_MAU_BAO_CAO {
+  id                    String   @id @default(cuid())
+  ten                   String
+  mo_ta                 String?
+  thu_tuc_id            String
+  placeholder           Json     @default("[]")
+  anh_xa_tham_so        Json     @default("[]")
+  phan_quyen            Json     @default("{\"roles\": [\"SIEU_QUAN_TRI\"]}") // { "roles": ["CHU_NHA_TRO"], "users": ["id1"] }
+  noi_dung              String?  @db.Text // Nội dung HTML/Handlebars của template
+  css                   String? // CSS code for the template
+  js                    String? // JS code/helpers for the template
+  huong_giay            String   @default("portrait") // portrait or landscape
+  danh_muc              String?
+  trang_thai            Boolean  @default(true)
+  ngay_tao              DateTime @default(now())
+  ngay_cap_nhat         DateTime @updatedAt
+  nguoi_tao             String?
+
+  thu_tuc       RPT_THU_TUC  @relation(fields: [thu_tuc_id], references: [id])
 }

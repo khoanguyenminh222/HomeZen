@@ -25,7 +25,7 @@ export async function GET(request, { params }) {
     }
 
     // Check if room exists
-    const room = await prisma.room.findUnique({
+    const room = await prisma.pRP_PHONG.findUnique({
       where: { id: id },
     });
 
@@ -45,7 +45,7 @@ export async function GET(request, { params }) {
 
     // Build where clause
     const where = {
-      roomId: id,
+      phong_id: id,
     };
 
     // Filter by date range if provided
@@ -53,10 +53,10 @@ export async function GET(request, { params }) {
       where.AND = where.AND || [];
       where.AND.push({
         OR: [
-          { year: { gt: parseInt(startYear) } },
+          { nam: { gt: parseInt(startYear) } },
           {
-            year: parseInt(startYear),
-            month: { gte: parseInt(startMonth) },
+            nam: parseInt(startYear),
+            thang: { gte: parseInt(startMonth) },
           },
         ],
       });
@@ -66,64 +66,64 @@ export async function GET(request, { params }) {
       where.AND = where.AND || [];
       where.AND.push({
         OR: [
-          { year: { lt: parseInt(endYear) } },
+          { nam: { lt: parseInt(endYear) } },
           {
-            year: parseInt(endYear),
-            month: { lte: parseInt(endMonth) },
+            nam: parseInt(endYear),
+            thang: { lte: parseInt(endMonth) },
           },
         ],
       });
     }
 
     // Fetch bills with meter readings
-    const bills = await prisma.bill.findMany({
+    const bills = await prisma.bIL_HOA_DON.findMany({
       where,
       select: {
         id: true,
-        month: true,
-        year: true,
-        oldElectricReading: true,
-        newElectricReading: true,
-        electricityUsage: true,
-        electricityRollover: true,
-        oldWaterReading: true,
-        newWaterReading: true,
-        waterUsage: true,
-        waterRollover: true,
-        createdAt: true,
+        thang: true,
+        nam: true,
+        chi_so_dien_cu: true,
+        chi_so_dien_moi: true,
+        tieu_thu_dien: true,
+        dien_vuot_nguong: true,
+        chi_so_nuoc_cu: true,
+        chi_so_nuoc_moi: true,
+        tieu_thu_nuoc: true,
+        nuoc_vuot_nguong: true,
+        ngay_tao: true,
       },
       orderBy: [
-        { year: 'asc' },
-        { month: 'asc' },
+        { nam: 'asc' },
+        { thang: 'asc' },
       ],
     });
 
     // Format data for response
     const history = bills.map(bill => ({
       id: bill.id,
-      month: bill.month,
-      year: bill.year,
-      date: `${bill.month}/${bill.year}`,
+      month: bill.thang,
+      year: bill.nam,
+      date: `${bill.thang}/${bill.nam}`,
       electric: {
-        old: bill.oldElectricReading,
-        new: bill.newElectricReading,
-        usage: bill.electricityUsage,
-        rollover: bill.electricityRollover,
+        old: bill.chi_so_dien_cu,
+        new: bill.chi_so_dien_moi,
+        usage: bill.tieu_thu_dien,
+        rollover: bill.dien_vuot_nguong,
       },
       water: {
-        old: bill.oldWaterReading,
-        new: bill.newWaterReading,
-        usage: bill.waterUsage,
-        rollover: bill.waterRollover,
+        old: bill.chi_so_nuoc_cu,
+        new: bill.chi_so_nuoc_moi,
+        usage: bill.tieu_thu_nuoc,
+        rollover: bill.nuoc_vuot_nguong,
       },
-      createdAt: bill.createdAt,
+      createdAt: bill.ngay_tao,
     }));
 
     return NextResponse.json({
       room: {
         id: room.id,
-        code: room.code,
-        name: room.name,
+        ma_phong: room.ma_phong,
+        ten_phong: room.ten_phong,
       },
       history,
     });

@@ -1,16 +1,16 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { createBillSchema, updateBillSchema } from '@/lib/validations/bill';
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { createBillSchema, updateBillSchema } from "@/lib/validations/bill";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -19,18 +19,30 @@ import {
   FormLabel,
   FormMessage,
   FormDescription,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, AlertTriangle } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Loader2, AlertTriangle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 /**
  * BillForm - Form tạo/sửa hóa đơn
  * Requirements: 6.1-6.34
  */
-export default function BillForm({ open, onClose, bill, onSuccess, roomId: initialRoomId }) {
+export default function BillForm({
+  open,
+  onClose,
+  bill,
+  onSuccess,
+  roomId: initialRoomId,
+}) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [rooms, setRooms] = useState([]);
   const [loadingRooms, setLoadingRooms] = useState(false);
@@ -40,18 +52,20 @@ export default function BillForm({ open, onClose, bill, onSuccess, roomId: initi
   const isEdit = !!bill;
 
   const form = useForm({
-    resolver: zodResolver(isEdit ? updateBillSchema.omit({ id: true }) : createBillSchema),
+    resolver: zodResolver(
+      isEdit ? updateBillSchema.omit({ id: true }) : createBillSchema,
+    ),
     defaultValues: {
-      roomId: '',
-      month: new Date().getMonth() + 1,
-      year: new Date().getFullYear(),
-      oldElectricReading: 0,
-      newElectricReading: 0,
-      oldWaterReading: 0,
-      newWaterReading: 0,
-      electricMeterPhotoUrl: null,
-      waterMeterPhotoUrl: null,
-      notes: null,
+      phong_id: "",
+      thang: new Date().getMonth() + 1,
+      nam: new Date().getFullYear(),
+      chi_so_dien_cu: 0,
+      chi_so_dien_moi: 0,
+      chi_so_nuoc_cu: 0,
+      chi_so_nuoc_moi: 0,
+      url_anh_dong_ho_dien: null,
+      url_anh_dong_ho_nuoc: null,
+      ghi_chu: null,
     },
   });
 
@@ -66,44 +80,44 @@ export default function BillForm({ open, onClose, bill, onSuccess, roomId: initi
   useEffect(() => {
     if (bill) {
       form.reset({
-        roomId: bill.roomId,
-        month: bill.month,
-        year: bill.year,
-        oldElectricReading: bill.oldElectricReading,
-        newElectricReading: bill.newElectricReading,
-        oldWaterReading: bill.oldWaterReading,
-        newWaterReading: bill.newWaterReading,
-        electricMeterPhotoUrl: bill.electricMeterPhotoUrl,
-        waterMeterPhotoUrl: bill.waterMeterPhotoUrl,
-        notes: bill.notes,
+        phong_id: bill.phong_id,
+        thang: bill.thang,
+        nam: bill.nam,
+        chi_so_dien_cu: bill.chi_so_dien_cu,
+        chi_so_dien_moi: bill.chi_so_dien_moi,
+        chi_so_nuoc_cu: bill.chi_so_nuoc_cu,
+        chi_so_nuoc_moi: bill.chi_so_nuoc_moi,
+        url_anh_dong_ho_dien: bill.anh_dong_ho_dien,
+        url_anh_dong_ho_nuoc: bill.anh_dong_ho_nuoc,
+        ghi_chu: bill.ghi_chu,
       });
-      fetchRoom(bill.roomId);
+      fetchRoom(bill.phong_id);
     } else if (initialRoomId) {
       form.reset({
-        roomId: initialRoomId,
-        month: new Date().getMonth() + 1,
-        year: new Date().getFullYear(),
-        oldElectricReading: 0,
-        newElectricReading: 0,
-        oldWaterReading: 0,
-        newWaterReading: 0,
-        electricMeterPhotoUrl: null,
-        waterMeterPhotoUrl: null,
-        notes: null,
+        phong_id: initialRoomId,
+        thang: new Date().getMonth() + 1,
+        nam: new Date().getFullYear(),
+        chi_so_dien_cu: 0,
+        chi_so_dien_moi: 0,
+        chi_so_nuoc_cu: 0,
+        chi_so_nuoc_moi: 0,
+        url_anh_dong_ho_dien: null,
+        url_anh_dong_ho_nuoc: null,
+        ghi_chu: null,
       });
       fetchRoom(initialRoomId);
     } else {
       form.reset({
-        roomId: '',
-        month: new Date().getMonth() + 1,
-        year: new Date().getFullYear(),
-        oldElectricReading: 0,
-        newElectricReading: 0,
-        oldWaterReading: 0,
-        newWaterReading: 0,
-        electricMeterPhotoUrl: null,
-        waterMeterPhotoUrl: null,
-        notes: null,
+        phong_id: "",
+        thang: new Date().getMonth() + 1,
+        nam: new Date().getFullYear(),
+        chi_so_dien_cu: 0,
+        chi_so_dien_moi: 0,
+        chi_so_nuoc_cu: 0,
+        chi_so_nuoc_moi: 0,
+        url_anh_dong_ho_dien: null,
+        url_anh_dong_ho_nuoc: null,
+        ghi_chu: null,
       });
     }
   }, [bill, initialRoomId, form]);
@@ -111,16 +125,16 @@ export default function BillForm({ open, onClose, bill, onSuccess, roomId: initi
   const fetchRooms = async () => {
     try {
       setLoadingRooms(true);
-      const response = await fetch('/api/rooms');
-      if (!response.ok) throw new Error('Failed to fetch rooms');
+      const response = await fetch("/api/rooms");
+      if (!response.ok) throw new Error("Failed to fetch rooms");
       const data = await response.json();
-      setRooms(data.filter(room => room.status === 'OCCUPIED')); // Chỉ hiển thị phòng đã thuê
+      setRooms(data.filter((room) => room.trang_thai === "DA_THUE")); // Chỉ hiển thị phòng đã thuê
     } catch (error) {
-      console.error('Error fetching rooms:', error);
+      console.error("Error fetching rooms:", error);
       toast({
-        title: 'Lỗi',
-        description: 'Không thể tải danh sách phòng',
-        variant: 'destructive',
+        title: "Lỗi",
+        description: "Không thể tải danh sách phòng",
+        variant: "destructive",
       });
     } finally {
       setLoadingRooms(false);
@@ -130,11 +144,11 @@ export default function BillForm({ open, onClose, bill, onSuccess, roomId: initi
   const fetchRoom = async (roomId) => {
     try {
       const response = await fetch(`/api/rooms/${roomId}`);
-      if (!response.ok) throw new Error('Failed to fetch room');
+      if (!response.ok) throw new Error("Failed to fetch room");
       const data = await response.json();
       setSelectedRoom(data);
     } catch (error) {
-      console.error('Error fetching room:', error);
+      console.error("Error fetching room:", error);
     }
   };
 
@@ -152,23 +166,25 @@ export default function BillForm({ open, onClose, bill, onSuccess, roomId: initi
         year = year - 1;
       }
 
-      const response = await fetch(`/api/bills?roomId=${roomId}&month=${month}&year=${year}`);
-      if (!response.ok) throw new Error('Failed to fetch last bill');
+      const response = await fetch(
+        `/api/bills?phong_id=${roomId}&thang=${month}&nam=${year}`,
+      );
+      if (!response.ok) throw new Error("Failed to fetch last bill");
       const data = await response.json();
-      
+
       if (data.length > 0) {
         const last = data[0];
         setLastBill(last);
         // Auto-fill chỉ số cũ từ hóa đơn trước
-        form.setValue('oldElectricReading', last.newElectricReading);
-        form.setValue('oldWaterReading', last.newWaterReading);
+        form.setValue("chi_so_dien_cu", last.chi_so_dien_moi);
+        form.setValue("chi_so_nuoc_cu", last.chi_so_nuoc_moi);
       } else {
         setLastBill(null);
-        form.setValue('oldElectricReading', 0);
-        form.setValue('oldWaterReading', 0);
+        form.setValue("chi_so_dien_cu", 0);
+        form.setValue("chi_so_nuoc_cu", 0);
       }
     } catch (error) {
-      console.error('Error fetching last bill:', error);
+      console.error("Error fetching last bill:", error);
       setLastBill(null);
     }
   };
@@ -176,43 +192,45 @@ export default function BillForm({ open, onClose, bill, onSuccess, roomId: initi
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
-      const url = isEdit ? `/api/bills/${bill.id}` : '/api/bills';
-      const method = isEdit ? 'PUT' : 'POST';
+      const url = isEdit ? `/api/bills/${bill.id}` : "/api/bills";
+      const method = isEdit ? "PUT" : "POST";
 
       const response = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Có lỗi xảy ra');
+        throw new Error(errorData.error || "Có lỗi xảy ra");
       }
 
       const result = await response.json();
       toast({
-        title: 'Thành công',
-        description: isEdit ? 'Cập nhật hóa đơn thành công' : 'Tạo hóa đơn thành công',
-        variant: 'success',
+        title: "Thành công",
+        description: isEdit
+          ? "Cập nhật hóa đơn thành công"
+          : "Tạo hóa đơn thành công",
+        variant: "success",
       });
       onSuccess?.(result);
       onClose();
     } catch (error) {
-      console.error('Error submitting bill:', error);
+      console.error("Error submitting bill:", error);
       toast({
-        title: 'Lỗi',
-        description: error.message || 'Không thể tạo hóa đơn',
-        variant: 'destructive',
+        title: "Lỗi",
+        description: error.message || "Không thể tạo hóa đơn",
+        variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const currentMonth = form.watch('month');
-  const currentYear = form.watch('year');
-  const roomId = form.watch('roomId');
+  const currentMonth = form.watch("thang");
+  const currentYear = form.watch("nam");
+  const roomId = form.watch("phong_id");
 
   // Fetch last bill khi phòng hoặc tháng/năm thay đổi (chỉ khi tạo mới)
   useEffect(() => {
@@ -225,14 +243,16 @@ export default function BillForm({ open, onClose, bill, onSuccess, roomId: initi
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isEdit ? 'Sửa Hóa Đơn' : 'Tạo Hóa Đơn Mới'}</DialogTitle>
+          <DialogTitle>
+            {isEdit ? "Sửa Hóa Đơn" : "Tạo Hóa Đơn Mới"}
+          </DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="roomId"
+              name="phong_id"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Phòng *</FormLabel>
@@ -252,7 +272,7 @@ export default function BillForm({ open, onClose, bill, onSuccess, roomId: initi
                     <SelectContent>
                       {rooms.map((room) => (
                         <SelectItem key={room.id} value={room.id}>
-                          {room.code} - {room.name}
+                          {room.ma_phong} - {room.ten_phong}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -265,7 +285,7 @@ export default function BillForm({ open, onClose, bill, onSuccess, roomId: initi
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="month"
+                name="thang"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Tháng *</FormLabel>
@@ -274,8 +294,11 @@ export default function BillForm({ open, onClose, bill, onSuccess, roomId: initi
                         type="number"
                         min="1"
                         max="12"
+                        disabled={isEdit}
                         {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value))}
+                        onChange={(e) =>
+                          field.onChange(parseInt(e.target.value))
+                        }
                       />
                     </FormControl>
                     <FormMessage />
@@ -285,7 +308,7 @@ export default function BillForm({ open, onClose, bill, onSuccess, roomId: initi
 
               <FormField
                 control={form.control}
-                name="year"
+                name="nam"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Năm *</FormLabel>
@@ -294,8 +317,11 @@ export default function BillForm({ open, onClose, bill, onSuccess, roomId: initi
                         type="number"
                         min="2000"
                         max="2100"
+                        disabled={isEdit}
                         {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value))}
+                        onChange={(e) =>
+                          field.onChange(parseInt(e.target.value))
+                        }
                       />
                     </FormControl>
                     <FormMessage />
@@ -306,8 +332,17 @@ export default function BillForm({ open, onClose, bill, onSuccess, roomId: initi
 
             {selectedRoom && (
               <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-sm">
-                <p><strong>Phòng:</strong> {selectedRoom.code} - {selectedRoom.name}</p>
-                <p><strong>Giá phòng:</strong> {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(selectedRoom.price)}</p>
+                <p>
+                  <strong>Phòng:</strong> {selectedRoom.ma_phong} -{" "}
+                  {selectedRoom.ten_phong}
+                </p>
+                <p>
+                  <strong>Giá phòng:</strong>{" "}
+                  {new Intl.NumberFormat("vi-VN", {
+                    style: "currency",
+                    currency: "VND",
+                  }).format(selectedRoom.gia_phong)}
+                </p>
               </div>
             )}
 
@@ -316,7 +351,7 @@ export default function BillForm({ open, onClose, bill, onSuccess, roomId: initi
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="oldElectricReading"
+                  name="chi_so_dien_cu"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Chỉ số cũ *</FormLabel>
@@ -325,12 +360,15 @@ export default function BillForm({ open, onClose, bill, onSuccess, roomId: initi
                           type="number"
                           min="0"
                           {...field}
-                          onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                          onChange={(e) =>
+                            field.onChange(parseInt(e.target.value) || 0)
+                          }
                         />
                       </FormControl>
                       {lastBill && (
                         <FormDescription>
-                          Từ hóa đơn {lastBill.month}/{lastBill.year}: {lastBill.newElectricReading}
+                          Từ hóa đơn {lastBill.thang}/{lastBill.nam}:{" "}
+                          {lastBill.chi_so_dien_moi}
                         </FormDescription>
                       )}
                       <FormMessage />
@@ -340,7 +378,7 @@ export default function BillForm({ open, onClose, bill, onSuccess, roomId: initi
 
                 <FormField
                   control={form.control}
-                  name="newElectricReading"
+                  name="chi_so_dien_moi"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Chỉ số mới *</FormLabel>
@@ -349,7 +387,9 @@ export default function BillForm({ open, onClose, bill, onSuccess, roomId: initi
                           type="number"
                           min="0"
                           {...field}
-                          onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                          onChange={(e) =>
+                            field.onChange(parseInt(e.target.value) || 0)
+                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -364,7 +404,7 @@ export default function BillForm({ open, onClose, bill, onSuccess, roomId: initi
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="oldWaterReading"
+                  name="chi_so_nuoc_cu"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Chỉ số cũ *</FormLabel>
@@ -373,12 +413,15 @@ export default function BillForm({ open, onClose, bill, onSuccess, roomId: initi
                           type="number"
                           min="0"
                           {...field}
-                          onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                          onChange={(e) =>
+                            field.onChange(parseInt(e.target.value) || 0)
+                          }
                         />
                       </FormControl>
                       {lastBill && (
                         <FormDescription>
-                          Từ hóa đơn {lastBill.month}/{lastBill.year}: {lastBill.newWaterReading}
+                          Từ hóa đơn {lastBill.thang}/{lastBill.nam}:{" "}
+                          {lastBill.chi_so_nuoc_moi}
                         </FormDescription>
                       )}
                       <FormMessage />
@@ -388,7 +431,7 @@ export default function BillForm({ open, onClose, bill, onSuccess, roomId: initi
 
                 <FormField
                   control={form.control}
-                  name="newWaterReading"
+                  name="chi_so_nuoc_moi"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Chỉ số mới *</FormLabel>
@@ -397,7 +440,9 @@ export default function BillForm({ open, onClose, bill, onSuccess, roomId: initi
                           type="number"
                           min="0"
                           {...field}
-                          onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                          onChange={(e) =>
+                            field.onChange(parseInt(e.target.value) || 0)
+                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -409,14 +454,14 @@ export default function BillForm({ open, onClose, bill, onSuccess, roomId: initi
 
             <FormField
               control={form.control}
-              name="notes"
+              name="ghi_chu"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Ghi chú</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
-                      value={field.value || ''}
+                      value={field.value || ""}
                       placeholder="Ghi chú (tùy chọn)"
                     />
                   </FormControl>
@@ -426,12 +471,19 @@ export default function BillForm({ open, onClose, bill, onSuccess, roomId: initi
             />
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                disabled={isSubmitting}
+              >
                 Hủy
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isEdit ? 'Cập nhật' : 'Tạo hóa đơn'}
+                {isSubmitting && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
+                {isEdit ? "Cập nhật" : "Tạo hóa đơn"}
               </Button>
             </DialogFooter>
           </form>

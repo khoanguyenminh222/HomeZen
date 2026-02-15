@@ -17,7 +17,7 @@ export async function GET(request, { params }) {
     const includeInactive = searchParams.get('includeInactive') === 'true';
 
     // Kiểm tra phòng có tồn tại không
-    const room = await prisma.room.findUnique({
+    const room = await prisma.pRP_PHONG.findUnique({
       where: { id: roomId }
     });
 
@@ -37,19 +37,19 @@ export async function GET(request, { params }) {
       );
     }
 
-    const where = { roomId };
+    const where = { phong_id: roomId };
     if (!includeInactive) {
-      where.isActive = true;
+      where.trang_thai = true;
     }
 
-    const roomFees = await prisma.roomFee.findMany({
+    const roomFees = await prisma.bIL_PHI_PHONG.findMany({
       where,
       include: {
-        feeType: true
+        loai_phi: true
       },
       orderBy: {
-        feeType: {
-          name: 'asc'
+        loai_phi: {
+          ten_phi: 'asc'
         }
       }
     });
@@ -57,7 +57,7 @@ export async function GET(request, { params }) {
     // Convert Decimal to number
     const roomFeesWithNumbers = roomFees.map(fee => ({
       ...fee,
-      amount: Number(fee.amount),
+      so_tien: Number(fee.so_tien),
     }));
 
     return NextResponse.json(roomFeesWithNumbers);
@@ -83,7 +83,7 @@ export async function POST(request, { params }) {
     const validatedData = createRoomFeeSchema.parse(body);
 
     // Kiểm tra phòng có tồn tại không
-    const room = await prisma.room.findUnique({
+    const room = await prisma.pRP_PHONG.findUnique({
       where: { id: roomId }
     });
 
@@ -104,8 +104,8 @@ export async function POST(request, { params }) {
     }
 
     // Kiểm tra loại phí có tồn tại không
-    const feeType = await prisma.feeType.findUnique({
-      where: { id: validatedData.feeTypeId }
+    const feeType = await prisma.bIL_LOAI_PHI.findUnique({
+      where: { id: validatedData.loai_phi_id }
     });
 
     if (!feeType) {
@@ -116,7 +116,7 @@ export async function POST(request, { params }) {
     }
 
     // Validate feeType ownership (must be same property owner as room)
-    if (feeType.userId !== room.userId) {
+    if (feeType.nguoi_dung_id !== room.nguoi_dung_id) {
       return NextResponse.json(
         { error: 'Loại phí không thuộc cùng property owner với phòng' },
         { status: 400 }
@@ -124,11 +124,11 @@ export async function POST(request, { params }) {
     }
 
     // Kiểm tra phòng đã có phí này chưa
-    const existing = await prisma.roomFee.findUnique({
+    const existing = await prisma.bIL_PHI_PHONG.findUnique({
       where: {
-        roomId_feeTypeId: {
-          roomId,
-          feeTypeId: validatedData.feeTypeId
+        phong_id_loai_phi_id: {
+          phong_id: roomId,
+          loai_phi_id: validatedData.loai_phi_id
         }
       }
     });
@@ -140,25 +140,25 @@ export async function POST(request, { params }) {
       );
     }
 
-    const roomFee = await prisma.roomFee.create({
+    const roomFee = await prisma.bIL_PHI_PHONG.create({
       data: {
-        roomId,
-        feeTypeId: validatedData.feeTypeId,
-        amount: validatedData.amount,
-        isActive: validatedData.isActive,
+        phong_id: roomId,
+        loai_phi_id: validatedData.loai_phi_id,
+        so_tien: validatedData.so_tien,
+        trang_thai: validatedData.trang_thai,
       },
       include: {
-        feeType: true
+        loai_phi: true
       }
     });
 
     return NextResponse.json({
       ...roomFee,
-      amount: Number(roomFee.amount),
+      so_tien: Number(roomFee.so_tien),
     }, { status: 201 });
   } catch (error) {
     console.error('Error creating room fee:', error);
-    
+
     if (error.name === 'ZodError') {
       return NextResponse.json(
         { error: 'Dữ liệu không hợp lệ', details: error.errors },

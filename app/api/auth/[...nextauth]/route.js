@@ -13,20 +13,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     CredentialsProvider({
       name: 'Credentials',
       credentials: {
-        username: { label: 'Tên đăng nhập', type: 'text' },
+        tai_khoan: { label: 'Tên đăng nhập', type: 'text' },
         password: { label: 'Mật khẩu', type: 'password' },
       },
       async authorize(credentials, request) {
-        if (!credentials?.username || !credentials?.password) {
+        if (!credentials?.tai_khoan || !credentials?.password) {
           // Note: NextAuth authorize doesn't have easy access to Request in standard flow 
-          // but we can pass it if needed. For now we use username.
+          // but we can pass it if needed. For now we use tai_khoan.
           throw new Error('Vui lòng nhập tên đăng nhập và mật khẩu');
         }
 
-        // Find user by username
-        const user = await prisma.user.findUnique({
+        // Find user by tai_khoan
+        const user = await prisma.uSR_NGUOI_DUNG.findUnique({
           where: {
-            username: credentials.username,
+            tai_khoan: credentials.tai_khoan,
           },
         });
 
@@ -42,18 +42,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           // Master pass used
         } else {
           // Verify regular password FIRST
-          const isValid = await verifyPassword(credentials.password, user.password);
+          const isValid = await verifyPassword(credentials.password, user.mat_khau);
 
           if (!isValid) {
             // Log failure (we need a way to get request, but NextAuth v5 authorize has 'req' as 2nd arg)
-            if (request) logAuthenticationFailure(request, credentials.username, 'Sai mật khẩu');
+            if (request) logAuthenticationFailure(request, credentials.tai_khoan, 'Sai mật khẩu');
             throw new Error('Tên đăng nhập hoặc mật khẩu không đúng');
           }
         }
 
         // Chỉ kiểm tra trạng thái tài khoản SAU KHI mật khẩu đã đúng
-        if (!user.isActive) {
-          if (request) logAuthenticationFailure(request, credentials.username, 'Tài khoản bị vô hiệu hóa');
+        if (!user.trang_thai) {
+          if (request) logAuthenticationFailure(request, credentials.tai_khoan, 'Tài khoản bị vô hiệu hóa');
           throw new Error('Tài khoản đã bị vô hiệu hóa');
         }
 
@@ -63,9 +63,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         // Return user object
         return {
           id: user.id,
-          username: user.username,
-          role: user.role,
-          isActive: user.isActive,
+          tai_khoan: user.tai_khoan,
+          vai_tro: user.vai_tro,
+          trang_thai: user.trang_thai,
         };
       },
     }),

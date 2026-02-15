@@ -38,19 +38,19 @@ export async function POST(request) {
     }
 
     // Tìm user theo username
-    const user = await prisma.user.findUnique({
+    const user = await prisma.uSR_NGUOI_DUNG.findUnique({
       where: {
-        username: username,
+        tai_khoan: username,
       },
       include: {
-        propertyInfo: true,
+        thong_tin_nha_tro: true,
       },
     });
 
     // Kiểm tra tên đăng nhập có tồn tại không
     if (!user) {
       return NextResponse.json(
-        { 
+        {
           error: 'Tên đăng nhập không tồn tại trong hệ thống. Vui lòng kiểm tra lại.'
         },
         { status: 404 }
@@ -58,9 +58,9 @@ export async function POST(request) {
     }
 
     // Kiểm tra tài khoản có active không
-    if (!user.isActive) {
+    if (!user.trang_thai) {
       return NextResponse.json(
-        { 
+        {
           error: 'Tài khoản của bạn đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên để được hỗ trợ.'
         },
         { status: 403 }
@@ -68,10 +68,10 @@ export async function POST(request) {
     }
 
     // Kiểm tra tài khoản có email không
-    const recipientEmail = user.propertyInfo?.email;
+    const recipientEmail = user.thong_tin_nha_tro?.email;
     if (!recipientEmail || recipientEmail.trim() === '') {
       return NextResponse.json(
-        { 
+        {
           error: 'Tài khoản của bạn chưa có email. Vui lòng liên hệ quản trị viên để được hỗ trợ.'
         },
         { status: 400 }
@@ -79,11 +79,11 @@ export async function POST(request) {
     }
 
     // Xóa các token cũ chưa sử dụng của user này
-    await prisma.passwordResetToken.deleteMany({
+    await prisma.uSR_TOKEN_DAT_LAI_MAT_KHAU.deleteMany({
       where: {
-        userId: user.id,
-        used: false,
-        expiresAt: {
+        nguoi_dung_id: user.id,
+        da_su_dung: false,
+        het_han_luc: {
           gt: new Date(), // Chỉ xóa token chưa hết hạn
         },
       },
@@ -91,28 +91,28 @@ export async function POST(request) {
 
     // Tạo token mới (32 bytes = 64 ký tự hex)
     const token = randomBytes(32).toString('hex');
-    
+
     // Token hết hạn sau 1 giờ
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 1);
 
     // Lưu token vào database
-    await prisma.passwordResetToken.create({
+    await prisma.uSR_TOKEN_DAT_LAI_MAT_KHAU.create({
       data: {
         token,
-        userId: user.id,
-        expiresAt,
+        nguoi_dung_id: user.id,
+        het_han_luc: expiresAt,
       },
     });
 
     // Gửi email chứa link reset password
     const resetLink = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/reset-password?token=${token}`;
-    
+
     // Lấy brand name từ website config
     const websiteConfigService = getWebsiteConfigurationService();
     const websiteConfig = await websiteConfigService.getCurrentConfiguration();
-    const brandName = websiteConfig.brandName || 'HomeZen';
-    
+    const brandName = websiteConfig.ten_thuong_hieu || 'HomeZen';
+
     // Tạo email template
     const subject = `Đặt lại mật khẩu - ${brandName}`;
     const htmlContent = `
@@ -294,49 +294,42 @@ export async function POST(request) {
       </head>
       <body>
         <div class="email-wrapper">
-          <!-- Header -->
           <div class="email-header">
-            <h1>Đặt lại mật khẩu</h1>
-            <div class="brand">${brandName}</div>
+            <h1>Yêu cầu đặt lại mật khẩu</h1>
+            <div class="brand">${websiteConfig.ten_thuong_hieu || 'HomeZen'}</div>
           </div>
-
-          <!-- Content -->
+          
           <div class="email-content">
-            <div class="greeting">Xin chào,</div>
+            <p class="greeting">Chào bạn,</p>
+            <p class="message">
+              Chúng tôi đã nhận được yêu cầu đặt lại mật khẩu cho tài khoản <span class="username">${user.tai_khoan}</span> 
+              tại ${websiteConfig.ten_thuong_hieu || 'HomeZen'}.
+            </p>
             
-            <div class="message">
-              Bạn đã yêu cầu đặt lại mật khẩu cho tài khoản <span class="username">${user.username}</span>.
-            </div>
-
-            <div class="message">
-              Vui lòng nhấp vào nút bên dưới để đặt lại mật khẩu của bạn. Liên kết này sẽ hết hạn sau <strong>1 giờ</strong>.
-            </div>
-
-            <!-- Reset Button -->
             <div class="button-container">
-              <a href="${resetLink}" class="reset-button" style="display: inline-block; background-color: #10b981; color: #ffffff !important; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px; border: 1px solid #10b981;">Đặt lại mật khẩu</a>
+              <a href="${resetLink}" class="reset-button">Đặt lại mật khẩu</a>
             </div>
-
-            <hr class="divider" />
-
-            <!-- Alternative Link -->
+            
+            <p class="message">Liên kết này sẽ có hiệu lực trong vòng <strong>1 giờ</strong>.</p>
+            
+            <div class="divider"></div>
+            
             <div class="link-section">
-              <div class="link-label">Hoặc sao chép liên kết sau:</div>
+              <div class="link-label">Nếu nút trên không hoạt động, bạn có thể sử dụng liên kết này:</div>
               <a href="${resetLink}" class="reset-link">${resetLink}</a>
             </div>
-
-            <!-- Note -->
+            
             <div class="note">
-              <p><strong>Lưu ý:</strong> Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này. Mật khẩu của bạn sẽ không thay đổi.</p>
+              <p>
+                <strong>Lưu ý:</strong> Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này. 
+                Mật khẩu của bạn sẽ không thay đổi cho đến khi bạn tạo mật khẩu mới.
+              </p>
             </div>
           </div>
-
-          <!-- Footer -->
+          
           <div class="email-footer">
-            <p>© ${new Date().getFullYear()} ${brandName}. Tất cả quyền được bảo lưu.</p>
-            <p style="margin-top: 8px;">
-              Email này được gửi tự động, vui lòng không trả lời email này.
-            </p>
+            <p>${websiteConfig.tieu_de_footer || 'HomeZen — Boarding House Management v1.0'}</p>
+            <p>&copy; ${new Date().getFullYear()} ${websiteConfig.ten_thuong_hieu || 'HomeZen'}. Tất cả quyền được bảo lưu.</p>
           </div>
         </div>
       </body>
@@ -347,7 +340,7 @@ export async function POST(request) {
 
 Xin chào,
 
-Bạn đã yêu cầu đặt lại mật khẩu cho tài khoản ${user.username}.
+Bạn đã yêu cầu đặt lại mật khẩu cho tài khoản ${user.tai_khoan}.
 
 Vui lòng truy cập liên kết sau để đặt lại mật khẩu:
 ${resetLink}
@@ -368,11 +361,11 @@ Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua emai
         htmlContent,
         user.id
       );
-      
+
       // Trả về success với email đã mask
       const maskedEmail = maskEmail(recipientEmail);
       return NextResponse.json(
-        { 
+        {
           success: true,
           message: `Đã gửi email đặt lại mật khẩu đến ${maskedEmail}. Vui lòng kiểm tra hộp thư của bạn.`
         },
@@ -382,7 +375,7 @@ Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua emai
       // Log lỗi và trả về lỗi
       console.error('Failed to send password reset email:', emailError);
       return NextResponse.json(
-        { 
+        {
           error: 'Không thể gửi email. Vui lòng thử lại sau hoặc liên hệ quản trị viên.'
         },
         { status: 500 }
@@ -392,7 +385,7 @@ Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua emai
     console.error('Forgot password error:', error);
     // Trả về success để không tiết lộ lỗi hệ thống
     return NextResponse.json(
-      { 
+      {
         success: true,
         message: 'Nếu tên đăng nhập tồn tại, bạn sẽ nhận được hướng dẫn đặt lại mật khẩu.'
       },

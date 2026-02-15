@@ -20,8 +20,8 @@ export async function GET() {
     }
 
     // Lấy thông tin nhà trọ của user hiện tại
-    const propertyInfo = await prisma.propertyInfo.findUnique({
-      where: { userId: session.user.id }
+    const propertyInfo = await prisma.pRP_THONG_TIN_NHA_TRO.findUnique({
+      where: { nguoi_dung_id: session.user.id }
     });
 
     if (!propertyInfo) {
@@ -67,9 +67,9 @@ export async function POST(request) {
     const validationResult = propertyInfoSchema.safeParse(body);
     if (!validationResult.success) {
       return NextResponse.json(
-        { 
+        {
           error: 'Dữ liệu không hợp lệ',
-          details: validationResult.error.errors 
+          details: validationResult.error.errors
         },
         { status: 400 }
       );
@@ -78,45 +78,45 @@ export async function POST(request) {
     const data = validationResult.data;
 
     // Kiểm tra xem đã có thông tin nhà trọ chưa
-    const existingPropertyInfo = await prisma.propertyInfo.findUnique({
-      where: { userId: session.user.id }
+    const existingPropertyInfo = await prisma.pRP_THONG_TIN_NHA_TRO.findUnique({
+      where: { nguoi_dung_id: session.user.id }
     });
 
     let propertyInfo;
     if (existingPropertyInfo) {
       // Cập nhật thông tin hiện tại
-      propertyInfo = await prisma.propertyInfo.update({
+      propertyInfo = await prisma.pRP_THONG_TIN_NHA_TRO.update({
         where: { id: existingPropertyInfo.id },
         data: {
-          name: data.name,
-          address: data.address,
-          phone: data.phone,
-          ownerName: data.ownerName,
+          ten: data.ten,
+          dia_chi: data.dia_chi,
+          dien_thoai: data.dien_thoai,
+          ten_chu_nha: data.ten_chu_nha,
           email: data.email || null,
-          logoUrl: data.logoUrl || null,
-          maxElectricMeter: data.maxElectricMeter,
-          maxWaterMeter: data.maxWaterMeter,
+          logo_url: data.logo_url || null,
+          max_dong_ho_dien: data.max_dong_ho_dien,
+          max_dong_ho_nuoc: data.max_dong_ho_nuoc,
         },
       });
     } else {
       // Tạo mới thông tin nhà trọ cho user hiện tại
-      propertyInfo = await prisma.propertyInfo.create({
+      propertyInfo = await prisma.pRP_THONG_TIN_NHA_TRO.create({
         data: {
-          userId: session.user.id,
-          name: data.name,
-          address: data.address,
-          phone: data.phone,
-          ownerName: data.ownerName,
+          nguoi_dung_id: session.user.id,
+          ten: data.ten,
+          dia_chi: data.dia_chi,
+          dien_thoai: data.dien_thoai,
+          ten_chu_nha: data.ten_chu_nha,
           email: data.email || null,
-          logoUrl: data.logoUrl || null,
-          maxElectricMeter: data.maxElectricMeter,
-          maxWaterMeter: data.maxWaterMeter,
+          logo_url: data.logo_url || null,
+          max_dong_ho_dien: data.max_dong_ho_dien,
+          max_dong_ho_nuoc: data.max_dong_ho_nuoc,
         },
       });
     }
 
     return NextResponse.json(
-      { 
+      {
         data: propertyInfo,
         message: 'Lưu thông tin nhà trọ thành công'
       },
@@ -124,7 +124,7 @@ export async function POST(request) {
     );
   } catch (error) {
     console.error('Error saving property info:', error);
-    
+
     // Handle unique constraint error (user already has propertyInfo)
     if (error.code === 'P2002') {
       return NextResponse.json(
@@ -132,7 +132,7 @@ export async function POST(request) {
         { status: 400 }
       );
     }
-    
+
     return NextResponse.json(
       { error: 'Không thể lưu thông tin nhà trọ. Vui lòng thử lại.' },
       { status: 500 }

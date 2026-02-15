@@ -18,30 +18,30 @@ export async function GET(request) {
 
     // Super Admin: get global rate
     if (isSuperAdmin(session)) {
-      // Tìm đơn giá chung (isGlobal = true)
-      const globalRate = await prisma.utilityRate.findFirst({
-        where: { isGlobal: true, userId: null },
+      // Tìm đơn giá chung (la_chung = true)
+      const globalRate = await prisma.pRP_DON_GIA_DIEN_NUOC.findFirst({
+        where: { la_chung: true, nguoi_dung_id: null },
         include: {
-          tieredRates: {
-            orderBy: { minUsage: 'asc' }
+          bac_thang_gia: {
+            orderBy: { muc_tieu_thu_min: 'asc' }
           }
         }
       });
 
       if (!globalRate) {
         // Tạo đơn giá chung mặc định nếu chưa có
-        const defaultRate = await prisma.utilityRate.create({
+        const defaultRate = await prisma.pRP_DON_GIA_DIEN_NUOC.create({
           data: {
-            electricityPrice: 3000, // 3000 VNĐ/kWh
-            waterPrice: 25000, // 25000 VNĐ/m³
-            waterPricingMethod: 'METER',
-            waterPricePerPerson: null,
-            useTieredPricing: false,
-            isGlobal: true,
+            gia_dien: 3000, // 3000 VNĐ/kWh
+            gia_nuoc: 25000, // 25000 VNĐ/m³
+            phuong_thuc_tinh_nuoc: 'DONG_HO',
+            gia_nuoc_theo_nguoi: null,
+            su_dung_bac_thang: false,
+            la_chung: true,
           },
           include: {
-            tieredRates: {
-              orderBy: { minUsage: 'asc' }
+            bac_thang_gia: {
+              orderBy: { muc_tieu_thu_min: 'asc' }
             }
           }
         });
@@ -53,16 +53,15 @@ export async function GET(request) {
 
     // Property Owner: get property-specific utility rate (for their own property)
     // Find property-specific utility rate (not global, not room-specific)
-    const propertyRate = await prisma.utilityRate.findFirst({
+    const propertyRate = await prisma.pRP_DON_GIA_DIEN_NUOC.findFirst({
       where: {
-        userId: session.user.id,
-        userId: session.user.id,
-        isGlobal: true,
-        roomId: null
+        nguoi_dung_id: session.user.id,
+        la_chung: true,
+        phong_id: null
       },
       include: {
-        tieredRates: {
-          orderBy: { minUsage: 'asc' }
+        bac_thang_gia: {
+          orderBy: { muc_tieu_thu_min: 'asc' }
         }
       }
     });
@@ -94,58 +93,58 @@ export async function PUT(request) {
     if (isSuperAdmin(session)) {
 
       // Validate tiered rates nếu có
-      if (validatedData.useTieredPricing && validatedData.tieredRates) {
-        const validation = validateTieredRates(validatedData.tieredRates);
+      if (validatedData.su_dung_bac_thang && validatedData.bac_thang_gia) {
+        const validation = validateTieredRates(validatedData.bac_thang_gia);
         if (!validation.isValid) {
           return NextResponse.json(
             { error: validation.error },
             { status: 400 }
           );
         }
-        validatedData.tieredRates = validation.sortedRates;
+        validatedData.bac_thang_gia = validation.sortedRates;
       }
 
       // Tìm đơn giá chung hiện tại
-      let globalRate = await prisma.utilityRate.findFirst({
-        where: { isGlobal: true, userId: null }
+      let globalRate = await prisma.pRP_DON_GIA_DIEN_NUOC.findFirst({
+        where: { la_chung: true, nguoi_dung_id: null }
       });
 
       if (!globalRate) {
         // Tạo mới nếu chưa có
-        globalRate = await prisma.utilityRate.create({
+        globalRate = await prisma.pRP_DON_GIA_DIEN_NUOC.create({
           data: {
             ...validatedData,
-            isGlobal: true,
+            la_chung: true,
           }
         });
       } else {
         // Cập nhật trong transaction để đảm bảo consistency
         await prisma.$transaction(async (tx) => {
           // Xóa các bậc thang cũ nếu có
-          if (validatedData.tieredRates !== undefined) {
-            await tx.tieredElectricityRate.deleteMany({
-              where: { utilityRateId: globalRate.id }
+          if (validatedData.bac_thang_gia !== undefined) {
+            await tx.pRP_BAC_THANG_GIA_DIEN.deleteMany({
+              where: { don_gia_id: globalRate.id }
             });
           }
 
           // Cập nhật đơn giá chung
-          globalRate = await tx.utilityRate.update({
+          globalRate = await tx.pRP_DON_GIA_DIEN_NUOC.update({
             where: { id: globalRate.id },
             data: {
-              electricityPrice: validatedData.electricityPrice,
-              waterPrice: validatedData.waterPrice,
-              waterPricingMethod: validatedData.waterPricingMethod,
-              waterPricePerPerson: validatedData.waterPricePerPerson,
-              useTieredPricing: validatedData.useTieredPricing,
+              gia_dien: validatedData.gia_dien,
+              gia_nuoc: validatedData.gia_nuoc,
+              phuong_thuc_tinh_nuoc: validatedData.phuong_thuc_tinh_nuoc,
+              gia_nuoc_theo_nguoi: validatedData.gia_nuoc_theo_nguoi,
+              su_dung_bac_thang: validatedData.su_dung_bac_thang,
             }
           });
 
           // Tạo các bậc thang mới nếu có
-          if (validatedData.useTieredPricing && validatedData.tieredRates) {
-            await tx.tieredElectricityRate.createMany({
-              data: validatedData.tieredRates.map(rate => ({
+          if (validatedData.su_dung_bac_thang && validatedData.bac_thang_gia) {
+            await tx.pRP_BAC_THANG_GIA_DIEN.createMany({
+              data: validatedData.bac_thang_gia.map(rate => ({
                 ...rate,
-                utilityRateId: globalRate.id
+                don_gia_id: globalRate.id
               }))
             });
           }
@@ -153,11 +152,11 @@ export async function PUT(request) {
       }
 
       // Lấy dữ liệu đầy đủ để trả về
-      const updatedRate = await prisma.utilityRate.findUnique({
+      const updatedRate = await prisma.pRP_DON_GIA_DIEN_NUOC.findUnique({
         where: { id: globalRate.id },
         include: {
-          tieredRates: {
-            orderBy: { minUsage: 'asc' }
+          bac_thang_gia: {
+            orderBy: { muc_tieu_thu_min: 'asc' }
           }
         }
       });
@@ -167,44 +166,43 @@ export async function PUT(request) {
 
     // Property Owner: update property-specific utility rate (for their own property)
     // Validate tiered rates nếu có
-    if (validatedData.useTieredPricing && validatedData.tieredRates) {
-      const validation = validateTieredRates(validatedData.tieredRates);
+    if (validatedData.su_dung_bac_thang && validatedData.bac_thang_gia) {
+      const validation = validateTieredRates(validatedData.bac_thang_gia);
       if (!validation.isValid) {
         return NextResponse.json(
           { error: validation.error },
           { status: 400 }
         );
       }
-      validatedData.tieredRates = validation.sortedRates;
+      validatedData.bac_thang_gia = validation.sortedRates;
     }
 
     // Tìm property utility rate hiện tại
-    let propertyRate = await prisma.utilityRate.findFirst({
+    let propertyRate = await prisma.pRP_DON_GIA_DIEN_NUOC.findFirst({
       where: {
-        userId: session.user.id,
-        userId: session.user.id,
-        isGlobal: true,
-        roomId: null
+        nguoi_dung_id: session.user.id,
+        la_chung: true,
+        phong_id: null
       }
     });
 
     if (!propertyRate) {
       // Tạo mới nếu chưa có
-      propertyRate = await prisma.utilityRate.create({
+      propertyRate = await prisma.pRP_DON_GIA_DIEN_NUOC.create({
         data: {
           ...validatedData,
-          userId: session.user.id,
-          isGlobal: false,
-          roomId: null,
+          nguoi_dung_id: session.user.id,
+          la_chung: true, // Force la_chung=true for property default
+          phong_id: null,
         }
       });
 
       // Tạo các bậc thang nếu có
-      if (validatedData.useTieredPricing && validatedData.tieredRates && validatedData.tieredRates.length > 0) {
-        await prisma.tieredElectricityRate.createMany({
-          data: validatedData.tieredRates.map(rate => ({
+      if (validatedData.su_dung_bac_thang && validatedData.bac_thang_gia && validatedData.bac_thang_gia.length > 0) {
+        await prisma.pRP_BAC_THANG_GIA_DIEN.createMany({
+          data: validatedData.bac_thang_gia.map(rate => ({
             ...rate,
-            utilityRateId: propertyRate.id
+            don_gia_id: propertyRate.id
           }))
         });
       }
@@ -212,31 +210,31 @@ export async function PUT(request) {
       // Cập nhật trong transaction
       await prisma.$transaction(async (tx) => {
         // Xóa các bậc thang cũ nếu có
-        if (validatedData.tieredRates !== undefined) {
-          await tx.tieredElectricityRate.deleteMany({
-            where: { utilityRateId: propertyRate.id }
+        if (validatedData.bac_thang_gia !== undefined) {
+          await tx.pRP_BAC_THANG_GIA_DIEN.deleteMany({
+            where: { don_gia_id: propertyRate.id }
           });
         }
 
         // Cập nhật property utility rate
-        propertyRate = await tx.utilityRate.update({
+        propertyRate = await tx.pRP_DON_GIA_DIEN_NUOC.update({
           where: { id: propertyRate.id },
           data: {
-            electricityPrice: validatedData.electricityPrice,
-            waterPrice: validatedData.waterPrice,
-            waterPricingMethod: validatedData.waterPricingMethod,
-            waterPricePerPerson: validatedData.waterPricePerPerson,
-            useTieredPricing: validatedData.useTieredPricing,
-            isGlobal: true, // Force isGlobal=true for property default
+            gia_dien: validatedData.gia_dien,
+            gia_nuoc: validatedData.gia_nuoc,
+            phuong_thuc_tinh_nuoc: validatedData.phuong_thuc_tinh_nuoc,
+            gia_nuoc_theo_nguoi: validatedData.gia_nuoc_theo_nguoi,
+            su_dung_bac_thang: validatedData.su_dung_bac_thang,
+            la_chung: true, // Force la_chung=true for property default
           }
         });
 
         // Tạo các bậc thang mới nếu có
-        if (validatedData.useTieredPricing && validatedData.tieredRates && validatedData.tieredRates.length > 0) {
-          await tx.tieredElectricityRate.createMany({
-            data: validatedData.tieredRates.map(rate => ({
+        if (validatedData.su_dung_bac_thang && validatedData.bac_thang_gia && validatedData.bac_thang_gia.length > 0) {
+          await tx.pRP_BAC_THANG_GIA_DIEN.createMany({
+            data: validatedData.bac_thang_gia.map(rate => ({
               ...rate,
-              utilityRateId: propertyRate.id
+              don_gia_id: propertyRate.id
             }))
           });
         }
@@ -244,11 +242,11 @@ export async function PUT(request) {
     }
 
     // Lấy dữ liệu đầy đủ để trả về
-    const updatedRate = await prisma.utilityRate.findUnique({
+    const updatedRate = await prisma.pRP_DON_GIA_DIEN_NUOC.findUnique({
       where: { id: propertyRate.id },
       include: {
-        tieredRates: {
-          orderBy: { minUsage: 'asc' }
+        bac_thang_gia: {
+          orderBy: { muc_tieu_thu_min: 'asc' }
         }
       }
     });

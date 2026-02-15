@@ -1,27 +1,30 @@
-'use client';
+"use client";
 
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Search, X } from 'lucide-react';
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Search, X } from "lucide-react";
 
 /**
  * RoomFilters - Filters (status, search)
  * Requirements: 2.11
  */
 export default function RoomFilters({ filters, onFilterChange }) {
-  const handleStatusChange = (status) => {
-    onFilterChange({ ...filters, status: status === filters.status ? '' : status });
+  const handleStatusChange = (trang_thai) => {
+    onFilterChange({
+      ...filters,
+      trang_thai: trang_thai === filters.trang_thai ? "" : trang_thai,
+    });
   };
 
   const handleSearchChange = (e) => {
-    onFilterChange({ ...filters, search: e.target.value });
+    onFilterChange({ ...filters, tu_khoa: e.target.value });
   };
 
   const handleClearFilters = () => {
-    onFilterChange({ status: '', search: '' });
+    onFilterChange({ trang_thai: "", tu_khoa: "" });
   };
 
-  const hasActiveFilters = filters.status || filters.search;
+  const hasActiveFilters = filters.trang_thai || filters.tu_khoa;
 
   return (
     <div className="space-y-4">
@@ -31,7 +34,7 @@ export default function RoomFilters({ filters, onFilterChange }) {
         <Input
           type="text"
           placeholder="Tìm kiếm theo mã phòng hoặc tên..."
-          value={filters.search}
+          value={filters.tu_khoa}
           onChange={handleSearchChange}
           className="pl-10 h-12 text-base"
         />
@@ -40,15 +43,15 @@ export default function RoomFilters({ filters, onFilterChange }) {
       {/* Status filters */}
       <div className="flex flex-wrap gap-2">
         <Button
-          variant={filters.status === 'EMPTY' ? 'default' : 'outline'}
-          onClick={() => handleStatusChange('EMPTY')}
+          variant={filters.trang_thai === "TRONG" ? "default" : "outline"}
+          onClick={() => handleStatusChange("TRONG")}
           className="h-11 text-sm sm:text-base flex-1 sm:flex-none"
         >
           Phòng trống
         </Button>
         <Button
-          variant={filters.status === 'OCCUPIED' ? 'default' : 'outline'}
-          onClick={() => handleStatusChange('OCCUPIED')}
+          variant={filters.trang_thai === "DA_THUE" ? "default" : "outline"}
+          onClick={() => handleStatusChange("DA_THUE")}
           className="h-11 text-sm sm:text-base flex-1 sm:flex-none"
         >
           Đã thuê

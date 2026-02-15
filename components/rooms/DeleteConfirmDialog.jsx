@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   AlertDialog,
@@ -9,12 +9,17 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from "@/components/ui/alert-dialog";
 
 /**
  * DeleteConfirmDialog - Dialog xác nhận xóa phòng
  */
-export default function DeleteConfirmDialog({ open, onClose, onConfirm, room }) {
+export default function DeleteConfirmDialog({
+  open,
+  onClose,
+  onConfirm,
+  room,
+}) {
   return (
     <AlertDialog open={open} onOpenChange={onClose}>
       <AlertDialogContent
@@ -28,7 +33,8 @@ export default function DeleteConfirmDialog({ open, onClose, onConfirm, room }) 
             Xác nhận xóa phòng
           </AlertDialogTitle>
           <AlertDialogDescription className="text-base">
-            Bạn có chắc muốn xóa phòng <strong>{room?.code}</strong> - {room?.name}?
+            Bạn có chắc muốn xóa phòng <strong>{room?.ma_phong}</strong> -{" "}
+            {room?.ten_phong}?
             <br />
             <br />
             Hành động này không thể hoàn tác.

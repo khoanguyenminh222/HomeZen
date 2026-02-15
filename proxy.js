@@ -16,13 +16,13 @@ async function validateUserInDatabase(userId) {
   }
 
   try {
-    const user = await prisma.user.findUnique({
+    const user = await prisma.uSR_NGUOI_DUNG.findUnique({
       where: { id: userId },
       select: {
         id: true,
-        username: true,
-        role: true,
-        isActive: true
+        tai_khoan: true,
+        vai_tro: true,
+        trang_thai: true
       }
     });
 
@@ -30,7 +30,7 @@ async function validateUserInDatabase(userId) {
       return { isValid: false, reason: 'User not found in database' };
     }
 
-    if (!user.isActive) {
+    if (!user.trang_thai) {
       return { isValid: false, reason: 'User account is deactivated' };
     }
 
@@ -80,7 +80,7 @@ export async function proxy(request) {
     if (token && authPages.some(page => pathname.startsWith(page))) {
       const validation = await validateUserInDatabase(token.id);
       if (validation.isValid) {
-        const dashboardUrl = new URL(validation.user.role === 'SUPER_ADMIN' ? '/admin' : '/', request.url);
+        const dashboardUrl = new URL(validation.user.vai_tro === 'SIEU_QUAN_TRI' ? '/admin' : '/', request.url);
         // Important: Use '/' as dashboard for Property Owners
         return NextResponse.redirect(dashboardUrl);
       }
@@ -119,19 +119,19 @@ export async function proxy(request) {
     }
   }
 
-  const userRole = validation.user.role;
+  const userRole = validation.user.vai_tro;
 
   // 7. Role-based Authorization
   // Protect Super Admin dashboard
   if (pathname.startsWith('/admin')) {
-    if (userRole !== 'SUPER_ADMIN') {
+    if (userRole !== 'SIEU_QUAN_TRI') {
       return NextResponse.redirect(new URL('/', request.url));
     }
   }
 
   // Custom logic: Force Super Admin to Admin dashboard if they try to access property owner routes
   // But allow them to see the landing page '/'
-  if (userRole === 'SUPER_ADMIN' && pathname !== '/' && !pathname.startsWith('/admin')) {
+  if (userRole === 'SIEU_QUAN_TRI' && pathname !== '/' && !pathname.startsWith('/admin')) {
     return NextResponse.redirect(new URL('/admin', request.url));
   }
 

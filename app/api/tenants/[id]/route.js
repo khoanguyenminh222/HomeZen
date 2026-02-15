@@ -14,45 +14,45 @@ export async function GET(request, { params }) {
 
     const { id } = await params;
 
-    const tenant = await prisma.tenant.findUnique({
+    const tenant = await prisma.tNT_NGUOI_THUE_CHINH.findUnique({
       where: { id },
       include: {
-        room: {
+        phong: {
           select: {
             id: true,
-            code: true,
-            name: true,
-            price: true,
-            status: true
+            ma_phong: true,
+            ten_phong: true,
+            gia_phong: true,
+            trang_thai: true
           }
         },
-        occupants: {
+        nguoi_o: {
           orderBy: {
-            createdAt: 'asc'
+            ngay_tao: 'asc'
           }
         },
-        depositReturns: {
+        hoan_tra_coc: {
           orderBy: {
-            returnDate: 'desc'
+            ngay_hoan_tra: 'desc'
           }
         }
       }
     });
 
-    if (!tenant || tenant.deletedAt) {
+    if (!tenant || tenant.ngay_xoa) {
       return NextResponse.json(
         { error: 'Không tìm thấy người thuê hoặc đã bị xóa' },
         { status: 404 }
       );
     }
 
-    // Transform deposit to number
+    // Transform deposit to number for frontend compatibility if needed
     const tenantWithDeposit = {
       ...tenant,
-      deposit: tenant.deposit ? parseFloat(tenant.deposit) : null,
-      depositReturns: tenant.depositReturns.map(dr => ({
+      tien_coc: tenant.tien_coc ? parseFloat(tenant.tien_coc) : null,
+      hoan_tra_coc: tenant.hoan_tra_coc.map(dr => ({
         ...dr,
-        amount: parseFloat(dr.amount)
+        so_tien: parseFloat(dr.so_tien)
       }))
     };
 
@@ -81,11 +81,11 @@ export async function PUT(request, { params }) {
     const validatedData = updateTenantSchema.parse(body);
 
     // Kiểm tra người thuê có tồn tại không
-    const existingTenant = await prisma.tenant.findUnique({
+    const existingTenant = await prisma.tNT_NGUOI_THUE_CHINH.findUnique({
       where: { id }
     });
 
-    if (!existingTenant || existingTenant.deletedAt) {
+    if (!existingTenant || existingTenant.ngay_xoa) {
       return NextResponse.json(
         { error: 'Không tìm thấy người thuê hoặc đã bị xóa' },
         { status: 404 }
@@ -93,27 +93,27 @@ export async function PUT(request, { params }) {
     }
 
     // Kiểm tra số điện thoại trùng (nếu có thay đổi) - chỉ trong cùng property owner
-    if (validatedData.phone && validatedData.phone !== existingTenant.phone) {
+    if (validatedData.dien_thoai && validatedData.dien_thoai !== existingTenant.dien_thoai) {
       // Xác định userId của tenant hiện tại
-      let tenantUserId = existingTenant.userId;
-      
+      let tenantUserId = existingTenant.nguoi_dung_id;
+
       // Nếu tenant có phòng, lấy userId từ phòng (để đảm bảo chính xác)
-      if (existingTenant.roomId && !tenantUserId) {
-        const room = await prisma.room.findUnique({
-          where: { id: existingTenant.roomId },
-          select: { userId: true }
+      if (existingTenant.phong_id && !tenantUserId) {
+        const room = await prisma.pRP_PHONG.findUnique({
+          where: { id: existingTenant.phong_id },
+          select: { nguoi_dung_id: true }
         });
-        tenantUserId = room?.userId || null;
+        tenantUserId = room?.nguoi_dung_id || null;
       }
 
       // Chỉ kiểm tra trùng phone trong cùng property owner
       if (tenantUserId) {
-        const phoneExists = await prisma.tenant.findFirst({
+        const phoneExists = await prisma.tNT_NGUOI_THUE_CHINH.findFirst({
           where: {
-            phone: validatedData.phone,
-            userId: tenantUserId,
+            dien_thoai: validatedData.dien_thoai,
+            nguoi_dung_id: tenantUserId,
             id: { not: id },
-            deletedAt: null // Only check among active tenants
+            ngay_xoa: null // Only check among active tenants
           }
         });
 
@@ -129,110 +129,110 @@ export async function PUT(request, { params }) {
     // Cập nhật người thuê trong transaction (để xử lý roomId)
     const updatedTenant = await prisma.$transaction(async (tx) => {
       // 1. Kiểm tra và cập nhật roomId nếu có
-      let newUserId = existingTenant.userId; // Giữ nguyên userId mặc định
-      
-      if (validatedData.roomId && !existingTenant.roomId) {
+      let newUserId = existingTenant.nguoi_dung_id; // Giữ nguyên userId mặc định
+
+      if (validatedData.phong_id && !existingTenant.phong_id) {
         // Kiểm tra phòng có tồn tại và trống không
-        const room = await tx.room.findUnique({
-          where: { id: validatedData.roomId },
-          include: { tenant: true }
+        const room = await tx.pRP_PHONG.findUnique({
+          where: { id: validatedData.phong_id },
+          include: { nguoi_thue: true }
         });
 
         if (!room) {
           throw new Error('ROOM_NOT_FOUND');
         }
 
-        if (room.tenant) {
+        if (room.nguoi_thue) {
           throw new Error('ROOM_OCCUPIED');
         }
 
         // Cập nhật userId từ room.userId
-        newUserId = room.userId;
+        newUserId = room.nguoi_dung_id;
 
         // Kiểm tra phòng có hóa đơn chưa thanh toán (nợ) không
-        const allBills = await tx.bill.findMany({
+        const allBills = await tx.bIL_HOA_DON.findMany({
           where: {
-            roomId: validatedData.roomId
+            phong_id: validatedData.phong_id
           },
           select: {
             id: true,
-            month: true,
-            year: true,
-            totalCost: true,
-            paidAmount: true,
-            isPaid: true
+            thang: true,
+            nam: true,
+            tong_tien: true,
+            so_tien_da_tra: true,
+            da_thanh_toan: true
           }
         });
 
         // Lọc các hóa đơn chưa thanh toán đầy đủ
         const unpaidBills = allBills.filter(bill => {
-          const totalCost = Number(bill.totalCost || 0);
-          const paidAmount = bill.paidAmount ? Number(bill.paidAmount) : 0;
-          return !bill.isPaid || (bill.isPaid && paidAmount < totalCost);
+          const totalCost = Number(bill.tong_tien || 0);
+          const paidAmount = bill.so_tien_da_tra ? Number(bill.so_tien_da_tra) : 0;
+          return !bill.da_thanh_toan || (bill.da_thanh_toan && paidAmount < totalCost);
         });
 
         if (unpaidBills.length > 0) {
           const totalDebt = unpaidBills.reduce((sum, bill) => {
-            const totalCost = Number(bill.totalCost || 0);
-            const paidAmount = bill.paidAmount ? Number(bill.paidAmount) : 0;
-            const debt = bill.isPaid ? Math.max(0, totalCost - paidAmount) : totalCost;
+            const totalCost = Number(bill.tong_tien || 0);
+            const paidAmount = bill.so_tien_da_tra ? Number(bill.so_tien_da_tra) : 0;
+            const debt = bill.da_thanh_toan ? Math.max(0, totalCost - paidAmount) : totalCost;
             return sum + debt;
           }, 0);
 
           throw new Error(`ROOM_HAS_DEBT:${unpaidBills.length}:${totalDebt}`);
         }
 
-        // Cập nhật trạng thái phòng thành OCCUPIED
-        await tx.room.update({
-          where: { id: validatedData.roomId },
-          data: { status: 'OCCUPIED' }
+        // Cập nhật trạng thái phòng thành DA_THUE
+        await tx.pRP_PHONG.update({
+          where: { id: validatedData.phong_id },
+          data: { trang_thai: 'DA_THUE' }
         });
       }
 
       // 2. Cập nhật thông tin người thuê
-      return await tx.tenant.update({
+      return await tx.tNT_NGUOI_THUE_CHINH.update({
         where: { id },
         data: {
-          ...(validatedData.fullName && { fullName: validatedData.fullName }),
-          ...(validatedData.phone && { phone: validatedData.phone }),
-          ...(validatedData.idCard !== undefined && { idCard: validatedData.idCard || null }),
-          ...(validatedData.dateOfBirth !== undefined && { dateOfBirth: validatedData.dateOfBirth }),
-          ...(validatedData.hometown !== undefined && { hometown: validatedData.hometown || null }),
-          ...(validatedData.moveInDate !== undefined && { moveInDate: validatedData.moveInDate }),
-          ...(validatedData.deposit !== undefined && { deposit: validatedData.deposit }),
-          ...(validatedData.contractFileUrl !== undefined && { contractFileUrl: validatedData.contractFileUrl || null }),
-          ...(validatedData.roomId && !existingTenant.roomId && { 
-            roomId: validatedData.roomId,
-            userId: newUserId // Cập nhật userId từ room
+          ...(validatedData.ho_ten && { ho_ten: validatedData.ho_ten }),
+          ...(validatedData.dien_thoai && { dien_thoai: validatedData.dien_thoai }),
+          ...(validatedData.can_cuoc !== undefined && { can_cuoc: validatedData.can_cuoc || null }),
+          ...(validatedData.ngay_sinh !== undefined && { ngay_sinh: validatedData.ngay_sinh }),
+          ...(validatedData.que_quan !== undefined && { que_quan: validatedData.que_quan || null }),
+          ...(validatedData.ngay_vao_o !== undefined && { ngay_vao_o: validatedData.ngay_vao_o }),
+          ...(validatedData.tien_coc !== undefined && { tien_coc: validatedData.tien_coc }),
+          ...(validatedData.url_hop_dong !== undefined && { url_hop_dong: validatedData.url_hop_dong || null }),
+          ...(validatedData.phong_id && !existingTenant.phong_id && {
+            phong_id: validatedData.phong_id,
+            nguoi_dung_id: newUserId // Cập nhật userId từ room
           }),
           // Thông tin bổ sung
-          ...(validatedData.gender !== undefined && { gender: validatedData.gender || null }),
-          ...(validatedData.occupation !== undefined && { occupation: validatedData.occupation || null }),
-          ...(validatedData.ethnicity !== undefined && { ethnicity: validatedData.ethnicity || null }),
-          ...(validatedData.nationality !== undefined && { nationality: validatedData.nationality || null }),
-          ...(validatedData.permanentAddress !== undefined && { permanentAddress: validatedData.permanentAddress || null }),
-          ...(validatedData.temporaryAddress !== undefined && { temporaryAddress: validatedData.temporaryAddress || null }),
-          ...(validatedData.insuranceCardNumber !== undefined && { insuranceCardNumber: validatedData.insuranceCardNumber || null }),
-          ...(validatedData.issueDate !== undefined && { issueDate: validatedData.issueDate }),
-          ...(validatedData.placeOfIssue !== undefined && { placeOfIssue: validatedData.placeOfIssue || null }),
+          ...(validatedData.gioi_tinh !== undefined && { gioi_tinh: validatedData.gioi_tinh || null }),
+          ...(validatedData.nghe_nghiep !== undefined && { nghe_nghiep: validatedData.nghe_nghiep || null }),
+          ...(validatedData.dan_toc !== undefined && { dan_toc: validatedData.dan_toc || null }),
+          ...(validatedData.quoc_tich !== undefined && { quoc_tich: validatedData.quoc_tich || null }),
+          ...(validatedData.dia_chi_thuong_tru !== undefined && { dia_chi_thuong_tru: validatedData.dia_chi_thuong_tru || null }),
+          ...(validatedData.dia_chi_tam_tru !== undefined && { dia_chi_tam_tru: validatedData.dia_chi_tam_tru || null }),
+          ...(validatedData.so_the_bao_hiem !== undefined && { so_the_bao_hiem: validatedData.so_the_bao_hiem || null }),
+          ...(validatedData.ngay_cap !== undefined && { ngay_cap: validatedData.ngay_cap }),
+          ...(validatedData.noi_cap !== undefined && { noi_cap: validatedData.noi_cap || null }),
         },
         include: {
-          room: {
+          phong: {
             select: {
               id: true,
-              code: true,
-              name: true,
-              price: true
+              ma_phong: true,
+              ten_phong: true,
+              gia_phong: true
             }
           },
-          occupants: true
+          nguoi_o: true
         }
       });
     });
 
     return NextResponse.json({
       ...updatedTenant,
-      deposit: updatedTenant.deposit ? parseFloat(updatedTenant.deposit) : null
+      tien_coc: updatedTenant.tien_coc ? parseFloat(updatedTenant.tien_coc) : null
     });
   } catch (error) {
     console.error('Error updating tenant:', error);
@@ -246,7 +246,7 @@ export async function PUT(request, { params }) {
     if (error.message?.startsWith('ROOM_HAS_DEBT')) {
       const [, unpaidBillsCount, totalDebt] = error.message.split(':');
       return NextResponse.json(
-        { 
+        {
           error: `Phòng này còn ${unpaidBillsCount} hóa đơn chưa thanh toán đầy đủ. Tổng nợ: ${Number(totalDebt).toLocaleString('vi-VN')} VNĐ. Vui lòng thanh toán hết nợ trước khi gán người thuê mới.`,
           unpaidBillsCount: parseInt(unpaidBillsCount),
           totalDebt: Number(totalDebt)

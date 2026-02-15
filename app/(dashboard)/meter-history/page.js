@@ -27,7 +27,7 @@ export default function MeterHistoryPage() {
   const currentDate = new Date();
   const currentYear = currentDate.getFullYear();
   const currentMonth = currentDate.getMonth() + 1;
-  
+
   // Default: 6 tháng gần nhất
   const [filters, setFilters] = useState({
     startMonth: currentMonth >= 6 ? currentMonth - 5 : currentMonth + 7,
@@ -151,7 +151,7 @@ export default function MeterHistoryPage() {
                 <SelectContent>
                   {rooms.map((room) => (
                     <SelectItem key={room.id} value={room.id} className="text-sm sm:text-base">
-                      {room.code} - {room.name}
+                      {room.ma_phong} - {room.ten_phong}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -160,7 +160,7 @@ export default function MeterHistoryPage() {
 
             {/* Start Month */}
             <div className="space-y-2">
-              <label className="text-sm sm:text-base font-medium">Từ Tháng</label>
+              <label className="text-sm sm:text-base font-medium flex items-center gap-2">Từ Tháng</label>
               <Select
                 value={filters.startMonth?.toString() || ''}
                 onValueChange={(value) =>
@@ -182,7 +182,7 @@ export default function MeterHistoryPage() {
 
             {/* Start Year */}
             <div className="space-y-2">
-              <label className="text-sm sm:text-base font-medium">Từ Năm</label>
+              <label className="text-sm sm:text-base font-medium flex items-center gap-2">Từ Năm</label>
               <Select
                 value={filters.startYear?.toString() || ''}
                 onValueChange={(value) =>
@@ -204,7 +204,7 @@ export default function MeterHistoryPage() {
 
             {/* End Month */}
             <div className="space-y-2">
-              <label className="text-sm sm:text-base font-medium">Đến Tháng</label>
+              <label className="text-sm sm:text-base font-medium flex items-center gap-2">Đến Tháng</label>
               <Select
                 value={filters.endMonth?.toString() || ''}
                 onValueChange={(value) =>
@@ -226,7 +226,7 @@ export default function MeterHistoryPage() {
 
             {/* End Year */}
             <div className="space-y-2">
-              <label className="text-sm sm:text-base font-medium">Đến Năm</label>
+              <label className="text-sm sm:text-base font-medium flex items-center gap-2">Đến Năm</label>
               <Select
                 value={filters.endYear?.toString() || ''}
                 onValueChange={(value) =>
@@ -265,7 +265,7 @@ export default function MeterHistoryPage() {
                 <div className="flex items-center gap-2 sm:gap-3">
                   <Home className="h-4 w-4 sm:h-5 sm:w-5 shrink-0" />
                   <span className="font-semibold text-sm sm:text-base wrap-break-word">
-                    {roomInfo.code} - {roomInfo.name}
+                    {roomInfo.ma_phong} - {roomInfo.ten_phong}
                   </span>
                 </div>
               </CardContent>

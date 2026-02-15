@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { formatCurrency } from '@/lib/format';
-import { Plus, Edit, Trash2 } from 'lucide-react';
-import RoomFeeForm from './RoomFeeForm';
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { formatCurrency } from "@/lib/format";
+import { Plus, Edit, Trash2 } from "lucide-react";
+import RoomFeeForm from "./RoomFeeForm";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,9 +17,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
-import { useToast } from '@/hooks/use-toast';
-import { Loading } from '@/components/ui/loading';
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
+import { Loading } from "@/components/ui/loading";
 
 /**
  * RoomFeesList - Danh sách phí của phòng
@@ -42,16 +42,18 @@ export default function RoomFeesList({ roomId, roomCode }) {
   const fetchRoomFees = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/rooms/${roomId}/fees?includeInactive=true`);
-      if (!response.ok) throw new Error('Failed to fetch');
+      const response = await fetch(
+        `/api/rooms/${roomId}/fees?includeInactive=true`,
+      );
+      if (!response.ok) throw new Error("Failed to fetch");
       const data = await response.json();
       setRoomFees(data);
     } catch (error) {
-      console.error('Error fetching room fees:', error);
+      console.error("Error fetching room fees:", error);
       toast({
-        title: 'Lỗi',
-        description: 'Không thể tải danh sách phí của phòng',
-        variant: 'destructive',
+        title: "Lỗi",
+        description: "Không thể tải danh sách phí của phòng",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -77,30 +79,30 @@ export default function RoomFeesList({ roomId, roomCode }) {
   const handleDelete = async (feeId) => {
     try {
       const response = await fetch(`/api/rooms/${roomId}/fees/${feeId}`, {
-        method: 'DELETE',
+        method: "DELETE",
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to delete');
+        throw new Error(error.error || "Failed to delete");
       }
 
       toast({
-        title: 'Thành công',
-        description: 'Đã xóa phí của phòng',
-        variant: 'success',
+        title: "Thành công",
+        description: "Đã xóa phí của phòng",
+        variant: "success",
       });
       fetchRoomFees();
-      setDeleteDialogOpen(prev => ({
+      setDeleteDialogOpen((prev) => ({
         ...prev,
-        [feeId]: false
+        [feeId]: false,
       }));
     } catch (error) {
-      console.error('Error deleting room fee:', error);
+      console.error("Error deleting room fee:", error);
       toast({
-        title: 'Lỗi',
-        description: error.message || 'Không thể xóa phí của phòng',
-        variant: 'destructive',
+        title: "Lỗi",
+        description: error.message || "Không thể xóa phí của phòng",
+        variant: "destructive",
       });
     }
   };
@@ -131,24 +133,32 @@ export default function RoomFeesList({ roomId, roomCode }) {
                 >
                   <div className="flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="font-medium">{roomFee.feeType?.name || 'N/A'}</p>
-                      {roomFee.isActive ? (
-                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                      <p className="font-medium">
+                        {roomFee.loai_phi?.ten_phi || "N/A"}
+                      </p>
+                      {roomFee.trang_thai ? (
+                        <Badge
+                          variant="outline"
+                          className="bg-green-50 text-green-700 border-green-200"
+                        >
                           Đang hoạt động
                         </Badge>
                       ) : (
-                        <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
+                        <Badge
+                          variant="outline"
+                          className="bg-gray-50 text-gray-700 border-gray-200"
+                        >
                           Tạm ngưng
                         </Badge>
                       )}
                     </div>
                     <p className="text-sm text-muted-foreground mt-1">
-                      {roomFee.feeType?.description || ''}
+                      {roomFee.loai_phi?.mo_ta || ""}
                     </p>
                   </div>
                   <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
                     <p className="font-bold">
-                      {formatCurrency(roomFee.amount)}
+                      {formatCurrency(roomFee.so_tien)}
                     </p>
                     <div className="flex gap-1">
                       <Button
@@ -162,9 +172,9 @@ export default function RoomFeesList({ roomId, roomCode }) {
                       <AlertDialog
                         open={deleteDialogOpen[roomFee.id] || false}
                         onOpenChange={(open) => {
-                          setDeleteDialogOpen(prev => ({
+                          setDeleteDialogOpen((prev) => ({
                             ...prev,
-                            [roomFee.id]: open
+                            [roomFee.id]: open,
                           }));
                         }}
                       >
@@ -179,26 +189,29 @@ export default function RoomFeesList({ roomId, roomCode }) {
                         </AlertDialogTrigger>
                         <AlertDialogContent
                           onOverlayClick={() => {
-                            setDeleteDialogOpen(prev => ({
+                            setDeleteDialogOpen((prev) => ({
                               ...prev,
-                              [roomFee.id]: false
+                              [roomFee.id]: false,
                             }));
                           }}
                           onInteractOutside={(e) => {
-                            setDeleteDialogOpen(prev => ({
+                            setDeleteDialogOpen((prev) => ({
                               ...prev,
-                              [roomFee.id]: false
+                              [roomFee.id]: false,
                             }));
                           }}
                         >
                           <AlertDialogHeader>
                             <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
                             <AlertDialogDescription>
-                              Bạn có chắc chắn muốn xóa phí "{roomFee.feeType?.name}" khỏi phòng này?
+                              Bạn có chắc chắn muốn xóa phí "
+                              {roomFee.loai_phi?.ten_phi}" khỏi phòng này?
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel className="dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200">Hủy</AlertDialogCancel>
+                            <AlertDialogCancel className="dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200">
+                              Hủy
+                            </AlertDialogCancel>
                             <AlertDialogAction
                               onClick={() => handleDelete(roomFee.id)}
                               variant="destructive"

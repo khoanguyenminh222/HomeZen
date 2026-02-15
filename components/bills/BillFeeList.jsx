@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { formatCurrency } from '@/lib/format';
-import { Plus, Edit, Trash2 } from 'lucide-react';
-import BillFeeForm from './BillFeeForm';
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { formatCurrency } from "@/lib/format";
+import { Plus, Edit, Trash2 } from "lucide-react";
+import BillFeeForm from "./BillFeeForm";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,8 +16,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
-import { useToast } from '@/hooks/use-toast';
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 /**
  * BillFeeList - Danh sách phí phụ thu trong hóa đơn
@@ -48,30 +48,30 @@ export default function BillFeeList({ billId, fees, isPaid, onUpdate }) {
   const handleDelete = async (feeId) => {
     try {
       const response = await fetch(`/api/bills/${billId}/fees/${feeId}`, {
-        method: 'DELETE',
+        method: "DELETE",
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to delete fee');
+        throw new Error(error.error || "Failed to delete fee");
       }
 
       toast({
-        title: 'Thành công',
-        description: 'Đã xóa phí phụ thu',
-        variant: 'success',
+        title: "Thành công",
+        description: "Đã xóa phí phụ thu",
+        variant: "success",
       });
       onUpdate?.();
-      setDeleteDialogOpen(prev => ({
+      setDeleteDialogOpen((prev) => ({
         ...prev,
-        [feeId]: false
+        [feeId]: false,
       }));
     } catch (error) {
-      console.error('Error deleting bill fee:', error);
+      console.error("Error deleting bill fee:", error);
       toast({
-        title: 'Lỗi',
-        description: error.message || 'Không thể xóa phí phụ thu',
-        variant: 'destructive',
+        title: "Lỗi",
+        description: error.message || "Không thể xóa phí phụ thu",
+        variant: "destructive",
       });
     }
   };
@@ -107,7 +107,10 @@ export default function BillFeeList({ billId, fees, isPaid, onUpdate }) {
     );
   }
 
-  const totalFees = fees.reduce((sum, fee) => sum + Number(fee.amount || 0), 0);
+  const totalFees = fees.reduce(
+    (sum, fee) => sum + Number(fee.so_tien || 0),
+    0,
+  );
 
   return (
     <>
@@ -129,7 +132,7 @@ export default function BillFeeList({ billId, fees, isPaid, onUpdate }) {
                 className="flex items-center justify-between p-3 border rounded-lg"
               >
                 <div className="flex-1">
-                  <p className="font-medium">{fee.name}</p>
+                  <p className="font-medium">{fee.ten_phi}</p>
                   {/* {fee.feeTypeId && (
                     <p className="text-xs text-muted-foreground">
                       ID: {fee.feeTypeId}
@@ -137,9 +140,7 @@ export default function BillFeeList({ billId, fees, isPaid, onUpdate }) {
                   )} */}
                 </div>
                 <div className="flex items-center gap-2">
-                  <p className="font-bold">
-                    {formatCurrency(fee.amount)}
-                  </p>
+                  <p className="font-bold">{formatCurrency(fee.so_tien)}</p>
                   {!isPaid && (
                     <div className="flex gap-1">
                       <Button
@@ -153,9 +154,9 @@ export default function BillFeeList({ billId, fees, isPaid, onUpdate }) {
                       <AlertDialog
                         open={deleteDialogOpen[fee.id] || false}
                         onOpenChange={(open) => {
-                          setDeleteDialogOpen(prev => ({
+                          setDeleteDialogOpen((prev) => ({
                             ...prev,
-                            [fee.id]: open
+                            [fee.id]: open,
                           }));
                         }}
                       >
@@ -170,26 +171,29 @@ export default function BillFeeList({ billId, fees, isPaid, onUpdate }) {
                         </AlertDialogTrigger>
                         <AlertDialogContent
                           onOverlayClick={() => {
-                            setDeleteDialogOpen(prev => ({
+                            setDeleteDialogOpen((prev) => ({
                               ...prev,
-                              [fee.id]: false
+                              [fee.id]: false,
                             }));
                           }}
                           onInteractOutside={(e) => {
-                            setDeleteDialogOpen(prev => ({
+                            setDeleteDialogOpen((prev) => ({
                               ...prev,
-                              [fee.id]: false
+                              [fee.id]: false,
                             }));
                           }}
                         >
                           <AlertDialogHeader>
                             <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
                             <AlertDialogDescription>
-                              Bạn có chắc chắn muốn xóa phí &ldquo;{fee.name}&rdquo;?
+                              Bạn có chắc chắn muốn xóa phí &ldquo;{fee.ten_phi}
+                              &rdquo;?
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel className="dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200">Hủy</AlertDialogCancel>
+                            <AlertDialogCancel className="dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200">
+                              Hủy
+                            </AlertDialogCancel>
                             <AlertDialogAction
                               onClick={() => handleDelete(fee.id)}
                               variant="destructive"

@@ -37,4 +37,4 @@ async function previewReportHandler(request, { params }) {
     }
 }
 
-export const GET = requireSuperAdmin(previewReportHandler);
+export const GET = requireAuth(previewReportHandler);

@@ -32,9 +32,9 @@ async function postHandler(request) {
     const { userId, newPassword } = validationResult.data;
 
     // Check if user exists
-    const user = await prisma.user.findUnique({
+    const user = await prisma.uSR_NGUOI_DUNG.findUnique({
       where: { id: userId },
-      select: { id: true, username: true, role: true }
+      select: { id: true, tai_khoan: true, vai_tro: true }
     });
 
     if (!user) {
@@ -48,16 +48,16 @@ async function postHandler(request) {
     const hashedPassword = await hashPassword(newPassword);
 
     // Update password
-    await prisma.user.update({
+    await prisma.uSR_NGUOI_DUNG.update({
       where: { id: userId },
       data: {
-        password: hashedPassword,
+        mat_khau: hashedPassword,
       }
     });
 
     return NextResponse.json(
       {
-        message: `Đã reset mật khẩu thành công cho user: ${user.username}`
+        message: `Đã reset mật khẩu thành công cho user: ${user.tai_khoan}`
       },
       { status: 200 }
     );

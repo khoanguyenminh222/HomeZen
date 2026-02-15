@@ -17,17 +17,17 @@ export async function PATCH(request, { params }) {
     const validatedData = updateBillStatusSchema.parse(body);
 
     // Kiểm tra hóa đơn có tồn tại không
-    const bill = await prisma.bill.findUnique({
+    const bill = await prisma.bIL_HOA_DON.findUnique({
       where: { id },
       include: {
-        room: {
+        phong: {
           select: {
             id: true,
-            code: true,
-            name: true,
+            ma_phong: true,
+            ten_phong: true,
           }
         },
-        billFees: true,
+        phi_hoa_don: true,
       }
     });
 
@@ -38,48 +38,48 @@ export async function PATCH(request, { params }) {
       );
     }
 
-    const totalCost = Number(bill.totalCost);
+    const totalCost = Number(bill.tong_tien);
     let paidAmount = null;
 
-    // Xử lý paidAmount
-    if (validatedData.isPaid) {
-      if (validatedData.paidAmount !== undefined && validatedData.paidAmount !== null) {
-        // Kiểm tra paidAmount không được vượt quá totalCost
-        if (validatedData.paidAmount > totalCost) {
+    // Xử lý so_tien_da_tra
+    if (validatedData.da_thanh_toan) {
+      if (validatedData.so_tien_da_tra !== undefined && validatedData.so_tien_da_tra !== null) {
+        // Kiểm tra so_tien_da_tra không được vượt quá totalCost
+        if (validatedData.so_tien_da_tra > totalCost) {
           return NextResponse.json(
-            { error: `Số tiền đã thanh toán (${validatedData.paidAmount.toLocaleString('vi-VN')} VNĐ) không được vượt quá tổng tiền hóa đơn (${totalCost.toLocaleString('vi-VN')} VNĐ)` },
+            { error: `Số tiền đã thanh toán (${validatedData.so_tien_da_tra.toLocaleString('vi-VN')} VNĐ) không được vượt quá tổng tiền hóa đơn (${totalCost.toLocaleString('vi-VN')} VNĐ)` },
             { status: 400 }
           );
         }
-        paidAmount = validatedData.paidAmount;
+        paidAmount = validatedData.so_tien_da_tra;
       } else {
-        // Nếu không có paidAmount, mặc định là thanh toán đầy đủ
+        // Nếu không có so_tien_da_tra, mặc định là thanh toán đầy đủ
         paidAmount = totalCost;
       }
     } else {
-      // Nếu isPaid = false, thì paidAmount = null
+      // Nếu da_thanh_toan = false, thì so_tien_da_tra = null
       paidAmount = null;
     }
 
     // Cập nhật trạng thái
-    const updatedBill = await prisma.bill.update({
+    const updatedBill = await prisma.bIL_HOA_DON.update({
       where: { id },
       data: {
-        isPaid: validatedData.isPaid,
-        paidAmount: paidAmount,
-        paidDate: validatedData.isPaid 
-          ? (validatedData.paidDate ? new Date(validatedData.paidDate) : new Date())
+        da_thanh_toan: validatedData.da_thanh_toan,
+        so_tien_da_tra: paidAmount,
+        ngay_thanh_toan: validatedData.da_thanh_toan
+          ? (validatedData.ngay_thanh_toan ? new Date(validatedData.ngay_thanh_toan) : new Date())
           : null,
       },
       include: {
-        room: {
+        phong: {
           select: {
             id: true,
-            code: true,
-            name: true,
+            ma_phong: true,
+            ten_phong: true,
           }
         },
-        billFees: true,
+        phi_hoa_don: true,
       }
     });
 
@@ -87,14 +87,14 @@ export async function PATCH(request, { params }) {
     const oldSnapshot = BillHistoryService.createBillSnapshot(bill);
     const newSnapshot = BillHistoryService.createBillSnapshot(updatedBill);
     const changes = BillHistoryService.compareSnapshots(oldSnapshot, newSnapshot);
-    
-    const statusText = validatedData.isPaid 
+
+    const statusText = validatedData.da_thanh_toan
       ? (paidAmount === totalCost ? 'đã thanh toán đầy đủ' : `đã thanh toán một phần (${paidAmount?.toLocaleString('vi-VN')} VNĐ)`)
       : 'chưa thanh toán';
-    
+
     await BillHistoryService.createHistory({
       billId: updatedBill.id,
-      action: 'STATUS_CHANGE',
+      action: 'THAY_DOI_TRANG_THAI',
       changedBy: session.user.id,
       oldData: oldSnapshot,
       newData: newSnapshot,
@@ -105,7 +105,7 @@ export async function PATCH(request, { params }) {
     return NextResponse.json(updatedBill);
   } catch (error) {
     console.error('Error updating bill status:', error);
-    
+
     if (error.name === 'ZodError') {
       return NextResponse.json(
         { error: 'Dữ liệu không hợp lệ', details: error.errors },

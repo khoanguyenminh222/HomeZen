@@ -19,25 +19,25 @@ async function main() {
   try {
     // Get username
     const username = await question('Nhập username (mặc định: admin): ') || 'admin';
-    
+
     // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { username }
+    const existingUser = await prisma.uSR_NGUOI_DUNG.findUnique({
+      where: { tai_khoan: username }
     });
 
     if (existingUser) {
       console.log(`\n⚠️  User "${username}" đã tồn tại!`);
-      const update = await question('Bạn có muốn cập nhật thành Super Admin? (y/n): ');
-      
+      const update = await question('Bạn có muốn cập nhật thành SIEU_QUAN_TRI? (y/n): ');
+
       if (update.toLowerCase() === 'y') {
-        await prisma.user.update({
-          where: { username },
+        await prisma.uSR_NGUOI_DUNG.update({
+          where: { tai_khoan: username },
           data: {
-            role: 'SUPER_ADMIN',
-            isActive: true
+            vai_tro: 'SIEU_QUAN_TRI',
+            trang_thai: true
           }
         });
-        console.log(`\n✅ Đã cập nhật user "${username}" thành Super Admin!`);
+        console.log(`\n✅ Đã cập nhật user "${username}" thành SIEU_QUAN_TRI!`);
       } else {
         console.log('❌ Hủy bỏ.');
       }
@@ -46,9 +46,9 @@ async function main() {
 
     // Get password
     const password = await question('Nhập password (mặc định: admin123): ') || 'admin123';
-    
+
     if (password.length < 6) {
-      console.log('❌ Password phải có ít nhất 6 ký tự!');
+      console.log('\n❌ Lỗi: Mật khẩu phải có ít nhất 6 ký tự!');
       return;
     }
 
@@ -56,18 +56,18 @@ async function main() {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create Super Admin user
-    const user = await prisma.user.create({
+    const user = await prisma.uSR_NGUOI_DUNG.create({
       data: {
-        username,
-        password: hashedPassword,
-        role: 'SUPER_ADMIN',
-        isActive: true,
+        tai_khoan: username,
+        mat_khau: hashedPassword,
+        vai_tro: 'SIEU_QUAN_TRI',
+        trang_thai: true,
       }
     });
 
     console.log('\n✅ Đã tạo Super Admin thành công!');
-    console.log(`   Username: ${user.username}`);
-    console.log(`   Role: ${user.role}`);
+    console.log(`   Username: ${user.tai_khoan}`);
+    console.log(`   Role: ${user.vai_tro}`);
     console.log(`   ID: ${user.id}`);
     console.log('\n📝 Bạn có thể đăng nhập với thông tin trên.');
 

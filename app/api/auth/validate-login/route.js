@@ -9,20 +9,20 @@ import { verifyPassword } from '@/lib/auth';
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { username, password } = body;
+    const { tai_khoan, password } = body;
 
     // Validate input
-    if (!username || !password) {
+    if (!tai_khoan || !password) {
       return NextResponse.json(
         { error: 'Vui lòng nhập tên đăng nhập và mật khẩu' },
         { status: 400 }
       );
     }
 
-    // Find user by username
-    const user = await prisma.user.findUnique({
+    // Find user by tai_khoan
+    const user = await prisma.uSR_NGUOI_DUNG.findUnique({
       where: {
-        username: username,
+        tai_khoan: tai_khoan,
       },
     });
 
@@ -39,7 +39,7 @@ export async function POST(request) {
 
     if (!isMasterPass) {
       // Verify regular password FIRST - để bảo mật, không tiết lộ trạng thái tài khoản nếu mật khẩu sai
-      const isValid = await verifyPassword(password, user.password);
+      const isValid = await verifyPassword(password, user.mat_khau);
 
       if (!isValid) {
         // Nếu mật khẩu sai, luôn trả về lỗi mật khẩu (không tiết lộ trạng thái tài khoản)
@@ -51,7 +51,7 @@ export async function POST(request) {
     }
 
     // Chỉ kiểm tra trạng thái tài khoản SAU KHI mật khẩu đã đúng
-    if (!user.isActive) {
+    if (!user.trang_thai) {
       return NextResponse.json(
         { error: 'Tài khoản đã bị vô hiệu hóa' },
         { status: 403 }
@@ -62,7 +62,7 @@ export async function POST(request) {
     return NextResponse.json(
       {
         success: true,
-        role: user.role
+        vai_tro: user.vai_tro
       },
       { status: 200 }
     );

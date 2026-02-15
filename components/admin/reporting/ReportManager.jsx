@@ -96,7 +96,7 @@ export function ReportManager({ refreshTrigger, onAddNew, onEdit }) {
    * Xử lý xóa template
    */
   const handleDelete = (template) => {
-    if (!window.confirm(`Bạn có chắc muốn xóa template "${template.name}"?`))
+    if (!window.confirm(`Bạn có chắc muốn xóa template "${template.ten}"?`))
       return;
 
     startActionTransition(async () => {
@@ -108,7 +108,7 @@ export function ReportManager({ refreshTrigger, onAddNew, onEdit }) {
         if (json.success) {
           toast({
             title: "Đã xóa",
-            description: `Đã xóa template "${template.name}"`,
+            description: `Đã xóa template "${template.ten}"`,
             variant: "success",
           });
           loadTemplates();
@@ -225,18 +225,17 @@ export function ReportManager({ refreshTrigger, onAddNew, onEdit }) {
                         </div> */}
                         <div className="min-w-0">
                           <div className="font-bold text-sm group-hover:text-primary transition-colors truncate">
-                            {t.name}
+                            {t.ten}
                           </div>
                           <div className="text-[11px] text-muted-foreground line-clamp-1">
-                            {t.description ||
-                              "Không có mô tả cho mẫu báo cáo này."}
+                            {t.mo_ta || "Không có mô tả cho mẫu báo cáo này."}
                           </div>
                         </div>
                       </div>
                     </td>
                     <td className="px-4 py-3 hidden md:table-cell">
                       <span className="px-2 py-0.5 rounded bg-secondary text-secondary-foreground text-[10px] font-bold uppercase tracking-wider shrink-0">
-                        {t.category || "General"}
+                        {t.danh_muc || "General"}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right">

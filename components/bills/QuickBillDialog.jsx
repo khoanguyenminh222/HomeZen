@@ -32,8 +32,8 @@ import { Loading } from "../ui/loading";
  * Requirements: 12.11, 12.12, 14.5
  */
 const quickBillSchema = z.object({
-  newElectricReading: z.number().int().min(0, "Chỉ số điện mới không được âm"),
-  newWaterReading: z.number().int().min(0, "Chỉ số nước mới không được âm"),
+  chi_so_dien_moi: z.number().int().min(0, "Chỉ số điện mới không được âm"),
+  chi_so_nuoc_moi: z.number().int().min(0, "Chỉ số nước mới không được âm"),
 });
 
 export default function QuickBillDialog({ open, onClose, room, onSuccess }) {
@@ -46,8 +46,8 @@ export default function QuickBillDialog({ open, onClose, room, onSuccess }) {
   const form = useForm({
     resolver: zodResolver(quickBillSchema),
     defaultValues: {
-      newElectricReading: 0,
-      newWaterReading: 0,
+      chi_so_dien_moi: 0,
+      chi_so_nuoc_moi: 0,
     },
   });
 
@@ -89,12 +89,12 @@ export default function QuickBillDialog({ open, onClose, room, onSuccess }) {
         const last = data[0];
         setLastBill(last);
         // Auto-fill số cũ từ hóa đơn trước
-        form.setValue("newElectricReading", last.newElectricReading);
-        form.setValue("newWaterReading", last.newWaterReading);
+        form.setValue("chi_so_dien_moi", last.chi_so_dien_moi);
+        form.setValue("chi_so_nuoc_moi", last.chi_so_nuoc_moi);
       } else {
         setLastBill(null);
-        form.setValue("newElectricReading", 0);
-        form.setValue("newWaterReading", 0);
+        form.setValue("chi_so_dien_moi", 0);
+        form.setValue("chi_so_nuoc_moi", 0);
       }
     } catch (error) {
       console.error("Error fetching last bill:", error);
@@ -113,8 +113,8 @@ export default function QuickBillDialog({ open, onClose, room, onSuccess }) {
 
     try {
       // Lấy số cũ
-      const oldElectric = lastBill?.newElectricReading || 0;
-      const oldWater = lastBill?.newWaterReading || 0;
+      const oldElectric = lastBill?.chi_so_dien_moi || 0;
+      const oldWater = lastBill?.chi_so_nuoc_moi || 0;
 
       // Gọi API để tính toán (sử dụng endpoint tạm thời hoặc tính toán client-side)
       // Tạm thời chỉ hiển thị usage
@@ -129,11 +129,11 @@ export default function QuickBillDialog({ open, onClose, room, onSuccess }) {
           : 999999 - oldWater + newWater;
 
       setPreview({
-        oldElectricReading: oldElectric,
-        newElectricReading: newElectric,
+        chi_so_dien_cu: oldElectric,
+        chi_so_dien_moi: newElectric,
         electricityUsage: electricUsage,
-        oldWaterReading: oldWater,
-        newWaterReading: newWater,
+        chi_so_nuoc_cu: oldWater,
+        chi_so_nuoc_moi: newWater,
         waterUsage: waterUsage,
       });
     } catch (error) {
@@ -143,8 +143,8 @@ export default function QuickBillDialog({ open, onClose, room, onSuccess }) {
   };
 
   // Watch form values để tính preview
-  const newElectric = form.watch("newElectricReading");
-  const newWater = form.watch("newWaterReading");
+  const newElectric = form.watch("chi_so_dien_moi");
+  const newWater = form.watch("chi_so_nuoc_moi");
 
   useEffect(() => {
     if (newElectric && newWater) {
@@ -169,21 +169,21 @@ export default function QuickBillDialog({ open, onClose, room, onSuccess }) {
       const year = now.getFullYear();
 
       // Lấy số cũ từ last bill hoặc 0
-      const oldElectricReading = lastBill?.newElectricReading || 0;
-      const oldWaterReading = lastBill?.newWaterReading || 0;
+      const chi_so_dien_cu = lastBill?.chi_so_dien_moi || 0;
+      const chi_so_nuoc_cu = lastBill?.chi_so_nuoc_moi || 0;
 
       // Tạo hóa đơn
       const response = await fetch("/api/bills", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          roomId: room.id,
-          month,
-          year,
-          oldElectricReading,
-          newElectricReading: data.newElectricReading,
-          oldWaterReading,
-          newWaterReading: data.newWaterReading,
+          phong_id: room.id,
+          thang: month,
+          nam: year,
+          chi_so_dien_cu,
+          chi_so_dien_moi: data.chi_so_dien_moi,
+          chi_so_nuoc_cu,
+          chi_so_nuoc_moi: data.chi_so_nuoc_moi,
         }),
       });
 
@@ -215,8 +215,8 @@ export default function QuickBillDialog({ open, onClose, room, onSuccess }) {
     }
   };
 
-  const oldElectricReading = lastBill?.newElectricReading || 0;
-  const oldWaterReading = lastBill?.newWaterReading || 0;
+  const oldElectricReading = lastBill?.chi_so_dien_moi || 0;
+  const oldWaterReading = lastBill?.chi_so_nuoc_moi || 0;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -226,8 +226,8 @@ export default function QuickBillDialog({ open, onClose, room, onSuccess }) {
             Tạo Hóa Đơn Nhanh
           </DialogTitle>
           <DialogDescription className="text-base">
-            Phòng: <span className="font-semibold">{room?.code}</span> -{" "}
-            {room?.name}
+            Phòng: <span className="font-semibold">{room?.ma_phong}</span> -{" "}
+            {room?.ten_phong}
           </DialogDescription>
         </DialogHeader>
 
@@ -265,7 +265,7 @@ export default function QuickBillDialog({ open, onClose, room, onSuccess }) {
             <div className="space-y-4">
               <FormField
                 control={form.control}
-                name="newElectricReading"
+                name="chi_so_dien_moi"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-base font-medium flex items-center gap-2">
@@ -291,7 +291,7 @@ export default function QuickBillDialog({ open, onClose, room, onSuccess }) {
 
               <FormField
                 control={form.control}
-                name="newWaterReading"
+                name="chi_so_nuoc_moi"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-base font-medium flex items-center gap-2">

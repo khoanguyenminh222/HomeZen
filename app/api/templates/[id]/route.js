@@ -33,35 +33,33 @@ async function updateTemplateHandler(request, { params }) {
         const { id } = await params;
         const formData = await request.formData();
 
-        const html = formData.get('html');
-        const name = formData.get('name');
-        const description = formData.get('description');
-        const procedureId = formData.get('procedureId');
-        const category = formData.get('category');
-        const designerStateRaw = formData.get('designerState');
+        const noi_dung = formData.get('html');
+        const ten = formData.get('name');
+        const mo_ta = formData.get('description');
+        const thu_tuc_id = formData.get('procedureId');
+        const danh_muc = formData.get('category');
         const css = formData.get('css');
         const js = formData.get('js');
-        const orientation = formData.get('orientation');
-
-        let designerState = undefined;
-        if (designerStateRaw) {
-            try {
-                designerState = typeof designerStateRaw === 'string' ? JSON.parse(designerStateRaw) : designerStateRaw;
-            } catch (e) {
-                console.error('Error parsing designerState:', e);
-            }
+        const huong_giay = formData.get('orientation');
+        const anh_xa_tham_so_raw = formData.get('parameterMapping');
+        let anh_xa_tham_so = undefined;
+        try {
+            if (anh_xa_tham_so_raw) anh_xa_tham_so = JSON.parse(anh_xa_tham_so_raw);
+        } catch (e) {
+            console.error('Error parsing parameterMapping', e);
         }
 
+
         const template = await templateManager.updateTemplate(id, {
-            name,
-            description,
-            procedureId,
-            category,
-            designerState,
+            ten,
+            mo_ta,
+            thu_tuc_id,
+            danh_muc,
             css,
             js,
-            orientation,
-            html
+            huong_giay,
+            noi_dung,
+            anh_xa_tham_so
         });
 
         return NextResponse.json({ success: true, data: template });

@@ -154,10 +154,10 @@ export function TemplateSelector({ onSelect, selectedId }) {
                             </div>
                             <div className="min-w-0">
                               <div className="font-semibold text-sm truncate">
-                                {template.name}
+                                {template.ten}
                               </div>
                               <div className="text-[10px] text-muted-foreground uppercase tracking-widest leading-none mt-0.5">
-                                {template.category || "General"}
+                                {template.danh_muc || "General"}
                               </div>
                             </div>
                           </div>

@@ -27,7 +27,7 @@ export async function GET(request, { params }) {
       );
     }
 
-    const room = await prisma.room.findUnique({
+    const room = await prisma.pRP_PHONG.findUnique({
       where: { id: id },
     });
 
@@ -53,7 +53,7 @@ export async function GET(request, { params }) {
     // Convert Decimal to number
     const roomWithNumber = {
       ...room,
-      price: Number(room.price),
+      gia_phong: Number(room.gia_phong),
     };
 
     return NextResponse.json(roomWithNumber);
@@ -94,7 +94,7 @@ export async function PUT(request, { params }) {
     const validatedData = updateRoomSchema.parse(body);
 
     // Check if room exists
-    const existingRoom = await prisma.room.findUnique({
+    const existingRoom = await prisma.pRP_PHONG.findUnique({
       where: { id: id },
     });
 
@@ -118,11 +118,11 @@ export async function PUT(request, { params }) {
     }
 
     // If updating code, check uniqueness within the same property owner (Requirements: 2.2)
-    if (validatedData.code && validatedData.code !== existingRoom.code) {
-      const roomWithSameCode = await prisma.room.findFirst({
-        where: { 
-          code: validatedData.code,
-          userId: existingRoom.userId
+    if (validatedData.ma_phong && validatedData.ma_phong !== existingRoom.ma_phong) {
+      const roomWithSameCode = await prisma.pRP_PHONG.findFirst({
+        where: {
+          ma_phong: validatedData.ma_phong,
+          nguoi_dung_id: existingRoom.nguoi_dung_id
         },
       });
 
@@ -135,21 +135,29 @@ export async function PUT(request, { params }) {
     }
 
     // Update room
-    const room = await prisma.room.update({
+    const room = await prisma.pRP_PHONG.update({
       where: { id: id },
-      data: validatedData,
+      data: {
+        ma_phong: validatedData.ma_phong,
+        ten_phong: validatedData.ten_phong,
+        gia_phong: validatedData.gia_phong,
+        trang_thai: validatedData.trang_thai,
+        ngay_chot_so: validatedData.ngay_chot_so,
+        max_dong_ho_dien: validatedData.max_dong_ho_dien,
+        max_dong_ho_nuoc: validatedData.max_dong_ho_nuoc,
+      },
     });
 
     // Convert Decimal to number
     const roomWithNumber = {
       ...room,
-      price: Number(room.price),
+      gia_phong: Number(room.gia_phong),
     };
 
     return NextResponse.json(roomWithNumber);
   } catch (error) {
     console.error('Error updating room:', error);
-    
+
     if (error.name === 'ZodError') {
       return NextResponse.json(
         { error: 'Dữ liệu không hợp lệ', details: error.errors },
@@ -187,7 +195,7 @@ export async function DELETE(request, { params }) {
     }
 
     // Check if room exists
-    const room = await prisma.room.findUnique({
+    const room = await prisma.pRP_PHONG.findUnique({
       where: { id: id },
     });
 
@@ -211,7 +219,7 @@ export async function DELETE(request, { params }) {
     }
 
     // Check if room is occupied (Requirements: 2.9)
-    if (room.status === 'OCCUPIED') {
+    if (room.trang_thai === 'DA_THUE') {
       return NextResponse.json(
         { error: 'Không thể xóa phòng đang có người thuê' },
         { status: 400 }
@@ -219,8 +227,8 @@ export async function DELETE(request, { params }) {
     }
 
     // Check if room has tenant (double check for safety)
-    const tenant = await prisma.tenant.findUnique({
-      where: { roomId: id },
+    const tenant = await prisma.tNT_NGUOI_THUE_CHINH.findUnique({
+      where: { phong_id: id },
     });
 
     if (tenant) {
@@ -231,8 +239,8 @@ export async function DELETE(request, { params }) {
     }
 
     // Check if room has bills
-    const billCount = await prisma.bill.count({
-      where: { roomId: id },
+    const billCount = await prisma.bIL_HOA_DON.count({
+      where: { phong_id: id },
     });
 
     if (billCount > 0) {
@@ -243,14 +251,14 @@ export async function DELETE(request, { params }) {
     }
 
     // Delete room (RoomFee will be cascade deleted automatically)
-    await prisma.room.delete({
+    await prisma.pRP_PHONG.delete({
       where: { id: id },
     });
 
     return NextResponse.json({ message: 'Xóa phòng thành công' });
   } catch (error) {
     console.error('Error deleting room:', error);
-    
+
     // Handle foreign key constraint error
     if (error.code === 'P2003') {
       return NextResponse.json(

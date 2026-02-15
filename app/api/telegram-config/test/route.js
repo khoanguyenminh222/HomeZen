@@ -18,7 +18,7 @@ export async function POST(request) {
     }
 
     // Chỉ property owner mới có thể test telegram config
-    if (session.user.role !== 'PROPERTY_OWNER') {
+    if (session.user.vai_tro !== 'CHU_NHA_TRO') {
       logAuthorizationViolation(
         request,
         session,
@@ -35,9 +35,9 @@ export async function POST(request) {
 
     // Lấy bot token từ global config
     const { TelegramBotConfigService } = await import('@/lib/services/telegram-bot-config.service.js');
-    const botToken = await TelegramBotConfigService.getDecryptedToken();
-    
-    if (!botToken) {
+    const bot_token = await TelegramBotConfigService.getDecryptedToken();
+
+    if (!bot_token) {
       return NextResponse.json(
         { error: 'Bot token chưa được cấu hình. Vui lòng liên hệ quản trị viên.' },
         { status: 400 }
@@ -45,8 +45,8 @@ export async function POST(request) {
     }
 
     const isValid = await TelegramConfigurationService.testConnection({
-      botToken,
-      chatId: validatedConfig.chatId,
+      bot_token,
+      chat_id: validatedConfig.chat_id,
     });
 
     if (isValid) {
@@ -62,7 +62,7 @@ export async function POST(request) {
     }
   } catch (error) {
     console.error('Test telegram config error:', error);
-    
+
     if (error.name === 'ZodError') {
       return NextResponse.json(
         {
