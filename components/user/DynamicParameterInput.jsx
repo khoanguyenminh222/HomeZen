@@ -10,22 +10,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Loader2, AlertCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-export function DynamicParameterInput({ param, value, onChange }) {
+export function DynamicParameterInput({ param, value, onChange, error }) {
   const [options, setOptions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Admin mapping types
-  const displayType = param.loai_hien_thi || detectParamType(param.ten_tham_so);
+  const displayType = param.displayType || param.loai_hien_thi || "TEXT";
 
   useEffect(() => {
     if (displayType === "ROOM_SELECT") {
-      fetchOptions("/api/rooms");
-    } else if (param.nguon_du_lieu) {
-      fetchOptions(param.nguon_du_lieu);
+      fetchOptions("/api/rooms/list");
+    } else if (param.metadata?.dataSource) {
+      // DataSource could be a key or a full URL
+      const url = param.metadata.dataSource.startsWith("/")
+        ? param.metadata.dataSource
+        : `/api/${param.metadata.dataSource}`;
+      fetchOptions(url);
     }
-  }, [displayType, param.nguon_du_lieu]);
+  }, [displayType, param.metadata?.dataSource]);
 
   async function fetchOptions(url) {
     try {
@@ -37,7 +42,7 @@ export function DynamicParameterInput({ param, value, onChange }) {
       if (Array.isArray(data)) {
         items = data;
       } else if (data.success) {
-        items = data.data || data.rooms || data.tenants || data.contracts || [];
+        items = data.data || data.rooms || [];
       }
 
       setOptions(Array.isArray(items) ? items : []);
@@ -48,19 +53,35 @@ export function DynamicParameterInput({ param, value, onChange }) {
     }
   }
 
+  const renderRequiredIndicator = () =>
+    param.required && <span className="text-destructive ml-1">*</span>;
+
+  const renderError = () =>
+    error && (
+      <p className="text-[10px] text-destructive flex items-center gap-1 mt-1 animate-in fade-in slide-in-from-top-1">
+        <AlertCircle className="h-3 w-3" />
+        {error}
+      </p>
+    );
+
   // 1. DATE PICKER
   if (displayType === "DATE") {
     return (
       <div className="space-y-2">
-        <Label htmlFor={param.ten_tham_so}>
-          {param.nhan || param.ten_tham_so}
+        <Label htmlFor={param.name} className={cn(error && "text-destructive")}>
+          {param.label || param.name}
+          {renderRequiredIndicator()}
         </Label>
         <Input
-          id={param.ten_tham_so}
+          id={param.name}
           type="date"
-          value={value}
+          value={value || ""}
           onChange={(e) => onChange(e.target.value)}
+          className={cn(
+            error && "border-destructive focus-visible:ring-destructive",
+          )}
         />
+        {renderError()}
       </div>
     );
   }
@@ -73,11 +94,15 @@ export function DynamicParameterInput({ param, value, onChange }) {
     }));
     return (
       <div className="space-y-2">
-        <Label htmlFor={param.ten_tham_so}>
-          {param.nhan || param.ten_tham_so}
+        <Label htmlFor={param.name} className={cn(error && "text-destructive")}>
+          {param.label || param.name}
+          {renderRequiredIndicator()}
         </Label>
-        <Select value={value} onValueChange={onChange}>
-          <SelectTrigger id={param.ten_tham_so}>
+        <Select value={String(value || "")} onValueChange={onChange}>
+          <SelectTrigger
+            id={param.name}
+            className={cn(error && "border-destructive")}
+          >
             <SelectValue placeholder="Chọn tháng" />
           </SelectTrigger>
           <SelectContent>
@@ -88,6 +113,7 @@ export function DynamicParameterInput({ param, value, onChange }) {
             ))}
           </SelectContent>
         </Select>
+        {renderError()}
       </div>
     );
   }
@@ -95,17 +121,21 @@ export function DynamicParameterInput({ param, value, onChange }) {
   // 3. YEAR SELECT
   if (displayType === "YEAR_SELECT") {
     const currentYear = new Date().getFullYear();
-    const years = Array.from({ length: 10 }, (_, i) => ({
+    const years = Array.from({ length: 11 }, (_, i) => ({
       id: (currentYear - 5 + i).toString(),
       label: `Năm ${currentYear - 5 + i}`,
     }));
     return (
       <div className="space-y-2">
-        <Label htmlFor={param.ten_tham_so}>
-          {param.nhan || param.ten_tham_so}
+        <Label htmlFor={param.name} className={cn(error && "text-destructive")}>
+          {param.label || param.name}
+          {renderRequiredIndicator()}
         </Label>
-        <Select value={value} onValueChange={onChange}>
-          <SelectTrigger id={param.ten_tham_so}>
+        <Select value={String(value || "")} onValueChange={onChange}>
+          <SelectTrigger
+            id={param.name}
+            className={cn(error && "border-destructive")}
+          >
             <SelectValue placeholder="Chọn năm" />
           </SelectTrigger>
           <SelectContent>
@@ -116,40 +146,44 @@ export function DynamicParameterInput({ param, value, onChange }) {
             ))}
           </SelectContent>
         </Select>
+        {renderError()}
       </div>
     );
   }
 
-  // 4. ROOM SELECT (Dynamic)
-  if (displayType === "ROOM_SELECT" || options.length > 0 || isLoading) {
+  // 4. ROOM_SELECT or DROPDOWN (Single Select)
+  if (
+    (displayType === "ROOM_SELECT" || options.length > 0 || isLoading) &&
+    displayType !== "MULTI_SELECT"
+  ) {
     return (
       <div className="space-y-2">
-        <Label htmlFor={param.ten_tham_so}>
-          {param.nhan || param.ten_tham_so}
+        <Label htmlFor={param.name} className={cn(error && "text-destructive")}>
+          {param.label || param.name}
+          {renderRequiredIndicator()}
         </Label>
         {isLoading ? (
           <div className="flex items-center justify-center h-10 border rounded-md">
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <Select value={value} onValueChange={onChange}>
-            <SelectTrigger id={param.ten_tham_so}>
-              <SelectValue
-                placeholder={`Chọn ${param.nhan || param.ten_tham_so}`}
-              />
+          <Select value={String(value || "")} onValueChange={onChange}>
+            <SelectTrigger
+              id={param.name}
+              className={cn(error && "border-destructive")}
+            >
+              <SelectValue placeholder={`Chọn ${param.label || param.name}`} />
             </SelectTrigger>
             <SelectContent>
               {options.map((option) => (
-                <SelectItem key={option.id} value={option.id}>
-                  {option.ten_phong ||
-                    option.ten ||
-                    option.ten_hien_thi ||
-                    option.id}
+                <SelectItem key={option.id} value={String(option.id)}>
+                  {option.ten || option.ten_phong || option.label || option.id}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         )}
+        {renderError()}
       </div>
     );
   }
@@ -158,38 +192,89 @@ export function DynamicParameterInput({ param, value, onChange }) {
   if (displayType === "NUMBER") {
     return (
       <div className="space-y-2">
-        <Label htmlFor={param.ten_tham_so}>
-          {param.nhan || param.ten_tham_so}
+        <Label htmlFor={param.name} className={cn(error && "text-destructive")}>
+          {param.label || param.name}
+          {renderRequiredIndicator()}
         </Label>
         <Input
-          id={param.ten_tham_so}
+          id={param.name}
           type="number"
-          value={value}
+          value={value || ""}
           onChange={(e) => onChange(e.target.value)}
+          className={cn(
+            error && "border-destructive focus-visible:ring-destructive",
+          )}
         />
+        {renderError()}
       </div>
     );
   }
 
-  // 6. DEFAULT TEXT
+  // 6. MULTI_SELECT (Simple Implementation using Checkboxes or Select with multiple)
+  if (displayType === "MULTI_SELECT") {
+    // For simplicity, we can use a more advanced component here,
+    // but let's stick to a robust basic version for now.
+    return (
+      <div className="space-y-2">
+        <Label className={cn(error && "text-destructive")}>
+          {param.label || param.name}
+          {renderRequiredIndicator()}
+        </Label>
+        <div className="border rounded-md p-3 max-h-40 overflow-y-auto space-y-2 bg-background">
+          {options.map((option) => (
+            <div key={option.id} className="flex items-center space-x-2">
+              <Checkbox
+                id={`${param.name}-${option.id}`}
+                checked={
+                  Array.isArray(value) && value.includes(String(option.id))
+                }
+                onCheckedChange={(checked) => {
+                  const currentValues = Array.isArray(value) ? [...value] : [];
+                  if (checked) {
+                    onChange([...currentValues, String(option.id)]);
+                  } else {
+                    onChange(
+                      currentValues.filter((v) => v !== String(option.id)),
+                    );
+                  }
+                }}
+              />
+              <label
+                htmlFor={`${param.name}-${option.id}`}
+                className="text-sm font-medium leading-none cursor-pointer"
+              >
+                {option.ten || option.ten_phong || option.label || option.id}
+              </label>
+            </div>
+          ))}
+          {options.length === 0 && !isLoading && (
+            <p className="text-xs text-muted-foreground italic">
+              Không có dữ liệu
+            </p>
+          )}
+        </div>
+        {renderError()}
+      </div>
+    );
+  }
+
+  // 7. DEFAULT TEXT
   return (
     <div className="space-y-2">
-      <Label htmlFor={param.ten_tham_so}>
-        {param.nhan || param.ten_tham_so}
+      <Label htmlFor={param.name} className={cn(error && "text-destructive")}>
+        {param.label || param.name}
+        {renderRequiredIndicator()}
       </Label>
       <Input
-        id={param.ten_tham_so}
-        value={value}
+        id={param.name}
+        value={value || ""}
         onChange={(e) => onChange(e.target.value)}
-        placeholder={`Nhập ${param.nhan || param.ten_tham_so}`}
+        placeholder={`Nhập ${param.label || param.name}`}
+        className={cn(
+          error && "border-destructive focus-visible:ring-destructive",
+        )}
       />
+      {renderError()}
     </div>
   );
-}
-
-function detectParamType(paramName) {
-  if (paramName.includes("ngay") || paramName.includes("date")) return "DATE";
-  if (paramName.includes("phong") || paramName === "p_phong")
-    return "ROOM_SELECT";
-  return "TEXT";
 }

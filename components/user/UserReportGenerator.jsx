@@ -35,6 +35,7 @@ export function UserReportGenerator() {
   const [isLoading, setIsLoading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [reportUrl, setReportUrl] = useState("");
+  const [errors, setErrors] = useState({});
   const [searchTerm, setSearchTerm] = useState("");
 
   const filteredTemplates = templates.filter(
@@ -56,23 +57,72 @@ export function UserReportGenerator() {
     }
   }, [selectedTemplateId, templates]);
 
-  async function initializeParameters(template) {
-    const params = {};
-    if (template?.anh_xa_tham_so) {
-      // Get user session for auto-filling p_uid
-      const session = await fetch("/api/auth/session").then((r) => r.json());
-      const userId = session?.user?.id;
-
-      template.anh_xa_tham_so.forEach((param) => {
-        // Auto-fill p_uid with current user ID
-        if (param.ten_tham_so === "p_uid" && userId) {
-          params[param.ten_tham_so] = userId;
-        } else {
-          params[param.ten_tham_so] = "";
-        }
-      });
+  function parseConfig(configJson) {
+    if (!configJson) return { parameters: [] };
+    if (typeof configJson === "string") {
+      try {
+        const parsed = JSON.parse(configJson);
+        return Array.isArray(parsed)
+          ? {
+              parameters: parsed.map((p) => ({
+                name: p.ten_tham_so,
+                label: p.ten_tham_so,
+                displayType: p.loai_hien_thi,
+                required: false,
+                defaultValue: "",
+              })),
+            }
+          : parsed;
+      } catch (e) {
+        return { parameters: [] };
+      }
     }
+    return configJson;
+  }
+
+  function initializeParameters(template) {
+    const config = parseConfig(template?.anh_xa_tham_so);
+    const params = {};
+    const now = new Date();
+
+    config.parameters?.forEach((param) => {
+      let val = param.defaultValue || "";
+
+      // Keyword mapping (frontend equivalent of ParameterManager)
+      if (val === "none") {
+        val = "";
+      } else if (val === "TODAY") {
+        val = now.toISOString().split("T")[0];
+      } else if (val === "FIRST_DAY_OF_MONTH") {
+        val = new Date(now.getFullYear(), now.getMonth(), 1)
+          .toISOString()
+          .split("T")[0];
+      } else if (val === "LAST_DAY_OF_MONTH") {
+        val = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+          .toISOString()
+          .split("T")[0];
+      } else if (val === "CURRENT_MONTH") {
+        val = (now.getMonth() + 1).toString();
+      } else if (val === "CURRENT_YEAR") {
+        val = now.getFullYear().toString();
+      }
+
+      // Ensure MULTI_SELECT starts as an array if no default value
+      if (param.displayType === "MULTI_SELECT" && !val) {
+        val = [];
+      } else if (
+        param.displayType === "MULTI_SELECT" &&
+        typeof val === "string" &&
+        val
+      ) {
+        val = val.split(",").map((v) => v.trim());
+      }
+
+      params[param.name] = val;
+    });
+
     setParameters(params);
+    setErrors({});
   }
 
   async function fetchTemplates() {
@@ -95,8 +145,8 @@ export function UserReportGenerator() {
     }
   }
 
-  async function handleGenerate() {
-    if (!selectedTemplateId) {
+  const handleGenerate = async () => {
+    if (!selectedTemplate) {
       toast({
         title: "Lỗi",
         description: "Vui lòng chọn mẫu báo cáo",
@@ -107,48 +157,106 @@ export function UserReportGenerator() {
 
     try {
       setIsGenerating(true);
+      setErrors({});
+
+      // Thu hồi URL cũ nếu có để tránh rò rỉ bộ nhớ
+      if (reportUrl && reportUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(reportUrl);
+      }
+
       const res = await fetch("/api/reports/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          templateId: selectedTemplateId,
+          templateId: selectedTemplate.id,
           parameters,
-          format: "pdf",
         }),
       });
 
-      // Parse JSON response to get fileUrl
-      const data = await res.json();
-
-      if (data.success && data.data.fileUrl) {
-        setReportUrl(data.data.fileUrl);
-
-        toast({
-          title: "Thành công",
-          description: "Đã tạo báo cáo thành công",
-          variant: "success",
-        });
-      } else {
-        throw new Error(data.error?.message || "Failed to generate report");
+      if (!res.ok) {
+        const result = await res.json();
+        if (result.error && result.error.code === "GEN_004") {
+          // Lỗi validation tham số
+          toast({
+            title: "Lỗi kiểm tra tham số",
+            description:
+              result.error.message || "Vui lòng kiểm tra lại các tham số.",
+            variant: "destructive",
+          });
+        } else {
+          throw new Error(result.error?.message || "Lỗi không xác định");
+        }
+        return;
       }
+
+      // Xử lý binary response
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+
+      setReportUrl(url);
+      toast({
+        title: "Thành công",
+        description: "Đã tạo báo cáo thành công",
+        variant: "success",
+      });
     } catch (error) {
-      console.error("Error generating report:", error);
+      console.error("Generate error:", error);
       toast({
         title: "Lỗi",
-        description: "Không thể tạo báo cáo",
+        description: error.message || "Không thể tạo báo cáo",
         variant: "destructive",
       });
     } finally {
       setIsGenerating(false);
     }
-  }
+  };
 
-  function handleParameterChange(paramName, value) {
-    setParameters((prev) => ({
-      ...prev,
-      [paramName]: value,
-    }));
-  }
+  // Dọn dẹp URL khi unmount
+  useEffect(() => {
+    return () => {
+      if (reportUrl && reportUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(reportUrl);
+      }
+    };
+  }, [reportUrl]);
+
+  const renderParameters = () => {
+    if (!selectedTemplate) return null;
+    const config = parseConfig(selectedTemplate.anh_xa_tham_so);
+    const displayParams =
+      config.parameters?.filter((p) => p.name !== "p_uid") || [];
+
+    if (displayParams.length === 0) {
+      return (
+        <div className="p-4 rounded-lg bg-muted/30 text-center text-sm text-muted-foreground border-2 border-dashed">
+          Báo cáo này không yêu cầu tham số bổ sung.
+        </div>
+      );
+    }
+
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {displayParams.map((param) => (
+          <DynamicParameterInput
+            key={param.name}
+            param={param}
+            value={parameters[param.name]}
+            error={errors[param.name]}
+            onChange={(val) => {
+              setParameters((prev) => ({ ...prev, [param.name]: val }));
+              if (errors[param.name]) {
+                setErrors((prev) => {
+                  const newErrors = { ...prev };
+                  delete newErrors[param.name];
+                  return newErrors;
+                });
+              }
+            }}
+          />
+        ))}
+      </div>
+    );
+  };
 
   if (isLoading) {
     return (
@@ -283,28 +391,7 @@ export function UserReportGenerator() {
                   </Button>
                 </div>
 
-                {selectedTemplate?.anh_xa_tham_so?.filter(
-                  (p) => p.ten_tham_so !== "p_uid",
-                )?.length > 0 ? (
-                  <div className="grid gap-6 md:grid-cols-2">
-                    {selectedTemplate.anh_xa_tham_so
-                      .filter((param) => param.ten_tham_so !== "p_uid")
-                      .map((param) => (
-                        <DynamicParameterInput
-                          key={param.ten_tham_so}
-                          param={param}
-                          value={parameters[param.ten_tham_so] || ""}
-                          onChange={(value) =>
-                            handleParameterChange(param.ten_tham_so, value)
-                          }
-                        />
-                      ))}
-                  </div>
-                ) : (
-                  <div className="p-4 rounded-lg bg-muted/30 text-center text-sm text-muted-foreground border-2 border-dashed">
-                    Báo cáo này không yêu cầu tham số bổ sung.
-                  </div>
-                )}
+                {renderParameters()}
               </div>
 
               {/* PDF Preview Area */}

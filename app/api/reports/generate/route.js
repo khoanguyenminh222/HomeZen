@@ -26,7 +26,15 @@ async function generateReportHandler(request) {
             userId: session?.user?.id
         });
 
-        return NextResponse.json({ success: true, data: report });
+        // Trả về binary response
+        return new NextResponse(report.buffer, {
+            status: 200,
+            headers: {
+                'Content-Type': 'application/pdf',
+                'Content-Disposition': `inline; filename="${report.fileName}"`,
+                'Content-Length': report.buffer.length.toString(),
+            },
+        });
     } catch (error) {
         return handleErrorResponse(error, 'Error generating report');
     }

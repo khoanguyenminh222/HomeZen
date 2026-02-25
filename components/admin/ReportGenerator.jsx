@@ -78,23 +78,34 @@ export function ReportGenerator() {
   };
 
   /**
+   * Helper function to parse parameter configuration
+   */
+  const parseParams = (config) => {
+    if (!config) return [];
+    if (Array.isArray(config)) return config;
+    return config.parameters || [];
+  };
+
+  /**
    * Tải danh sách phòng nếu cần thiết (cho bộ chọn phòng)
    */
   useEffect(() => {
     async function fetchRooms() {
       if (!selectedTemplate) return;
 
-      const hasRoomSelect = selectedTemplate.anh_xa_tham_so?.some(
-        (m) => m.loai_hien_thi === "ROOM_SELECT",
+      const paramsConfig = parseParams(selectedTemplate.anh_xa_tham_so);
+      const hasRoomSelect = paramsConfig.some(
+        (m) =>
+          m.loai_hien_thi === "ROOM_SELECT" || m.displayType === "ROOM_SELECT",
       );
 
       if (hasRoomSelect && rooms.length === 0) {
         try {
           setIsLoadingRooms(true);
-          const res = await fetch("/api/rooms");
-          const data = await res.json();
-          if (Array.isArray(data)) {
-            setRooms(data);
+          const res = await fetch("/api/rooms/list"); // Updated to use the new list endpoint
+          const json = await res.json();
+          if (json.success && Array.isArray(json.data)) {
+            setRooms(json.data);
           }
         } catch (error) {
           console.error("Error fetching rooms for generator", error);
@@ -112,10 +123,11 @@ export function ReportGenerator() {
   const renderParameterInput = (param) => {
     if (param.name === "p_uid") return null;
 
-    const mapping = selectedTemplate.anh_xa_tham_so?.find(
-      (m) => m.ten_tham_so === param.name,
+    const paramsConfig = parseParams(selectedTemplate.anh_xa_tham_so);
+    const mapping = paramsConfig.find(
+      (m) => m.ten_tham_so === param.name || m.name === param.name,
     );
-    const type = mapping?.loai_hien_thi || "TEXT";
+    const type = mapping?.loai_hien_thi || mapping?.displayType || "TEXT";
 
     const commonProps = {
       id: param.name,
@@ -213,6 +225,14 @@ export function ReportGenerator() {
 
     try {
       setIsGenerating(true);
+
+      // Cleanup old blob URL nếu có
+      if (
+        generationResult?.fileUrl &&
+        generationResult.fileUrl.startsWith("blob:")
+      ) {
+        URL.revokeObjectURL(generationResult.fileUrl);
+      }
       setGenerationResult(null);
 
       const res = await fetch("/api/reports/generate", {
@@ -225,18 +245,29 @@ export function ReportGenerator() {
         }),
       });
 
-      const json = await res.json();
-      if (json.success) {
-        toast({
-          title: "Thành công",
-          description: "Đã sinh báo cáo thành công.",
-          variant: "success",
-        });
-        setGenerationResult(json.data);
-      } else {
-        throw new Error(json.message || "Lỗi khi sinh báo cáo");
+      if (!res.ok) {
+        const json = await res.json();
+        throw new Error(
+          json.error?.message || json.message || "Lỗi khi sinh báo cáo",
+        );
       }
+
+      // Nhận dữ liệu dưới dạng Blob
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+
+      toast({
+        title: "Thành công",
+        description: "Đã sinh báo cáo thành công.",
+        variant: "success",
+      });
+
+      setGenerationResult({
+        fileUrl: url,
+        fileName: `Report_${selectedTemplate.ten}_${Date.now()}.pdf`,
+      });
     } catch (error) {
+      console.error("Generate error:", error);
       toast({
         title: "Lỗi sinh báo cáo",
         description: error.message,
@@ -246,6 +277,18 @@ export function ReportGenerator() {
       setIsGenerating(false);
     }
   };
+
+  // Cleanup blob URL khi component unmount
+  useEffect(() => {
+    return () => {
+      if (
+        generationResult?.fileUrl &&
+        generationResult.fileUrl.startsWith("blob:")
+      ) {
+        URL.revokeObjectURL(generationResult.fileUrl);
+      }
+    };
+  }, [generationResult]);
 
   return (
     <div className="flex flex-col lg:flex-row gap-0 lg:h-[calc(100vh-10rem)] bg-background border rounded-xl overflow-hidden shadow-sm">

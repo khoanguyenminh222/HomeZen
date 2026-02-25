@@ -46,6 +46,7 @@ import MonacoEditor from "@monaco-editor/react";
 import Handlebars from "handlebars";
 import { toast } from "@/hooks/use-toast";
 import { HTMLTemplateLibrary } from "@/components/admin/reporting/HTMLTemplateLibrary";
+import { AdminParameterConfig } from "@/components/admin/reporting/AdminParameterConfig";
 
 /**
  * Reusable Template Designer component.
@@ -59,7 +60,7 @@ export function TemplateDesigner({ templateId, onSaveComplete, onLoad }) {
     danh_muc: "",
     anh_xa_tham_so: [],
   });
-  const [parameterMapping, setParameterMapping] = useState({});
+  const [parameterMapping, setParameterMapping] = useState({ parameters: [] });
   const [availableVariables, setAvailableVariables] = useState([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("preview");
@@ -171,14 +172,23 @@ th {
           if (t.js) setRawJs(t.js);
           if (t.huong_giay) setOrientation(t.huong_giay);
           if (t.anh_xa_tham_so) {
-            const mapping = {};
-            t.anh_xa_tham_so.forEach((m) => {
-              mapping[m.ten_tham_so] = m.loai_hien_thi;
-            });
+            // Hỗ trợ cả định dạng cũ (mảng) và định dạng mới (object {parameters})
+            let mapping = { parameters: [] };
+            if (Array.isArray(t.anh_xa_tham_so)) {
+              mapping.parameters = t.anh_xa_tham_so.map((m) => ({
+                name: m.ten_tham_so,
+                label: m.ten_tham_so,
+                displayType: m.loai_hien_thi,
+                required: false,
+                defaultValue: "",
+              }));
+            } else if (t.anh_xa_tham_so?.parameters) {
+              mapping = t.anh_xa_tham_so;
+            }
             setParameterMapping(mapping);
             setTemplateInfo((prev) => ({
               ...prev,
-              anh_xa_tham_so: t.anh_xa_tham_so,
+              anh_xa_tham_so: mapping,
             }));
           }
 
@@ -303,14 +313,7 @@ th {
       formData.append("js", rawJs || "");
       formData.append("orientation", orientation);
 
-      const mappingArray = Object.entries(parameterMapping).map(
-        ([ten, loai]) => ({
-          ten_tham_so: ten,
-          loai_hien_thi: loai,
-        }),
-      );
-
-      formData.append("parameterMapping", JSON.stringify(mappingArray));
+      formData.append("parameterMapping", JSON.stringify(parameterMapping));
 
       const isEdit = Boolean(templateId);
       const method = templateId ? "PATCH" : "POST";
@@ -614,66 +617,11 @@ th {
 
                   {/* Phần Cấu hình Tham số mới */}
                   <div className="space-y-4 pt-4 border-t">
-                    <div className="flex items-center gap-2">
-                      <FileCode className="h-5 w-5 text-primary" />
-                      <h4 className="font-bold">Cấu hình tham số Procedure</h4>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Thiết lập cách hiển thị tham số cho người dùng khi sinh
-                      báo cáo.
-                    </p>
-
-                    {selectedProcedure?.tham_so?.length > 0 ? (
-                      <div className="grid gap-3 border rounded-lg p-4 bg-muted/20">
-                        {selectedProcedure.tham_so
-                          .filter((v) => v.name !== "p_uid")
-                          .map((v) => (
-                            <div
-                              key={v.name}
-                              className="grid grid-cols-2 items-center gap-4"
-                            >
-                              <Label className="text-xs font-mono">
-                                {v.name}
-                              </Label>
-                              <Select
-                                value={parameterMapping[v.name] || "TEXT"}
-                                onValueChange={(val) =>
-                                  setParameterMapping((prev) => ({
-                                    ...prev,
-                                    [v.name]: val,
-                                  }))
-                                }
-                              >
-                                <SelectTrigger className="h-8 text-xs">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="TEXT">
-                                    Văn bản (Mặc định)
-                                  </SelectItem>
-                                  <SelectItem value="NUMBER">Số</SelectItem>
-                                  <SelectItem value="DATE">
-                                    Chọn ngày
-                                  </SelectItem>
-                                  <SelectItem value="ROOM_SELECT">
-                                    Chọn phòng (System)
-                                  </SelectItem>
-                                  <SelectItem value="MONTH_SELECT">
-                                    Chọn tháng
-                                  </SelectItem>
-                                  <SelectItem value="YEAR_SELECT">
-                                    Chọn năm
-                                  </SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          ))}
-                      </div>
-                    ) : (
-                      <div className="text-xs italic text-muted-foreground p-4 border border-dashed rounded-lg text-center">
-                        Vui lòng chọn Procedure để cấu hình tham số.
-                      </div>
-                    )}
+                    <AdminParameterConfig
+                      procedureParams={selectedProcedure?.tham_so}
+                      mapping={parameterMapping}
+                      onChange={setParameterMapping}
+                    />
                   </div>
                 </div>
               </div>
