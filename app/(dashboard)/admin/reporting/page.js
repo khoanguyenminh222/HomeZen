@@ -25,10 +25,12 @@ export default function AdminReportingPage() {
     setIsDesigning(true);
   };
 
-  const handleDesignerSaveComplete = () => {
+  const handleDesignerSaveComplete = (savedTemplate) => {
     setRefreshTemplates(prev => prev + 1);
-    setIsDesigning(false);
-    setEditingTemplateId(null);
+    // Không set isDesigning(false) để giữ modal mở theo yêu cầu của người dùng
+    if (savedTemplate && !editingTemplateId) {
+      setEditingTemplateId(savedTemplate.id);
+    }
   };
 
   const handleTemplateUpdated = () => {

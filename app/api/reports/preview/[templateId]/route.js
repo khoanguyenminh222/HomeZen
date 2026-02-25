@@ -1,15 +1,13 @@
 import { NextResponse } from 'next/server';
-import { requireSuperAdmin } from '@/lib/middleware/authorization';
+import { requireAuth } from '@/lib/middleware/authorization';
 import { getReportGeneratorService } from '@/lib/services/report-generator.service.js';
-import { auth } from '@/app/api/auth/[...nextauth]/route';
 import { handleErrorResponse } from '@/lib/utils/report-errors';
 
 const reportGenerator = getReportGeneratorService();
 
 // GET /api/reports/preview/[templateId] - Preview report as HTML
-async function previewReportHandler(request, { params }) {
+async function previewReportHandler(request, { params }, session) {
     try {
-        const session = await auth();
         const { templateId } = await params;
 
         // Lấy parameters từ query string

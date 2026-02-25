@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -53,6 +54,7 @@ import { AdminParameterConfig } from "@/components/admin/reporting/AdminParamete
  * Simplified version: Focused on Monaco Code Editing (HTML/Handlebars, CSS, JS).
  */
 export function TemplateDesigner({ templateId, onSaveComplete, onLoad }) {
+  const router = useRouter();
   const [templateInfo, setTemplateInfo] = useState({
     ten: "Template mới",
     thu_tuc_id: "",
@@ -416,6 +418,12 @@ th {
             )}
             {templateId ? "Cập nhật" : "Lưu Template"}
           </Button>
+
+          {!onSaveComplete && (
+            <Button variant="outline" size="sm" onClick={() => router.back()}>
+              Quay lại
+            </Button>
+          )}
         </div>
       </div>
 

@@ -7,9 +7,8 @@ import { handleErrorResponse } from '@/lib/utils/report-errors';
 const reportGenerator = getReportGeneratorService();
 
 // POST /api/reports/generate - Generate a new report (PDF)
-async function generateReportHandler(request) {
+async function generateReportHandler(request, context, session) {
     try {
-        const session = await auth();
         const body = await request.json();
         const { templateId, parameters } = body;
 

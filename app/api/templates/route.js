@@ -7,7 +7,7 @@ import { handleErrorResponse } from '@/lib/utils/report-errors';
 const templateManager = getTemplateManagerService();
 
 // GET /api/templates - List templates
-async function listTemplatesHandler(request) {
+async function listTemplatesHandler(request, context, session) {
     try {
         const { searchParams } = new URL(request.url);
         const page = parseInt(searchParams.get('page')) || 1;
@@ -15,7 +15,6 @@ async function listTemplatesHandler(request) {
         const search = searchParams.get('search') || '';
 
         // Check permissions
-        const session = await auth();
         const userRole = session?.user?.vai_tro;
         const userId = session?.user?.id;
 
@@ -27,9 +26,8 @@ async function listTemplatesHandler(request) {
 }
 
 // POST /api/templates - Upload/Create template
-async function createTemplateHandler(request) {
+async function createTemplateHandler(request, context, session) {
     try {
-        const session = await auth();
         const formData = await request.formData();
         const noi_dung = formData.get('html');
         const ten = formData.get('name');
