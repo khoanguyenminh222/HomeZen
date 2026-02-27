@@ -17,21 +17,21 @@ export default async function DashboardLayout({ children }) {
 
   if (!session) {
     // If the user wants '/' to be public, we must NOT redirect here for '/'.
-    // But how to detect '/' in Server Layout? 
-    // Usually via headers 'x-url' or similar if set in middleware.
-    redirect('/login');
+    // In Server Layout, we trust the proxy/middleware to handle the protection.
+    // If we've reached here and there's no session, redirect to login.
+    redirect('/login?error=no_session');
   }
 
   // Check if user is active
   if (!session.user?.trang_thai) {
-    redirect('/login?error=Account is deactivated');
+    redirect('/login?error=account_deactivated');
   }
 
   const isSuperAdmin = session.user?.vai_tro === 'SIEU_QUAN_TRI';
 
   // Check if user has allowed roles for dashboard access
   if (session.user.vai_tro !== 'SIEU_QUAN_TRI' && session.user.vai_tro !== 'CHU_NHA_TRO') {
-    redirect('/login?error=Unauthorized access'); // Or a more specific error/page
+    redirect('/login?error=unauthorized_role&role=' + session.user.vai_tro);
   }
 
   // Transform session for client component

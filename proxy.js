@@ -1,54 +1,15 @@
 import { NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
-import { PrismaClient } from '@prisma/client';
-
-// Create Prisma client for proxy
-const prisma = new PrismaClient();
 
 /**
- * Validate user exists and is active in database
- * @param {string} userId - User ID from token
- * @returns {Promise<{isValid: boolean, user?: Object, reason?: string}>}
- */
-async function validateUserInDatabase(userId) {
-  if (!userId) {
-    return { isValid: false, reason: 'No user ID provided' };
-  }
-
-  try {
-    const user = await prisma.uSR_NGUOI_DUNG.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        tai_khoan: true,
-        vai_tro: true,
-        trang_thai: true
-      }
-    });
-
-    if (!user) {
-      return { isValid: false, reason: 'User not found in database' };
-    }
-
-    if (!user.trang_thai) {
-      return { isValid: false, reason: 'User account is deactivated' };
-    }
-
-    return { isValid: true, user };
-  } catch (error) {
-    console.error('Error validating user in proxy:', error);
-    return { isValid: false, reason: 'Database error during validation' };
-  }
-}
-
-/**
- * Proxy to protect routes with role-based access control and user validation
+ * Proxy to protect routes with role-based access control
+ * Removed Prisma dependency for Edge Runtime compatibility on Vercel
  * Requirements: 4.3, 7.1, 7.2, 7.4, 7.5
  */
 export async function proxy(request) {
   const token = await getToken({
     req: request,
-    secret: process.env.NEXTAUTH_SECRET,
+    secret: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET,
   });
 
   const { pathname } = request.nextUrl;
@@ -67,7 +28,6 @@ export async function proxy(request) {
   }
 
   // 2. Define Public Routes (accessible without login)
-  // Include root '/' if it should be public
   const publicRoutes = ['/', '/login', '/forgot-password', '/reset-password', '/api/auth'];
 
   const isPublicRoute = publicRoutes.some(route =>
@@ -78,17 +38,14 @@ export async function proxy(request) {
     // If user is already authenticated and tries to access auth pages, redirect to dashboard
     const authPages = ['/login', '/forgot-password', '/reset-password'];
     if (token && authPages.some(page => pathname.startsWith(page))) {
-      const validation = await validateUserInDatabase(token.id);
-      if (validation.isValid) {
-        const dashboardUrl = new URL(validation.user.vai_tro === 'SIEU_QUAN_TRI' ? '/admin' : '/', request.url);
-        // Important: Use '/' as dashboard for Property Owners
-        return NextResponse.redirect(dashboardUrl);
-      }
+      const userRole = token.vai_tro;
+      const dashboardUrl = new URL(userRole === 'SIEU_QUAN_TRI' ? '/admin' : '/', request.url);
+      return NextResponse.redirect(dashboardUrl);
     }
     return NextResponse.next();
   }
 
-  // 3. API routes are protected by their own auth checks in route handlers
+  // 3. API routes (auth handled in handlers or specific logic)
   if (pathname.startsWith('/api')) {
     return NextResponse.next();
   }
@@ -100,16 +57,7 @@ export async function proxy(request) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // 5. Validate authenticated user still exists and is active
-  const validation = await validateUserInDatabase(token.id);
-  if (!validation.isValid) {
-    console.log(`User validation failed: ${validation.reason} for user ${token.id}`);
-    const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('error', validation.reason === 'User not found in database' ? 'User not found' : 'Account deactivated');
-    return NextResponse.redirect(loginUrl);
-  }
-
-  // 6. Check token expiry
+  // 5. Token expiry check
   if (token.exp) {
     const now = Math.floor(Date.now() / 1000);
     if (now > token.exp) {
@@ -119,9 +67,9 @@ export async function proxy(request) {
     }
   }
 
-  const userRole = validation.user.vai_tro;
+  const userRole = token.vai_tro;
 
-  // 7. Role-based Authorization
+  // 6. Role-based Authorization
   // Protect Super Admin dashboard
   if (pathname.startsWith('/admin')) {
     if (userRole !== 'SIEU_QUAN_TRI') {
@@ -130,7 +78,6 @@ export async function proxy(request) {
   }
 
   // Custom logic: Force Super Admin to Admin dashboard if they try to access property owner routes
-  // But allow them to see the landing page '/'
   if (userRole === 'SIEU_QUAN_TRI' && pathname !== '/' && !pathname.startsWith('/admin')) {
     return NextResponse.redirect(new URL('/admin', request.url));
   }
