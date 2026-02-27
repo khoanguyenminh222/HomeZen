@@ -3,18 +3,19 @@ import { getToken } from 'next-auth/jwt';
 
 /**
  * Proxy to protect routes with role-based access control
- * Removed Prisma dependency for Edge Runtime compatibility on Vercel
- * Requirements: 4.3, 7.1, 7.2, 7.4, 7.5
+ * Edge Runtime compatible (No Prisma)
  */
 export async function proxy(request) {
+  const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
+
   const token = await getToken({
     req: request,
-    secret: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET,
+    secret: secret,
   });
 
   const { pathname } = request.nextUrl;
 
-  // 1. Exclude all static assets and Next.js internals early
+  // 1. Exclude static assets
   const isStaticFile =
     pathname.startsWith('/_next') ||
     pathname.startsWith('/favicon.ico') ||
@@ -27,15 +28,13 @@ export async function proxy(request) {
     return NextResponse.next();
   }
 
-  // 2. Define Public Routes (accessible without login)
+  // 2. Public Routes
   const publicRoutes = ['/', '/login', '/forgot-password', '/reset-password', '/api/auth'];
-
   const isPublicRoute = publicRoutes.some(route =>
     pathname === route || (route !== '/' && pathname.startsWith(route))
   );
 
   if (isPublicRoute) {
-    // If user is already authenticated and tries to access auth pages, redirect to dashboard
     const authPages = ['/login', '/forgot-password', '/reset-password'];
     if (token && authPages.some(page => pathname.startsWith(page))) {
       const userRole = token.vai_tro;
@@ -45,13 +44,15 @@ export async function proxy(request) {
     return NextResponse.next();
   }
 
-  // 3. API routes (auth handled in handlers or specific logic)
+  // 3. API routes
   if (pathname.startsWith('/api')) {
     return NextResponse.next();
   }
 
-  // 4. Redirect to login if no session token for protected routes
+  // 4. Redirect to login if no session token
   if (!token) {
+    // Log for Vercel troubleshooting
+    console.log(`[PROXY] No token found for ${pathname}. Redirecting to login.`);
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('callbackUrl', pathname);
     return NextResponse.redirect(loginUrl);
@@ -70,14 +71,12 @@ export async function proxy(request) {
   const userRole = token.vai_tro;
 
   // 6. Role-based Authorization
-  // Protect Super Admin dashboard
   if (pathname.startsWith('/admin')) {
     if (userRole !== 'SIEU_QUAN_TRI') {
       return NextResponse.redirect(new URL('/', request.url));
     }
   }
 
-  // Custom logic: Force Super Admin to Admin dashboard if they try to access property owner routes
   if (userRole === 'SIEU_QUAN_TRI' && pathname !== '/' && !pathname.startsWith('/admin')) {
     return NextResponse.redirect(new URL('/admin', request.url));
   }
@@ -86,14 +85,10 @@ export async function proxy(request) {
 }
 
 /**
- * Matcher configuration
+ * Matcher configuration for Next.js 16 Proxy
  */
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones omitted in the proxy function 
-     * but we keep it broad for the proxy function to handle accurately.
-     */
     '/((?!api/auth|_next/static|_next/image|favicon.ico|images/).*)',
   ],
 };
