@@ -6,6 +6,7 @@ import { WebsiteConfigProvider } from "@/contexts/WebsiteConfigContext";
 import { DynamicMetadata } from "@/components/ui/DynamicMetadata";
 import { Toaster } from "@/components/ui/toaster";
 import { getWebsiteConfigurationService } from "@/lib/services/website-configuration.service";
+import { Analytics } from "@vercel/analytics/next"
 
 const beVietnamPro = Be_Vietnam_Pro({
   variable: "--font-be-vietnam-pro",
@@ -70,6 +71,7 @@ export default function RootLayout({ children }) {
             </WebsiteConfigProvider>
           </SessionProvider>
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   );
