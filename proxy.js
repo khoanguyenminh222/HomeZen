@@ -8,9 +8,15 @@ import { getToken } from 'next-auth/jwt';
 export async function proxy(request) {
   const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
 
+  // Debug cookies on Vercel
+  const cookies = request.cookies.getAll();
+  const cookieNames = cookies.map(c => c.name).join(', ');
+  console.log(`[PROXY] Path: ${request.nextUrl.pathname}, Cookies: [${cookieNames}]`);
+
   const token = await getToken({
     req: request,
     secret: secret,
+    secureCookie: process.env.NODE_ENV === 'production',
   });
 
   const { pathname } = request.nextUrl;
